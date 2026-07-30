@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AdminGuard from "@/components/AdminGuard";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
+import BrandHeader from "@/components/BrandHeader";
 
 function InviteForm() {
   const [hosts, setHosts] = useState([]);
@@ -187,7 +188,7 @@ export default function PreregisterInvitePage() {
     <AdminGuard>
       <main className="kiosk-shell">
         <div className="kiosk-header">
-          <div className="brand">Reception<span className="dot">·</span>Invite a guest</div>
+          <BrandHeader label="Invite a guest" />
         </div>
         <InviteForm />
       </main>

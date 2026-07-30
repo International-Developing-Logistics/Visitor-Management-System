@@ -5,6 +5,7 @@ import StepProgress from "@/components/StepProgress";
 import VisitorDetailsForm from "@/components/VisitorDetailsForm";
 import PhotoCapture from "@/components/PhotoCapture";
 import SignaturePad from "@/components/SignaturePad";
+import BrandHeader from "@/components/BrandHeader";
 
 const STEPS = ["Details", "Photo", "Signature", "Done"];
 
@@ -66,7 +67,7 @@ export default function WalkinPage() {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <div className="brand">Reception<span className="dot">·</span>Check-in</div>
+        <BrandHeader />
       </div>
 
       <StepProgress steps={STEPS} currentIndex={step} />

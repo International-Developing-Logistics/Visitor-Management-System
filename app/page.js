@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import BrandHeader from "@/components/BrandHeader";
+
+const COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "our company";
 
 export default function Home() {
   const [origin, setOrigin] = useState("");
@@ -18,13 +21,11 @@ export default function Home() {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <div className="brand">
-          Reception<span className="dot">·</span>Check-in
-        </div>
+        <BrandHeader />
       </div>
 
       <div className="card" style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.6rem" }}>Welcome</h1>
+        <h1 style={{ fontSize: "1.6rem" }}>Welcome to {COMPANY_NAME}</h1>
         <p style={{ color: "var(--muted)", marginBottom: 28 }}>
           Scan the code with your phone, or tap below to check in on this screen.
         </p>

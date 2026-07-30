@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PhotoCapture from "@/components/PhotoCapture";
 import SignaturePad from "@/components/SignaturePad";
+import BrandHeader from "@/components/BrandHeader";
 
 function CheckinInner() {
   const token = useSearchParams().get("token");
@@ -183,7 +184,7 @@ export default function CheckinPage() {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <div className="brand">Reception<span className="dot">·</span>Check-in</div>
+        <BrandHeader />
       </div>
       <div className="card">
         <Suspense fallback={<p className="helper-text">Loading…</p>}>

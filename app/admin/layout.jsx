@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import AdminGuard from "@/components/AdminGuard";
+import BrandHeader from "@/components/BrandHeader";
 
 function AdminNav() {
   const pathname = usePathname();
@@ -69,7 +70,7 @@ export default function AdminLayout({ children }) {
     <AdminGuard>
       <main className="kiosk-shell" style={{ alignItems: "center" }}>
         <div className="kiosk-header" style={{ maxWidth: 720 }}>
-          <div className="brand">Reception<span className="dot">·</span>Admin</div>
+          <BrandHeader label="Admin" />
         </div>
         {!isLoginPage && <AdminNav />}
         {children}
