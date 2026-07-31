@@ -45,7 +45,15 @@ alter table visitors enable row level security;
 
 -- Seed a couple of hosts to get started — edit these, or manage hosts
 -- from the Supabase Table Editor.
-insert into hosts (name, email) values
-  ('Alex Rivera', 'alex@yourcompany.com'),
-  ('Sam Okafor', 'sam@yourcompany.com')
+insert into hosts (name, email, department) values
+  ('Ajeethan Selvaratnam', 'operations@idllogistics.ae', 'Operations Department'),
+  ('Crisylle Tablit', 'ops.support@idllogistics.ae', 'Operations Department'),
+  ('Dileep Kumar', 'cfo@idllogistics.ae', 'Finance Department'),
+  ('Mohamed Hamdhan', 'supply.chain@idllogistics.ae', 'Supply Chain Department'),
+  ('Mohammad Salimi', 'mohammad.s@idllogistics.ae', 'Director''s Office'),
+  ('Santhosh Shetty', 'finance@idllogistics.ae', 'Finance Department'),
+  ('Arun Bote', 'accounts.sr@idllogistics.ae', 'Accounts Department'),
+  ('Ayman', 'crm1@harmonydwc.ae', 'IT Department'),
+  ('Mhai Labajanan', 'support@idllogistics.ae', 'Operations Department'),
+  ('Roshan Shinde', 'roshan@idllogistics.ae', 'Human Resources Department')
 on conflict do nothing;
