@@ -192,7 +192,7 @@ input:focus, select:focus, textarea:focus {
 /* --- admin dashboard --- */
 .admin-card {
   width: 100%;
-  max-width: 720px;
+  max-width: 960px;
   background: var(--card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -217,23 +217,29 @@ input:focus, select:focus, textarea:focus {
 }
 .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-.vtable { width: 100%; border-collapse: collapse; }
+/* Wraps the table so it scrolls horizontally on narrow screens instead of
+   spilling out of the card. */
+.vtable-scroll { width: 100%; overflow-x: auto; }
+
+.vtable { width: 100%; border-collapse: collapse; min-width: 720px; }
 .vtable th {
   text-align: left;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--muted);
-  padding: 8px 10px;
+  padding: 8px 8px;
   border-bottom: 1px solid var(--line);
+  white-space: nowrap;
 }
 .vtable td {
-  padding: 12px 10px;
+  padding: 10px 8px;
   border-bottom: 1px solid var(--line);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   vertical-align: middle;
 }
 .vtable tr:last-child td { border-bottom: none; }
+
 
 .badge {
   display: inline-block;

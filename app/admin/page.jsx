@@ -148,6 +148,7 @@ export default function AdminDashboard() {
       )}
 
       {!loading && visitors.length > 0 && (
+        <div className="vtable-scroll">
         <table className="vtable">
           <thead>
             <tr>
@@ -200,6 +201,7 @@ export default function AdminDashboard() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {editingVisitor && (

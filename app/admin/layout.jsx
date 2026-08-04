@@ -33,7 +33,7 @@ function AdminNav() {
     <div
       style={{
         width: "100%",
-        maxWidth: 720,
+        maxWidth: 960,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -69,7 +69,7 @@ export default function AdminLayout({ children }) {
   return (
     <AdminGuard>
       <main className="kiosk-shell" style={{ alignItems: "center" }}>
-        <div className="kiosk-header" style={{ maxWidth: 720 }}>
+        <div className="kiosk-header" style={{ maxWidth: 960 }}>
           <BrandHeader label="Admin" />
         </div>
         {!isLoginPage && <AdminNav />}
