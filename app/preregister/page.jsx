@@ -15,6 +15,9 @@ function InviteForm() {
     purpose: "",
     purpose_detail: "",
     notes: "",
+    is_group: false,
+    additional_visitor_count: "",
+    additional_visitor_names: "",
   });
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [result, setResult] = useState(null); // { checkinUrl, emailSent, emailError }
@@ -39,7 +42,13 @@ function InviteForm() {
       const res = await authFetch("/api/preregister", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, purpose: finalPurpose, send_email: alsoEmail }),
+        body: JSON.stringify({
+          ...values,
+          purpose: finalPurpose,
+          additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
+          additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          send_email: alsoEmail,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -59,7 +68,17 @@ function InviteForm() {
 
   const startOver = () => {
     setResult(null);
-    setValues({ email: "", full_name: "", host_id: "", purpose: "", purpose_detail: "", notes: "" });
+    setValues({
+      email: "",
+      full_name: "",
+      host_id: "",
+      purpose: "",
+      purpose_detail: "",
+      notes: "",
+      is_group: false,
+      additional_visitor_count: "",
+      additional_visitor_names: "",
+    });
   };
 
   return (
@@ -143,6 +162,44 @@ function InviteForm() {
                 value={values.purpose_detail}
                 onChange={set("purpose_detail")}
                 placeholder="Briefly describe the purpose"
+              />
+            </div>
+          )}
+
+          <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
+            <input
+              type="checkbox"
+              checked={values.is_group}
+              onChange={(e) =>
+                setValues({
+                  ...values,
+                  is_group: e.target.checked,
+                  additional_visitor_count: e.target.checked ? values.additional_visitor_count || "1" : "",
+                })
+              }
+              style={{ width: 16, height: 16 }}
+            />
+            <span style={{ fontWeight: 400, color: "var(--ink)", textTransform: "none", fontSize: "0.9rem" }}>
+              This guest is bringing others
+            </span>
+          </label>
+
+          {values.is_group && (
+            <div>
+              <label>How many additional visitors?</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={values.additional_visitor_count}
+                onChange={set("additional_visitor_count")}
+                placeholder="e.g. 2"
+              />
+              <label>Their names (optional)</label>
+              <textarea
+                rows={2}
+                value={values.additional_visitor_names}
+                onChange={set("additional_visitor_names")}
+                placeholder="One name per line, or comma-separated"
               />
             </div>
           )}

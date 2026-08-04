@@ -9,7 +9,15 @@ export async function POST(req) {
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { token, full_name, phone, company, signature } = await req.json();
+  const {
+    token,
+    full_name,
+    phone,
+    company,
+    signature,
+    additional_visitor_count,
+    additional_visitor_names,
+  } = await req.json();
 
   if (!token || !full_name) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -24,6 +32,10 @@ export async function POST(req) {
   if (findError || !existing) {
     return NextResponse.json({ error: "Invalid or expired link" }, { status: 404 });
   }
+
+  const groupCount = Number.isFinite(Number(additional_visitor_count))
+    ? Math.max(0, Math.floor(Number(additional_visitor_count)))
+    : 0;
 
   try {
     // No photo capture in the check-in flow anymore — signature (NDA) only.
@@ -40,6 +52,8 @@ export async function POST(req) {
         signature_url: signature_path,
         nda_signed_at: signature ? new Date().toISOString() : null,
         status: "pre_registered",
+        additional_visitor_count: groupCount,
+        additional_visitor_names: additional_visitor_names || null,
       })
       .eq("checkin_token", token)
       .select()

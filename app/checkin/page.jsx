@@ -11,7 +11,14 @@ function CheckinInner() {
   const [visitor, setVisitor] = useState(null);
   const [error, setError] = useState("");
   const [stage, setStage] = useState("details"); // details -> signature -> arrived
-  const [values, setValues] = useState({ full_name: "", phone: "", company: "" });
+  const [values, setValues] = useState({
+    full_name: "",
+    phone: "",
+    company: "",
+    is_group: false,
+    additional_visitor_count: "",
+    additional_visitor_names: "",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -25,10 +32,14 @@ function CheckinInner() {
       .then((d) => {
         if (d.error) throw new Error(d.error);
         setVisitor(d.visitor);
+        const groupCount = d.visitor.additional_visitor_count || 0;
         setValues({
           full_name: d.visitor.full_name || "",
           phone: d.visitor.phone || "",
           company: d.visitor.company || "",
+          is_group: groupCount > 0,
+          additional_visitor_count: groupCount > 0 ? String(groupCount) : "",
+          additional_visitor_names: d.visitor.additional_visitor_names || "",
         });
         if (d.visitor.status === "checked_in") setStage("arrived");
       })
@@ -42,7 +53,15 @@ function CheckinInner() {
       const res = await fetch("/api/preregister/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, ...values, signature: signatureDataUrl }),
+        body: JSON.stringify({
+          token,
+          full_name: values.full_name,
+          phone: values.phone,
+          company: values.company,
+          additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
+          additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          signature: signatureDataUrl,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -137,6 +156,45 @@ function CheckinInner() {
           value={values.company}
           onChange={(e) => setValues({ ...values, company: e.target.value })}
         />
+
+        <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
+          <input
+            type="checkbox"
+            checked={values.is_group}
+            onChange={(e) =>
+              setValues({
+                ...values,
+                is_group: e.target.checked,
+                additional_visitor_count: e.target.checked ? values.additional_visitor_count || "1" : "",
+              })
+            }
+            style={{ width: 16, height: 16 }}
+          />
+          <span style={{ fontWeight: 400, color: "var(--ink)", textTransform: "none", fontSize: "0.9rem" }}>
+            I'm bringing others with me
+          </span>
+        </label>
+
+        {values.is_group && (
+          <div>
+            <label>How many additional visitors?</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={values.additional_visitor_count}
+              onChange={(e) => setValues({ ...values, additional_visitor_count: e.target.value })}
+              placeholder="e.g. 2"
+            />
+            <label>Their names (optional)</label>
+            <textarea
+              rows={2}
+              value={values.additional_visitor_names}
+              onChange={(e) => setValues({ ...values, additional_visitor_names: e.target.value })}
+              placeholder="One name per line, or comma-separated"
+            />
+          </div>
+        )}
+
         <button
           className="btn btn-primary"
           onClick={() => setStage("signature")}

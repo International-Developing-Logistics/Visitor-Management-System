@@ -5,7 +5,8 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { randomUUID } from "crypto";
 
-// POST /api/preregister { email, full_name?, host_id, purpose, notes?, send_email? }
+// POST /api/preregister { email, full_name?, host_id, purpose, notes?, send_email?,
+//   additional_visitor_count?, additional_visitor_names? }
 // Creates a stub visitor row and returns a check-in link staff can share
 // however they like. Only sends the link by email if send_email is true.
 // Staff-only.
@@ -17,7 +18,16 @@ export async function POST(req) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { email, full_name, host_id, purpose, notes, send_email } = await req.json();
+  const {
+    email,
+    full_name,
+    host_id,
+    purpose,
+    notes,
+    send_email,
+    additional_visitor_count,
+    additional_visitor_names,
+  } = await req.json();
 
   if (!email || !host_id || !purpose) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -25,6 +35,9 @@ export async function POST(req) {
 
   const id = randomUUID();
   const checkin_token = randomUUID();
+  const groupCount = Number.isFinite(Number(additional_visitor_count))
+    ? Math.max(0, Math.floor(Number(additional_visitor_count)))
+    : 0;
 
   const { data: visitor, error } = await supabaseAdmin
     .from("visitors")
@@ -38,6 +51,8 @@ export async function POST(req) {
       visit_type: "prereg",
       status: "invited",
       checkin_token,
+      additional_visitor_count: groupCount,
+      additional_visitor_names: additional_visitor_names || null,
     })
     .select()
     .single();
