@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { authFetch } from "@/lib/apiFetch";
+import EditVisitorModal from "@/components/EditVisitorModal";
 
 const TABS = [
   { key: "", label: "All" },
@@ -17,12 +18,25 @@ const STATUS_LABEL = {
   checked_out: "Checked out",
 };
 
+function fmtTime(ts) {
+  return ts ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+}
+
+function currentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default function AdminDashboard() {
   const [tab, setTab] = useState("");
   const [visitors, setVisitors] = useState([]);
+  const [hosts, setHosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  const [editingVisitor, setEditingVisitor] = useState(null);
+  const [exportMonth, setExportMonth] = useState(currentMonth());
+  const [exporting, setExporting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,6 +58,13 @@ export default function AdminDashboard() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    authFetch("/api/admin/hosts")
+      .then((r) => r.json())
+      .then((d) => setHosts(d.hosts || []))
+      .catch(() => setHosts([]));
+  }, []);
+
   const checkOut = async (id) => {
     setBusyId(id);
     try {
@@ -61,6 +82,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const runExport = async () => {
+    setExporting(true);
+    setError("");
+    try {
+      const res = await authFetch(`/api/admin/export?month=${exportMonth}`);
+      if (!res.ok) throw new Error((await res.json()).error);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `visitor-log-${exportMonth}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="admin-card">
       <div className="tabs">
@@ -75,6 +118,28 @@ export default function AdminDashboard() {
         ))}
       </div>
 
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          marginBottom: 20,
+          paddingBottom: 20,
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
+        <label style={{ margin: 0 }}>Export month</label>
+        <input
+          type="month"
+          value={exportMonth}
+          onChange={(e) => setExportMonth(e.target.value)}
+          style={{ width: "auto", padding: "8px 12px" }}
+        />
+        <button className="btn-small" onClick={runExport} disabled={exporting}>
+          {exporting ? "Exporting…" : "Export CSV"}
+        </button>
+      </div>
+
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}
 
@@ -86,12 +151,13 @@ export default function AdminDashboard() {
         <table className="vtable">
           <thead>
             <tr>
-              <th></th>
               <th>Visitor</th>
               <th>Host</th>
               <th>Purpose</th>
+              <th>Group</th>
               <th>Status</th>
               <th>Arrived</th>
+              <th>Left</th>
               <th></th>
             </tr>
           </thead>
@@ -99,51 +165,53 @@ export default function AdminDashboard() {
             {visitors.map((v) => (
               <tr key={v.id}>
                 <td>
-                  {v.photo_signed_url ? (
-                    <img
-                      src={v.photo_signed_url}
-                      alt={`${v.full_name || "Visitor"} photo`}
-                      style={{ width: 40, height: 40, objectFit: "cover", borderRadius: 8 }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 8,
-                        background: "var(--paper)",
-                        border: "1px solid var(--line)",
-                      }}
-                    />
-                  )}
-                </td>
-                <td>
                   <div style={{ fontWeight: 600 }}>{v.full_name || "(pending)"}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>
-                    {v.company ? `${v.company} · ` : ""}{v.email}
+                    {v.company ? `${v.company} · ` : ""}{v.email || "no email"}
                   </div>
                 </td>
                 <td>{v.hosts?.name || "—"}</td>
                 <td>{v.purpose}</td>
                 <td>
+                  {v.additional_visitor_count > 0 ? (
+                    <span title={v.additional_visitor_names || ""}>+{v.additional_visitor_count}</span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td>
                   <span className={`badge ${v.status}`}>{STATUS_LABEL[v.status] || v.status}</span>
                 </td>
+                <td>{fmtTime(v.checked_in_at)}</td>
+                <td>{fmtTime(v.checked_out_at)}</td>
                 <td>
-                  {v.checked_in_at
-                    ? new Date(v.checked_in_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                    : "—"}
-                </td>
-                <td>
-                  {v.status === "checked_in" && (
-                    <button className="btn-small" onClick={() => checkOut(v.id)} disabled={busyId === v.id}>
-                      {busyId === v.id ? "…" : "Check out"}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button className="btn-small" onClick={() => setEditingVisitor(v)}>
+                      Edit
                     </button>
-                  )}
+                    {v.status === "checked_in" && (
+                      <button className="btn-small" onClick={() => checkOut(v.id)} disabled={busyId === v.id}>
+                        {busyId === v.id ? "…" : "Check out"}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+
+      {editingVisitor && (
+        <EditVisitorModal
+          visitor={editingVisitor}
+          hosts={hosts}
+          onClose={() => setEditingVisitor(null)}
+          onSaved={() => {
+            setEditingVisitor(null);
+            load();
+          }}
+        />
       )}
     </div>
   );

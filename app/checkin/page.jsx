@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import PhotoCapture from "@/components/PhotoCapture";
 import SignaturePad from "@/components/SignaturePad";
 import BrandHeader from "@/components/BrandHeader";
 
@@ -11,9 +10,8 @@ function CheckinInner() {
   const [loading, setLoading] = useState(true);
   const [visitor, setVisitor] = useState(null);
   const [error, setError] = useState("");
-  const [stage, setStage] = useState("details"); // details -> photo -> signature -> arrived
+  const [stage, setStage] = useState("details"); // details -> signature -> arrived
   const [values, setValues] = useState({ full_name: "", phone: "", company: "" });
-  const [photo, setPhoto] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -44,7 +42,7 @@ function CheckinInner() {
       const res = await fetch("/api/preregister/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, ...values, photo, signature: signatureDataUrl }),
+        body: JSON.stringify({ token, ...values, signature: signatureDataUrl }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -141,25 +139,11 @@ function CheckinInner() {
         />
         <button
           className="btn btn-primary"
-          onClick={() => setStage("photo")}
+          onClick={() => setStage("signature")}
           disabled={!values.full_name.trim()}
         >
           Continue
         </button>
-      </div>
-    );
-  }
-
-  if (stage === "photo") {
-    return (
-      <div>
-        <h3>Add your photo</h3>
-        <PhotoCapture capturedPhoto={photo} onCapture={setPhoto} />
-        {photo && (
-          <button className="btn btn-primary" onClick={() => setStage("signature")}>
-            Continue
-          </button>
-        )}
       </div>
     );
   }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
-import { signMany } from "@/lib/storage";
 
 // GET /api/admin/visitors?status=checked_in — list visitors, newest first.
 // Pass no status to get everyone; status can be a single value or omitted.
@@ -23,18 +22,8 @@ export async function GET(req) {
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // photo_url/signature_url store private storage paths — sign them here so
-  // the dashboard can show thumbnails without exposing permanent public URLs.
-  const photoMap = await signMany(
-    supabaseAdmin,
-    "visitor-photos",
-    data.map((v) => v.photo_url)
+  return NextResponse.json(
+    { visitors: data },
+    { headers: { "Cache-Control": "no-store, max-age=0" } }
   );
-
-  const visitors = data.map((v) => ({
-    ...v,
-    photo_signed_url: v.photo_url ? photoMap.get(v.photo_url) || null : null,
-  }));
-
-  return NextResponse.json({ visitors });
 }

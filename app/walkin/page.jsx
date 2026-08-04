@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import StepProgress from "@/components/StepProgress";
 import VisitorDetailsForm from "@/components/VisitorDetailsForm";
-import PhotoCapture from "@/components/PhotoCapture";
 import SignaturePad from "@/components/SignaturePad";
 import BrandHeader from "@/components/BrandHeader";
 
-const STEPS = ["Details", "Photo", "Signature", "Done"];
+const STEPS = ["Details", "Signature", "Done"];
 
 export default function WalkinPage() {
   const [step, setStep] = useState(0);
@@ -23,8 +22,10 @@ export default function WalkinPage() {
     purpose_detail: "",
     host_id: "",
     notes: "",
+    is_group: false,
+    additional_visitor_count: "",
+    additional_visitor_names: "",
   });
-  const [photo, setPhoto] = useState(null);
   const [signature, setSignature] = useState(null);
 
   useEffect(() => {
@@ -48,7 +49,8 @@ export default function WalkinPage() {
         body: JSON.stringify({
           ...values,
           purpose: finalPurpose,
-          photo,
+          additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
+          additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
           signature: signatureDataUrl,
           visit_type: "walkin",
         }),
@@ -56,7 +58,7 @@ export default function WalkinPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setSignature(signatureDataUrl);
-      setStep(3);
+      setStep(2);
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -84,18 +86,6 @@ export default function WalkinPage() {
 
         {step === 1 && (
           <div>
-            <h3>Take your photo</h3>
-            <PhotoCapture capturedPhoto={photo} onCapture={setPhoto} />
-            {photo && (
-              <button className="btn btn-primary" onClick={() => setStep(2)}>
-                Continue
-              </button>
-            )}
-          </div>
-        )}
-
-        {step === 2 && (
-          <div>
             <h3>Sign the visitor NDA</h3>
             {submitting ? (
               <p className="helper-text">Submitting…</p>
@@ -106,7 +96,7 @@ export default function WalkinPage() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div className="confirm-wrap">
             <div className="confirm-icon">✓</div>
             <h2>You're checked in</h2>

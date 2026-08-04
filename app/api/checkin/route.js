@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
-import { signOne } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/checkin?token=xxx — look up a pre-registered visitor
@@ -52,10 +51,7 @@ export async function POST(req) {
     .single();
 
   if (host) {
-    const photoSignedUrl = visitor.photo_url
-      ? await signOne(supabaseAdmin, "visitor-photos", visitor.photo_url, 60 * 60 * 24 * 7)
-      : null;
-    await sendHostNotification({ host, visitor, status: "checked_in", photoSignedUrl });
+    await sendHostNotification({ host, visitor, status: "checked_in" });
   }
 
   return NextResponse.json({ visitor });

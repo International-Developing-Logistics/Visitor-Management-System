@@ -13,7 +13,7 @@ create table if not exists hosts (
 create table if not exists visitors (
   id uuid primary key default gen_random_uuid(),
   full_name text not null default '',
-  email text not null,
+  email text, -- optional: visitors can check in without an email
   phone text,
   company text,
   purpose text not null default '',
@@ -26,6 +26,8 @@ create table if not exists visitors (
     check (status in ('invited', 'pre_registered', 'checked_in', 'checked_out')),
   checkin_token text unique,
   notes text,
+  additional_visitor_count integer not null default 0, -- group check-in: guests beyond the primary visitor
+  additional_visitor_names text, -- optional free-text names of the group
   created_at timestamptz not null default now(),
   checked_in_at timestamptz,
   checked_out_at timestamptz
@@ -43,8 +45,12 @@ create index if not exists visitors_status_idx on visitors(status);
 alter table hosts enable row level security;
 alter table visitors enable row level security;
 
--- Seed a couple of hosts to get started — edit these, or manage hosts
--- from the Supabase Table Editor.
+-- Seeds your actual current host list, so if this project ever needs to be
+-- recreated (new Supabase project, disaster recovery, etc.) you don't have
+-- to re-enter everyone by hand in /admin/hosts. Keep this updated when your
+-- host list changes significantly, or just manage day-to-day changes from
+-- /admin/hosts directly — this file only matters if you're rebuilding from
+-- scratch.
 insert into hosts (name, email, department) values
   ('Ajeethan Selvaratnam', 'operations@idllogistics.ae', 'Operations Department'),
   ('Crisylle Tablit', 'ops.support@idllogistics.ae', 'Operations Department'),

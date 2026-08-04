@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
-import { uploadPrivateFile, signOne } from "@/lib/storage";
+import { uploadPrivateFile } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { randomUUID } from "crypto";
 
@@ -14,46 +14,52 @@ export async function POST(req) {
 
   const {
     full_name,
-    email,
+    email, // optional — may be empty/null
     phone,
     company,
     purpose,
     host_id,
     notes,
-    photo, // data URL
     signature, // data URL
     visit_type, // "walkin" | "prereg"
+    additional_visitor_count,
+    additional_visitor_names,
   } = body;
 
-  if (!full_name || !email || !purpose || !host_id) {
+  // Email is intentionally NOT required here — visitors can check in without one.
+  if (!full_name || !purpose || !host_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   const id = randomUUID();
   const status = visit_type === "prereg" ? "pre_registered" : "checked_in";
+  const groupCount = Number.isFinite(Number(additional_visitor_count))
+    ? Math.max(0, Math.floor(Number(additional_visitor_count)))
+    : 0;
 
   try {
-    const [photo_path, signature_path] = await Promise.all([
-      photo ? uploadPrivateFile(supabaseAdmin, "visitor-photos", `${id}.jpg`, photo) : null,
-      signature ? uploadPrivateFile(supabaseAdmin, "visitor-signatures", `${id}.png`, signature) : null,
-    ]);
+    // No photo capture in the check-in flow anymore — signature (NDA) only.
+    const signature_path = signature
+      ? await uploadPrivateFile(supabaseAdmin, "visitor-signatures", `${id}.png`, signature)
+      : null;
 
     const row = {
       id,
       full_name,
-      email,
+      email: email || null,
       phone,
       company,
       purpose,
       host_id,
       notes,
-      photo_url: photo_path, // stores the private storage PATH, not a public URL
       signature_url: signature_path,
       nda_signed_at: signature ? new Date().toISOString() : null,
       visit_type: visit_type === "prereg" ? "prereg" : "walkin",
       status,
       checkin_token: visit_type === "prereg" ? randomUUID() : null,
       checked_in_at: status === "checked_in" ? new Date().toISOString() : null,
+      additional_visitor_count: groupCount,
+      additional_visitor_names: additional_visitor_names || null,
     };
 
     const { data: visitor, error } = await supabaseAdmin
@@ -71,10 +77,7 @@ export async function POST(req) {
       .single();
 
     if (host) {
-      const photoSignedUrl = photo_path
-        ? await signOne(supabaseAdmin, "visitor-photos", photo_path, 60 * 60 * 24 * 7)
-        : null;
-      await sendHostNotification({ host, visitor, status, photoSignedUrl });
+      await sendHostNotification({ host, visitor, status });
     }
 
     return NextResponse.json({ visitor });
