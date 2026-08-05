@@ -4,6 +4,16 @@ import { useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 
+// Converts a UTC ISO timestamp to the local "YYYY-MM-DDTHH:mm" format
+// <input type="datetime-local"> needs, so the field shows the visitor's
+// checkout time in the browser's own timezone rather than raw UTC.
+function toLocalInputValue(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
   const [values, setValues] = useState({
     full_name: visitor.full_name || "",
@@ -16,6 +26,7 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
     additional_visitor_count: String(visitor.additional_visitor_count || 0),
     additional_visitor_names: visitor.additional_visitor_names || "",
   });
+  const [checkedOutAt, setCheckedOutAt] = useState(toLocalInputValue(visitor.checked_out_at));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -28,7 +39,12 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
       const res = await authFetch(`/api/admin/visitors/${visitor.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          ...values,
+          // Empty string clears the checkout (reverts to checked_in);
+          // a value converts local time back to a real ISO timestamp.
+          checked_out_at: checkedOutAt ? new Date(checkedOutAt).toISOString() : "",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -110,6 +126,20 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
 
         <label>Notes</label>
         <textarea rows={2} value={values.notes} onChange={set("notes")} />
+
+        <label>Checkout time</label>
+        <input
+          type="datetime-local"
+          value={checkedOutAt}
+          onChange={(e) => setCheckedOutAt(e.target.value)}
+        />
+        <p className="helper-text" style={{ marginTop: 6 }}>
+          {checkedOutAt
+            ? "Clear this field to undo an accidental checkout."
+            : visitor.status === "checked_out"
+            ? "This visitor was checked out but has no time recorded."
+            : "Not checked out yet — only set this if correcting a mistake."}
+        </p>
 
         {error && <p className="error-text">{error}</p>}
 

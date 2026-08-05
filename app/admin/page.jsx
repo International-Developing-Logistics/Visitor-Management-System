@@ -6,12 +6,14 @@ import EditVisitorModal from "@/components/EditVisitorModal";
 
 const TABS = [
   { key: "", label: "All" },
+  { key: "requested", label: "Requests" },
   { key: "checked_in", label: "Checked in" },
   { key: "pre_registered", label: "Expected" },
   { key: "checked_out", label: "Checked out" },
 ];
 
 const STATUS_LABEL = {
+  requested: "Requested",
   invited: "Invited",
   pre_registered: "Expected",
   checked_in: "Checked in",
@@ -37,6 +39,8 @@ export default function AdminDashboard() {
   const [editingVisitor, setEditingVisitor] = useState(null);
   const [exportMonth, setExportMonth] = useState(currentMonth());
   const [exporting, setExporting] = useState(false);
+  const [approvedLink, setApprovedLink] = useState(null); // { guestName, checkinUrl, emailSent }
+  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,6 +84,49 @@ export default function AdminDashboard() {
     } finally {
       setBusyId(null);
     }
+  };
+
+  const manualCheckIn = async (id) => {
+    setBusyId(id);
+    try {
+      const res = await authFetch("/api/admin/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const approveRequest = async (v, sendEmail) => {
+    setBusyId(v.id);
+    setError("");
+    try {
+      const res = await authFetch(`/api/admin/requests/${v.id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ send_email: sendEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setApprovedLink({ guestName: v.full_name || v.email, checkinUrl: data.checkinUrl, emailSent: data.emailSent });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const copyApprovedLink = async () => {
+    await navigator.clipboard.writeText(approvedLink.checkinUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const runExport = async () => {
@@ -140,6 +187,58 @@ export default function AdminDashboard() {
         </button>
       </div>
 
+      {approvedLink && (
+        <div
+          style={{
+            background: "var(--accent-soft)",
+            border: "1px solid var(--accent)",
+            borderRadius: 10,
+            padding: "12px 14px",
+            marginBottom: 18,
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+            <div>
+              <strong>Approved: {approvedLink.guestName}</strong>
+              <p className="helper-text" style={{ marginTop: 4 }}>
+                {approvedLink.emailSent
+                  ? "Emailed to the guest. Link also copyable below."
+                  : "Share this link with the guest directly:"}
+              </p>
+            </div>
+            <button
+              onClick={() => setApprovedLink(null)}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)" }}
+            >
+              ✕
+            </button>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "center",
+              background: "var(--card)",
+              border: "1px solid var(--line)",
+              borderRadius: 8,
+              padding: "8px 10px",
+              marginTop: 8,
+            }}
+          >
+            <input
+              type="text"
+              readOnly
+              value={approvedLink.checkinUrl}
+              style={{ border: "none", background: "none", padding: 0, flex: 1, fontSize: "0.82rem" }}
+              onFocus={(e) => e.target.select()}
+            />
+            <button className="btn-small" onClick={copyApprovedLink}>
+              {copied ? "Copied ✓" : "Copy"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}
 
@@ -168,7 +267,7 @@ export default function AdminDashboard() {
                 <td>
                   <div style={{ fontWeight: 600 }}>{v.full_name || "(pending)"}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>
-                    {v.company ? `${v.company} · ` : ""}{v.email || "no email"}
+                    {[v.company, v.email || "no email", v.phone].filter(Boolean).join(" · ")}
                   </div>
                 </td>
                 <td>{v.hosts?.name || "—"}</td>
@@ -186,14 +285,44 @@ export default function AdminDashboard() {
                 <td>{fmtTime(v.checked_in_at)}</td>
                 <td>{fmtTime(v.checked_out_at)}</td>
                 <td>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button className="btn-small" onClick={() => setEditingVisitor(v)}>
-                      Edit
-                    </button>
-                    {v.status === "checked_in" && (
-                      <button className="btn-small" onClick={() => checkOut(v.id)} disabled={busyId === v.id}>
-                        {busyId === v.id ? "…" : "Check out"}
-                      </button>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {v.status === "requested" ? (
+                      <>
+                        <button
+                          className="btn-small"
+                          onClick={() => approveRequest(v, true)}
+                          disabled={busyId === v.id}
+                        >
+                          {busyId === v.id ? "…" : "Approve & email"}
+                        </button>
+                        <button
+                          className="btn-small"
+                          onClick={() => approveRequest(v, false)}
+                          disabled={busyId === v.id}
+                        >
+                          Approve, get link
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="btn-small" onClick={() => setEditingVisitor(v)}>
+                          Edit
+                        </button>
+                        {v.status === "pre_registered" && (
+                          <button
+                            className="btn-small"
+                            onClick={() => manualCheckIn(v.id)}
+                            disabled={busyId === v.id}
+                          >
+                            {busyId === v.id ? "…" : "Check in"}
+                          </button>
+                        )}
+                        {v.status === "checked_in" && (
+                          <button className="btn-small" onClick={() => checkOut(v.id)} disabled={busyId === v.id}>
+                            {busyId === v.id ? "…" : "Check out"}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>
