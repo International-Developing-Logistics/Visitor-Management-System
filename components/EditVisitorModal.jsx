@@ -27,6 +27,7 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
     additional_visitor_names: visitor.additional_visitor_names || "",
   });
   const [checkedOutAt, setCheckedOutAt] = useState(toLocalInputValue(visitor.checked_out_at));
+  const [meetingTime, setMeetingTime] = useState(toLocalInputValue(visitor.selected_time_slot));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,6 +45,7 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
           // Empty string clears the checkout (reverts to checked_in);
           // a value converts local time back to a real ISO timestamp.
           checked_out_at: checkedOutAt ? new Date(checkedOutAt).toISOString() : "",
+          selected_time_slot: meetingTime ? new Date(meetingTime).toISOString() : "",
         }),
       });
       const data = await res.json();
@@ -126,6 +128,18 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
 
         <label>Notes</label>
         <textarea rows={2} value={values.notes} onChange={set("notes")} />
+
+        <label>Meeting time</label>
+        <input
+          type="datetime-local"
+          value={meetingTime}
+          onChange={(e) => setMeetingTime(e.target.value)}
+        />
+        <p className="helper-text" style={{ marginTop: 6 }}>
+          {visitor.proposed_time_slots?.length > 0 && !meetingTime
+            ? "Guest hasn't picked one of the proposed times yet."
+            : "Set or correct the agreed meeting time."}
+        </p>
 
         <label>Checkout time</label>
         <input

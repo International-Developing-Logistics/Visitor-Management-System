@@ -17,6 +17,7 @@ export async function POST(req) {
     signature,
     additional_visitor_count,
     additional_visitor_names,
+    selected_time_slot,
   } = await req.json();
 
   if (!token || !full_name) {
@@ -54,6 +55,7 @@ export async function POST(req) {
         status: "pre_registered",
         additional_visitor_count: groupCount,
         additional_visitor_names: additional_visitor_names || null,
+        selected_time_slot: selected_time_slot ? new Date(selected_time_slot).toISOString() : null,
       })
       .eq("checkin_token", token)
       .select()

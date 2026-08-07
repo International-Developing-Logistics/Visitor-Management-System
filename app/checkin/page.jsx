@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SignaturePad from "@/components/SignaturePad";
 import BrandHeader from "@/components/BrandHeader";
+import TimeSlotChooser from "@/components/TimeSlotChooser";
 
 function CheckinInner() {
   const token = useSearchParams().get("token");
@@ -18,6 +19,7 @@ function CheckinInner() {
     is_group: false,
     additional_visitor_count: "",
     additional_visitor_names: "",
+    selected_time_slot: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,6 +42,7 @@ function CheckinInner() {
           is_group: groupCount > 0,
           additional_visitor_count: groupCount > 0 ? String(groupCount) : "",
           additional_visitor_names: d.visitor.additional_visitor_names || "",
+          selected_time_slot: d.visitor.selected_time_slot || "",
         });
         if (d.visitor.status === "checked_in") setStage("arrived");
       })
@@ -60,6 +63,7 @@ function CheckinInner() {
           company: values.company,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          selected_time_slot: values.selected_time_slot || null,
           signature: signatureDataUrl,
         }),
       });
@@ -157,6 +161,14 @@ function CheckinInner() {
           onChange={(e) => setValues({ ...values, company: e.target.value })}
         />
 
+        {visitor?.proposed_time_slots?.length > 0 && (
+          <TimeSlotChooser
+            slots={visitor.proposed_time_slots}
+            value={values.selected_time_slot}
+            onChange={(iso) => setValues({ ...values, selected_time_slot: iso })}
+          />
+        )}
+
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
           <input
             type="checkbox"
@@ -198,7 +210,10 @@ function CheckinInner() {
         <button
           className="btn btn-primary"
           onClick={() => setStage("signature")}
-          disabled={!values.full_name.trim()}
+          disabled={
+            !values.full_name.trim() ||
+            (visitor?.proposed_time_slots?.length > 0 && !values.selected_time_slot)
+          }
         >
           Continue
         </button>

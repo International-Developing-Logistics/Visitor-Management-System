@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
+import TimeSlotEditor from "@/components/TimeSlotEditor";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 
 export default function RequestInvitePage() {
@@ -17,6 +18,7 @@ export default function RequestInvitePage() {
     additional_visitor_count: "",
     additional_visitor_names: "",
   });
+  const [timeSlots, setTimeSlots] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +45,7 @@ export default function RequestInvitePage() {
           purpose: finalPurpose,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          proposed_time_slots: timeSlots.filter(Boolean),
         }),
       });
       const data = await res.json();
@@ -84,6 +87,7 @@ export default function RequestInvitePage() {
                   additional_visitor_count: "",
                   additional_visitor_names: "",
                 });
+                setTimeSlots([]);
               }}
             >
               Request another
@@ -170,6 +174,9 @@ export default function RequestInvitePage() {
 
             <label>Notes for reception (optional)</label>
             <textarea rows={2} value={values.notes} onChange={set("notes")} />
+
+            <label>Proposed meeting times (optional)</label>
+            <TimeSlotEditor slots={timeSlots} onChange={setTimeSlots} />
 
             {error && <p className="error-text">{error}</p>}
 

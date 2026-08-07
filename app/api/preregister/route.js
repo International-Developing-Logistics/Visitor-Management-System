@@ -27,6 +27,7 @@ export async function POST(req) {
     send_email,
     additional_visitor_count,
     additional_visitor_names,
+    proposed_time_slots,
   } = await req.json();
 
   if (!email || !host_id || !purpose) {
@@ -38,6 +39,10 @@ export async function POST(req) {
   const groupCount = Number.isFinite(Number(additional_visitor_count))
     ? Math.max(0, Math.floor(Number(additional_visitor_count)))
     : 0;
+
+  const slots = Array.isArray(proposed_time_slots)
+    ? proposed_time_slots.filter(Boolean).map((s) => new Date(s).toISOString())
+    : null;
 
   const { data: visitor, error } = await supabaseAdmin
     .from("visitors")
@@ -53,6 +58,7 @@ export async function POST(req) {
       checkin_token,
       additional_visitor_count: groupCount,
       additional_visitor_names: additional_visitor_names || null,
+      proposed_time_slots: slots && slots.length > 0 ? slots : null,
     })
     .select()
     .single();

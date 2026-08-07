@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
         </button>
       </form>
       <p className="helper-text" style={{ marginTop: 18 }}>
-        Staff accounts are created in the Supabase dashboard — see the README.
+        Staff accounts are created in the Supabase dashboard.
       </p>
     </div>
   );

@@ -45,6 +45,18 @@ export async function PATCH(req, { params }) {
     }
   }
 
+  if ("selected_time_slot" in body) {
+    if (body.selected_time_slot) {
+      const d = new Date(body.selected_time_slot);
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json({ error: "That meeting time doesn't look valid" }, { status: 400 });
+      }
+      updates.selected_time_slot = d.toISOString();
+    } else {
+      updates.selected_time_slot = null;
+    }
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No editable fields provided" }, { status: 400 });
   }

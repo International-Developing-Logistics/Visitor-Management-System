@@ -5,6 +5,7 @@ import AdminGuard from "@/components/AdminGuard";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 import BrandHeader from "@/components/BrandHeader";
+import TimeSlotEditor from "@/components/TimeSlotEditor";
 
 function InviteForm() {
   const [hosts, setHosts] = useState([]);
@@ -19,6 +20,7 @@ function InviteForm() {
     additional_visitor_count: "",
     additional_visitor_names: "",
   });
+  const [timeSlots, setTimeSlots] = useState([]);
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [result, setResult] = useState(null); // { checkinUrl, emailSent, emailError }
   const [copied, setCopied] = useState(false);
@@ -47,6 +49,7 @@ function InviteForm() {
           purpose: finalPurpose,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          proposed_time_slots: timeSlots.filter(Boolean),
           send_email: alsoEmail,
         }),
       });
@@ -79,6 +82,7 @@ function InviteForm() {
       additional_visitor_count: "",
       additional_visitor_names: "",
     });
+    setTimeSlots([]);
   };
 
   return (
@@ -206,6 +210,9 @@ function InviteForm() {
 
           <label>Notes (optional)</label>
           <textarea rows={2} value={values.notes} onChange={set("notes")} />
+
+          <label>Proposed meeting times (optional)</label>
+          <TimeSlotEditor slots={timeSlots} onChange={setTimeSlots} />
 
           <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
             <input

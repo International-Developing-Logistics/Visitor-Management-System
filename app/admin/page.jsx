@@ -24,6 +24,19 @@ function fmtTime(ts) {
   return ts ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
 }
 
+function fmtMeetingTime(v) {
+  if (v.selected_time_slot) {
+    return new Date(v.selected_time_slot).toLocaleString([], {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+  if (v.proposed_time_slots && v.proposed_time_slots.length > 0) return "Awaiting choice";
+  return "—";
+}
+
 function currentMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -255,6 +268,7 @@ export default function AdminDashboard() {
               <th>Host</th>
               <th>Purpose</th>
               <th>Group</th>
+              <th>Meeting Time</th>
               <th>Status</th>
               <th>Arrived</th>
               <th>Left</th>
@@ -279,6 +293,7 @@ export default function AdminDashboard() {
                     "—"
                   )}
                 </td>
+                <td>{fmtMeetingTime(v)}</td>
                 <td>
                   <span className={`badge ${v.status}`}>{STATUS_LABEL[v.status] || v.status}</span>
                 </td>
