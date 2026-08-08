@@ -10,7 +10,6 @@ function fmtSlot(iso) {
   });
 }
 
-// slots: array of ISO timestamp strings. value: selected ISO string or "".
 export default function TimeSlotChooser({ slots, value, onChange }) {
   if (!slots || slots.length === 0) return null;
 

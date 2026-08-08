@@ -7,6 +7,7 @@ import EditVisitorModal from "@/components/EditVisitorModal";
 const TABS = [
   { key: "", label: "All" },
   { key: "requested", label: "Requests" },
+  { key: "gate_pending,gate_approved,gate_denied", label: "Gate" },
   { key: "checked_in", label: "Checked in" },
   { key: "pre_registered", label: "Expected" },
   { key: "checked_out", label: "Checked out" },
@@ -18,6 +19,9 @@ const STATUS_LABEL = {
   pre_registered: "Expected",
   checked_in: "Checked in",
   checked_out: "Checked out",
+  gate_pending: "Awaiting approval",
+  gate_approved: "Approved",
+  gate_denied: "Denied",
 };
 
 function fmtTime(ts) {
@@ -140,6 +144,24 @@ export default function AdminDashboard() {
     await navigator.clipboard.writeText(approvedLink.checkinUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const decideGate = async (id, action) => {
+    setBusyId(id);
+    setError("");
+    try {
+      const res = await authFetch(`/api/admin/gate/${id}/decide`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error);
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const runExport = async () => {
@@ -318,12 +340,29 @@ export default function AdminDashboard() {
                           Approve, get link
                         </button>
                       </>
+                    ) : v.status === "gate_pending" ? (
+                      <>
+                        <button
+                          className="btn-small"
+                          onClick={() => decideGate(v.id, "approve")}
+                          disabled={busyId === v.id}
+                        >
+                          {busyId === v.id ? "…" : "Approve"}
+                        </button>
+                        <button
+                          className="btn-small"
+                          onClick={() => decideGate(v.id, "deny")}
+                          disabled={busyId === v.id}
+                        >
+                          Deny
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button className="btn-small" onClick={() => setEditingVisitor(v)}>
                           Edit
                         </button>
-                        {v.status === "pre_registered" && (
+                        {(v.status === "pre_registered" || v.status === "gate_approved") && (
                           <button
                             className="btn-small"
                             onClick={() => manualCheckIn(v.id)}

@@ -252,6 +252,10 @@ input:focus, select:focus, textarea:focus {
 .badge.pre_registered { background: #eef1e6; color: #55622f; }
 .badge.invited { background: #f0eee6; color: var(--muted); }
 .badge.checked_out { background: #efeceb; color: var(--muted); }
+.badge.requested { background: #eef2f5; color: #3d5a6c; }
+.badge.gate_pending { background: #fbf0e2; color: #93591a; }
+.badge.gate_approved { background: var(--accent-soft); color: var(--accent-dark); }
+.badge.gate_denied { background: #f7e6e2; color: var(--danger); }
 
 .btn-small {
   padding: 7px 14px;

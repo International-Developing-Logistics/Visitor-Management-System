@@ -43,6 +43,7 @@ function AdminNav() {
       <div style={{ display: "flex", gap: 22 }}>
         {link("/admin", "Dashboard")}
         {link("/admin/hosts", "Hosts")}
+        {link("/admin/contractors", "Contractors")}
         {link("/preregister", "Invite a guest")}
       </div>
       <button

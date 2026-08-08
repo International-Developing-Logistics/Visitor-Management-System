@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 
 // GET /api/admin/visitors?status=checked_in — list visitors, newest first.
-// Pass no status to get everyone; status can be a single value or omitted.
+// Pass no status to get everyone; status can be a single value, a
+// comma-separated list (e.g. "gate_pending,gate_approved,gate_denied"), or omitted.
 export async function GET(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +18,10 @@ export async function GET(req) {
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (status) query = query.eq("status", status);
+  if (status) {
+    const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+    query = statuses.length > 1 ? query.in("status", statuses) : query.eq("status", statuses[0]);
+  }
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -4,9 +4,6 @@ import { useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 
-// Converts a UTC ISO timestamp to the local "YYYY-MM-DDTHH:mm" format
-// <input type="datetime-local"> needs, so the field shows the visitor's
-// checkout time in the browser's own timezone rather than raw UTC.
 function toLocalInputValue(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -42,8 +39,6 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
-          // Empty string clears the checkout (reverts to checked_in);
-          // a value converts local time back to a real ISO timestamp.
           checked_out_at: checkedOutAt ? new Date(checkedOutAt).toISOString() : "",
           selected_time_slot: meetingTime ? new Date(meetingTime).toISOString() : "",
         }),
