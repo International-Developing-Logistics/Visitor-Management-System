@@ -4,8 +4,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/contractors/pass?token=xxx
 // Public — deliberately returns only what's safe to show on a pass someone
-// might display at a gate: name, status, validity window. Never the
-// passport image, resident ID, or email.
+// might display at a gate: name, company, status, validity window. Never
+// the passport image, resident ID, or email.
 export async function GET(req) {
   const limited = checkRateLimit(req, "contractors-pass");
   if (limited) return limited;
@@ -16,7 +16,7 @@ export async function GET(req) {
 
   const { data, error } = await supabaseAdmin
     .from("contractors")
-    .select("full_name, status, validity_start, validity_end")
+    .select("full_name, company, status, validity_start, validity_end")
     .eq("pass_token", token)
     .single();
 

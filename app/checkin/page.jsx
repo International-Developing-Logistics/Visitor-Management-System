@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import SignaturePad from "@/components/SignaturePad";
+import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
 import TimeSlotChooser from "@/components/TimeSlotChooser";
 
@@ -11,7 +11,7 @@ function CheckinInner() {
   const [loading, setLoading] = useState(true);
   const [visitor, setVisitor] = useState(null);
   const [error, setError] = useState("");
-  const [stage, setStage] = useState("details"); // details -> signature -> arrived
+  const [stage, setStage] = useState("details"); // details -> agreement -> arrived
   const [values, setValues] = useState({
     full_name: "",
     phone: "",
@@ -50,7 +50,7 @@ function CheckinInner() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const completePreregistration = async (signatureDataUrl) => {
+  const completePreregistration = async () => {
     setSubmitting(true);
     try {
       const res = await fetch("/api/preregister/complete", {
@@ -64,7 +64,7 @@ function CheckinInner() {
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
           selected_time_slot: values.selected_time_slot || null,
-          signature: signatureDataUrl,
+          agreed: true,
         }),
       });
       const data = await res.json();
@@ -209,7 +209,7 @@ function CheckinInner() {
 
         <button
           className="btn btn-primary"
-          onClick={() => setStage("signature")}
+          onClick={() => setStage("agreement")}
           disabled={
             !values.full_name.trim() ||
             (visitor?.proposed_time_slots?.length > 0 && !values.selected_time_slot)
@@ -221,15 +221,11 @@ function CheckinInner() {
     );
   }
 
-  if (stage === "signature") {
+  if (stage === "agreement") {
     return (
       <div>
-        <h3>Sign the visitor NDA</h3>
-        {submitting ? (
-          <p className="helper-text">Submitting…</p>
-        ) : (
-          <SignaturePad signed={null} onSign={completePreregistration} />
-        )}
+        <h3>Agree to the visitor terms</h3>
+        <AgreementStep onAgree={completePreregistration} submitting={submitting} />
       </div>
     );
   }

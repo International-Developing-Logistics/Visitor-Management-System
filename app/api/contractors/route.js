@@ -12,7 +12,7 @@ export async function POST(req) {
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { full_name, email, resident_id, passport, estimated_duration } = await req.json();
+  const { full_name, email, resident_id, company, passport, estimated_duration } = await req.json();
 
   if (!full_name || !email) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -33,6 +33,7 @@ export async function POST(req) {
         full_name,
         email,
         resident_id,
+        company,
         passport_url: passport_path,
         estimated_duration,
         status: "pending",

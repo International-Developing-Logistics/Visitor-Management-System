@@ -19,6 +19,7 @@ export default function ContractorRegisterPage() {
     full_name: "",
     email: "",
     resident_id: "",
+    company: "",
     estimated_duration: "",
   });
   const [passportFile, setPassportFile] = useState(null);
@@ -129,6 +130,9 @@ export default function ContractorRegisterPage() {
 
             <label>Resident ID</label>
             <input type="text" value={values.resident_id} onChange={set("resident_id")} placeholder="784-XXXX-XXXXXXX-X" />
+
+            <label>Company</label>
+            <input type="text" value={values.company} onChange={set("company")} placeholder="Acme Contracting LLC" />
 
             <label>Estimated duration of access needed</label>
             <input

@@ -6,6 +6,7 @@ import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 import BrandHeader from "@/components/BrandHeader";
 import TimeSlotEditor from "@/components/TimeSlotEditor";
+import HyperlinkCopier from "@/components/HyperlinkCopier";
 
 function InviteForm() {
   const [hosts, setHosts] = useState([]);
@@ -23,7 +24,6 @@ function InviteForm() {
   const [timeSlots, setTimeSlots] = useState([]);
   const [alsoEmail, setAlsoEmail] = useState(false);
   const [result, setResult] = useState(null); // { checkinUrl, emailSent, emailError }
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -63,12 +63,6 @@ function InviteForm() {
     }
   };
 
-  const copyLink = async () => {
-    await navigator.clipboard.writeText(result.checkinUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const startOver = () => {
     setResult(null);
     setValues({
@@ -97,29 +91,7 @@ function InviteForm() {
             </p>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              background: "var(--paper)",
-              border: "1px solid var(--line)",
-              borderRadius: 10,
-              padding: "10px 12px",
-              marginBottom: 12,
-            }}
-          >
-            <input
-              type="text"
-              readOnly
-              value={result.checkinUrl}
-              style={{ border: "none", background: "none", padding: 0, flex: 1, fontSize: "0.85rem" }}
-              onFocus={(e) => e.target.select()}
-            />
-            <button className="btn-small" onClick={copyLink} style={{ flexShrink: 0 }}>
-              {copied ? "Copied ✓" : "Copy"}
-            </button>
-          </div>
+          <HyperlinkCopier url={result.checkinUrl} defaultText="Click here to complete your pre-registration" />
 
           {alsoEmail && (
             <p className={result.emailSent ? "helper-text" : "error-text"}>

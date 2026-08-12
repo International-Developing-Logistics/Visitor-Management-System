@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import EditVisitorModal from "@/components/EditVisitorModal";
+import HyperlinkCopier from "@/components/HyperlinkCopier";
 
 const TABS = [
   { key: "", label: "All" },
@@ -57,7 +58,6 @@ export default function AdminDashboard() {
   const [exportMonth, setExportMonth] = useState(currentMonth());
   const [exporting, setExporting] = useState(false);
   const [approvedLink, setApprovedLink] = useState(null); // { guestName, checkinUrl, emailSent }
-  const [copied, setCopied] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -138,12 +138,6 @@ export default function AdminDashboard() {
     } finally {
       setBusyId(null);
     }
-  };
-
-  const copyApprovedLink = async () => {
-    await navigator.clipboard.writeText(approvedLink.checkinUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   const decideGate = async (id, action) => {
@@ -248,28 +242,8 @@ export default function AdminDashboard() {
               ✕
             </button>
           </div>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              background: "var(--card)",
-              border: "1px solid var(--line)",
-              borderRadius: 8,
-              padding: "8px 10px",
-              marginTop: 8,
-            }}
-          >
-            <input
-              type="text"
-              readOnly
-              value={approvedLink.checkinUrl}
-              style={{ border: "none", background: "none", padding: 0, flex: 1, fontSize: "0.82rem" }}
-              onFocus={(e) => e.target.select()}
-            />
-            <button className="btn-small" onClick={copyApprovedLink}>
-              {copied ? "Copied ✓" : "Copy"}
-            </button>
+          <div style={{ marginTop: 8 }}>
+            <HyperlinkCopier url={approvedLink.checkinUrl} defaultText="Click here to complete your pre-registration" />
           </div>
         </div>
       )}

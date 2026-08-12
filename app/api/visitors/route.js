@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
-import { uploadPrivateFile } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { randomUUID } from "crypto";
 
@@ -20,7 +19,7 @@ export async function POST(req) {
     purpose,
     host_id,
     notes,
-    signature, // data URL
+    agreed, // boolean — replaces the old signature capture
     visit_type, // "walkin" | "prereg"
     additional_visitor_count,
     additional_visitor_names,
@@ -30,6 +29,9 @@ export async function POST(req) {
   if (!full_name || !purpose || !host_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
+  if (!agreed) {
+    return NextResponse.json({ error: "You must agree to the terms to check in" }, { status: 400 });
+  }
 
   const id = randomUUID();
   const status = visit_type === "prereg" ? "pre_registered" : "checked_in";
@@ -38,11 +40,6 @@ export async function POST(req) {
     : 0;
 
   try {
-    // No photo capture in the check-in flow anymore — signature (NDA) only.
-    const signature_path = signature
-      ? await uploadPrivateFile(supabaseAdmin, "visitor-signatures", `${id}.png`, signature)
-      : null;
-
     const row = {
       id,
       full_name,
@@ -52,8 +49,7 @@ export async function POST(req) {
       purpose,
       host_id,
       notes,
-      signature_url: signature_path,
-      nda_signed_at: signature ? new Date().toISOString() : null,
+      nda_signed_at: new Date().toISOString(),
       visit_type: visit_type === "prereg" ? "prereg" : "walkin",
       status,
       checkin_token: visit_type === "prereg" ? randomUUID() : null,

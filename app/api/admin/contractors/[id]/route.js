@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 
-const EDITABLE_FIELDS = ["full_name", "email", "resident_id", "estimated_duration"];
+const EDITABLE_FIELDS = ["full_name", "email", "resident_id", "company", "estimated_duration"];
 
 // PATCH /api/admin/contractors/[id]
 // Body can include any editable field, plus:

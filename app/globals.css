@@ -142,26 +142,6 @@ input:focus, select:focus, textarea:focus {
 .error-text { color: var(--danger); font-size: 0.85rem; margin-top: 8px; }
 .helper-text { color: var(--muted); font-size: 0.82rem; margin-top: 6px; }
 
-.camera-frame {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background: var(--ink);
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-}
-.camera-frame video, .camera-frame img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
-}
-
-.sig-canvas-wrap {
-  border: 1.5px dashed var(--line);
-  border-radius: 12px;
-  background: var(--paper);
-  overflow: hidden;
-}
-.sig-canvas-wrap canvas { display: block; width: 100%; touch-action: none; }
-
 .nda-box {
   max-height: 220px;
   overflow-y: auto;

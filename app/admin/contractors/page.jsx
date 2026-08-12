@@ -15,6 +15,7 @@ function EditContractorModal({ contractor, onClose, onSaved }) {
     full_name: contractor.full_name || "",
     email: contractor.email || "",
     resident_id: contractor.resident_id || "",
+    company: contractor.company || "",
     estimated_duration: contractor.estimated_duration || "",
   });
   const [validityStart, setValidityStart] = useState(toLocalInputValue(contractor.validity_start));
@@ -66,6 +67,9 @@ function EditContractorModal({ contractor, onClose, onSaved }) {
 
         <label>Resident ID</label>
         <input type="text" value={values.resident_id} onChange={set("resident_id")} />
+
+        <label>Company</label>
+        <input type="text" value={values.company} onChange={set("company")} />
 
         <label>Estimated duration</label>
         <input type="text" value={values.estimated_duration} onChange={set("estimated_duration")} />
@@ -153,6 +157,7 @@ export default function AdminContractorsPage() {
           <thead>
             <tr>
               <th>Contractor</th>
+              <th>Company</th>
               <th>Resident ID</th>
               <th>Duration</th>
               <th>Validity</th>
@@ -168,6 +173,7 @@ export default function AdminContractorsPage() {
                   <div style={{ fontWeight: 600 }}>{c.full_name}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>{c.email}</div>
                 </td>
+                <td>{c.company || "—"}</td>
                 <td>{c.resident_id || "—"}</td>
                 <td>{c.estimated_duration || "—"}</td>
                 <td style={{ fontSize: "0.82rem" }}>

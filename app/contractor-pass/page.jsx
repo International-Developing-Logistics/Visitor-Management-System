@@ -54,6 +54,9 @@ function PassInner() {
   return (
     <div style={{ textAlign: "center" }}>
       <h2 style={{ marginBottom: 4 }}>{pass.full_name}</h2>
+      {pass.company && (
+        <p className="helper-text" style={{ marginTop: 0, marginBottom: 12 }}>{pass.company}</p>
+      )}
       <p style={{ marginBottom: 20 }}>
         <span className={`badge ${status.tone}`}>{status.label}</span>
       </p>

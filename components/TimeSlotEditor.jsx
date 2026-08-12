@@ -1,5 +1,7 @@
 "use client";
 
+// slots: array of "YYYY-MM-DDTHH:mm" local datetime strings (raw input values).
+// onChange(slots) is called with the updated array.
 export default function TimeSlotEditor({ slots, onChange }) {
   const updateSlot = (i, value) => {
     const next = [...slots];

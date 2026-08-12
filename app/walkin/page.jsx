@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import StepProgress from "@/components/StepProgress";
 import VisitorDetailsForm from "@/components/VisitorDetailsForm";
-import SignaturePad from "@/components/SignaturePad";
+import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
 
-const STEPS = ["Details", "Signature", "Done"];
+const STEPS = ["Details", "Agreement", "Done"];
 
 export default function WalkinPage() {
   const [step, setStep] = useState(0);
@@ -26,7 +26,6 @@ export default function WalkinPage() {
     additional_visitor_count: "",
     additional_visitor_names: "",
   });
-  const [signature, setSignature] = useState(null);
 
   useEffect(() => {
     fetch("/api/hosts")
@@ -35,7 +34,7 @@ export default function WalkinPage() {
       .catch(() => setHosts([]));
   }, []);
 
-  const submit = async (signatureDataUrl) => {
+  const submit = async () => {
     setSubmitting(true);
     setSubmitError("");
     const finalPurpose =
@@ -51,13 +50,12 @@ export default function WalkinPage() {
           purpose: finalPurpose,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
-          signature: signatureDataUrl,
+          agreed: true,
           visit_type: "walkin",
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-      setSignature(signatureDataUrl);
       setStep(2);
     } catch (err) {
       setSubmitError(err.message);
@@ -86,12 +84,8 @@ export default function WalkinPage() {
 
         {step === 1 && (
           <div>
-            <h3>Sign the visitor NDA</h3>
-            {submitting ? (
-              <p className="helper-text">Submitting…</p>
-            ) : (
-              <SignaturePad signed={null} onSign={submit} />
-            )}
+            <h3>Agree to the visitor terms</h3>
+            <AgreementStep onAgree={submit} submitting={submitting} />
             {submitError && <p className="error-text">{submitError}</p>}
           </div>
         )}
