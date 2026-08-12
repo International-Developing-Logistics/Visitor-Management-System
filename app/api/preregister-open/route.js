@@ -2,39 +2,39 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { randomUUID } from "crypto";
 
+// POST /api/preregister-open
+// Public, no login, no invite needed — a guest fully self-registers for a
+// future visit in one step. Same trust model as /walkin (which is also
+// fully open): the host is notified immediately by email either way, so
+// anything suspicious is visible to a real person right away.
 export async function POST(req) {
-  const limited = checkRateLimit(req, "preregister-complete");
+  const limited = checkRateLimit(req, "preregister-open");
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
+  const body = await req.json();
+
   const {
-    token,
     full_name,
+    email, // optional — same as elsewhere in the app
     phone,
     company,
-    agreed, // boolean — replaces the old signature capture
+    purpose,
+    host_id,
+    notes,
+    agreed,
     additional_visitor_count,
     additional_visitor_names,
-    selected_time_slot,
     proposed_alternative_time,
-  } = await req.json();
+  } = body;
 
-  if (!token || !full_name) {
+  if (!full_name || !purpose || !host_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
   if (!agreed) {
     return NextResponse.json({ error: "You must agree to the terms to continue" }, { status: 400 });
-  }
-
-  const { data: existing, error: findError } = await supabaseAdmin
-    .from("visitors")
-    .select("id")
-    .eq("checkin_token", token)
-    .single();
-
-  if (findError || !existing) {
-    return NextResponse.json({ error: "Invalid or expired link" }, { status: 404 });
   }
 
   const groupCount = Number.isFinite(Number(additional_visitor_count))
@@ -42,31 +42,42 @@ export async function POST(req) {
     : 0;
 
   try {
+    const id = randomUUID();
+    const checkin_token = randomUUID();
+
     const { data: visitor, error } = await supabaseAdmin
       .from("visitors")
-      .update({
+      .insert({
+        id,
         full_name,
+        email: email || null,
         phone,
         company,
+        purpose,
+        host_id,
+        notes,
         nda_signed_at: new Date().toISOString(),
+        visit_type: "prereg",
         status: "pre_registered",
+        checkin_token,
         additional_visitor_count: groupCount,
         additional_visitor_names: additional_visitor_names || null,
-        selected_time_slot: selected_time_slot ? new Date(selected_time_slot).toISOString() : null,
-        proposed_alternative_time: proposed_alternative_time ? new Date(proposed_alternative_time).toISOString() : null,
+        proposed_alternative_time: proposed_alternative_time
+          ? new Date(proposed_alternative_time).toISOString()
+          : null,
       })
-      .eq("checkin_token", token)
       .select()
       .single();
 
     if (error) throw new Error(error.message);
 
-    const { data: host } = await supabaseAdmin.from("hosts").select("*").eq("id", visitor.host_id).single();
+    const { data: host } = await supabaseAdmin.from("hosts").select("*").eq("id", host_id).single();
     if (host) {
       await sendHostNotification({ host, visitor, status: "pre_registered" });
     }
 
-    return NextResponse.json({ visitor });
+    const origin = req.nextUrl.origin;
+    return NextResponse.json({ visitor, checkinUrl: `${origin}/checkin?token=${checkin_token}` });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

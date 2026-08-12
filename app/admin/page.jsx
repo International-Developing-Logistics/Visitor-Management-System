@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import EditVisitorModal from "@/components/EditVisitorModal";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
+import { formatInCompanyTimezone, formatTimeInCompanyTimezone } from "@/lib/timezone";
 
 const TABS = [
   { key: "", label: "All" },
@@ -26,18 +27,12 @@ const STATUS_LABEL = {
 };
 
 function fmtTime(ts) {
-  return ts ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—";
+  return ts ? formatTimeInCompanyTimezone(ts) : "—";
 }
 
 function fmtMeetingTime(v) {
-  if (v.selected_time_slot) {
-    return new Date(v.selected_time_slot).toLocaleString([], {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  }
+  if (v.selected_time_slot) return formatInCompanyTimezone(v.selected_time_slot);
+  if (v.proposed_alternative_time) return `Proposed: ${formatInCompanyTimezone(v.proposed_alternative_time)}`;
   if (v.proposed_time_slots && v.proposed_time_slots.length > 0) return "Awaiting choice";
   return "—";
 }

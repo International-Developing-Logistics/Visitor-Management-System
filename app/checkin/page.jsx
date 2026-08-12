@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
 import TimeSlotChooser from "@/components/TimeSlotChooser";
+import ProposeTimeForm from "@/components/ProposeTimeForm";
 
 function CheckinInner() {
   const token = useSearchParams().get("token");
@@ -20,6 +21,7 @@ function CheckinInner() {
     additional_visitor_count: "",
     additional_visitor_names: "",
     selected_time_slot: "",
+    proposed_alternative_time: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,6 +45,7 @@ function CheckinInner() {
           additional_visitor_count: groupCount > 0 ? String(groupCount) : "",
           additional_visitor_names: d.visitor.additional_visitor_names || "",
           selected_time_slot: d.visitor.selected_time_slot || "",
+          proposed_alternative_time: d.visitor.proposed_alternative_time || "",
         });
         if (d.visitor.status === "checked_in") setStage("arrived");
       })
@@ -64,6 +67,7 @@ function CheckinInner() {
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
           selected_time_slot: values.selected_time_slot || null,
+          proposed_alternative_time: values.proposed_alternative_time || null,
           agreed: true,
         }),
       });
@@ -162,11 +166,22 @@ function CheckinInner() {
         />
 
         {visitor?.proposed_time_slots?.length > 0 && (
-          <TimeSlotChooser
-            slots={visitor.proposed_time_slots}
-            value={values.selected_time_slot}
-            onChange={(iso) => setValues({ ...values, selected_time_slot: iso })}
-          />
+          <div>
+            <TimeSlotChooser
+              slots={visitor.proposed_time_slots}
+              value={values.selected_time_slot}
+              onChange={(iso) =>
+                setValues({ ...values, selected_time_slot: iso, proposed_alternative_time: "" })
+              }
+            />
+            <ProposeTimeForm
+              value={values.proposed_alternative_time}
+              onChange={(iso) =>
+                setValues({ ...values, proposed_alternative_time: iso, selected_time_slot: iso ? "" : values.selected_time_slot })
+              }
+              label="None of these work — propose a different time"
+            />
+          </div>
         )}
 
         <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
@@ -212,7 +227,9 @@ function CheckinInner() {
           onClick={() => setStage("agreement")}
           disabled={
             !values.full_name.trim() ||
-            (visitor?.proposed_time_slots?.length > 0 && !values.selected_time_slot)
+            (visitor?.proposed_time_slots?.length > 0 &&
+              !values.selected_time_slot &&
+              !values.proposed_alternative_time)
           }
         >
           Continue

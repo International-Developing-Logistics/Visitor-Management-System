@@ -7,6 +7,7 @@ import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 import BrandHeader from "@/components/BrandHeader";
 import TimeSlotEditor from "@/components/TimeSlotEditor";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
+import { companyLocalToUtcIso } from "@/lib/timezone";
 
 function InviteForm() {
   const [hosts, setHosts] = useState([]);
@@ -49,7 +50,7 @@ function InviteForm() {
           purpose: finalPurpose,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
-          proposed_time_slots: timeSlots.filter(Boolean),
+          proposed_time_slots: timeSlots.filter(Boolean).map(companyLocalToUtcIso).filter(Boolean),
           send_email: alsoEmail,
         }),
       });

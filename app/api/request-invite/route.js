@@ -33,8 +33,10 @@ export async function POST(req) {
     ? Math.max(0, Math.floor(Number(additional_visitor_count)))
     : 0;
 
+  // See app/api/preregister/route.js for why this doesn't re-run
+  // new Date(s).toISOString() on naive strings here.
   const slots = Array.isArray(proposed_time_slots)
-    ? proposed_time_slots.filter(Boolean).map((s) => new Date(s).toISOString())
+    ? proposed_time_slots.filter((s) => s && !Number.isNaN(new Date(s).getTime()))
     : null;
 
   const { data: visitor, error } = await supabaseAdmin

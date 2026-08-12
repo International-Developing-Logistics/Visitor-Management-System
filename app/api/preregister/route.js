@@ -40,8 +40,13 @@ export async function POST(req) {
     ? Math.max(0, Math.floor(Number(additional_visitor_count)))
     : 0;
 
+  // proposed_time_slots must already be proper UTC ISO strings by the time
+  // they reach here — converted client-side (see lib/timezone.js) from
+  // whatever the host typed, anchored to Dubai time. Re-interpreting a bare
+  // "YYYY-MM-DDTHH:mm" string here would silently use the SERVER's own
+  // timezone (UTC on Vercel), which is exactly the bug this fixes.
   const slots = Array.isArray(proposed_time_slots)
-    ? proposed_time_slots.filter(Boolean).map((s) => new Date(s).toISOString())
+    ? proposed_time_slots.filter((s) => s && !Number.isNaN(new Date(s).getTime()))
     : null;
 
   const { data: visitor, error } = await supabaseAdmin

@@ -1,16 +1,8 @@
 "use client";
 
-function fmtSlot(iso) {
-  return new Date(iso).toLocaleString([], {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatInViewerLocalTime, formatInCompanyTimezone, COMPANY_TIMEZONE_LABEL } from "@/lib/timezone";
 
-// slots: array of ISO timestamp strings. value: selected ISO string or "".
+// slots: array of UTC ISO timestamp strings. value: selected ISO string or "".
 export default function TimeSlotChooser({ slots, value, onChange }) {
   if (!slots || slots.length === 0) return null;
 
@@ -40,7 +32,12 @@ export default function TimeSlotChooser({ slots, value, onChange }) {
             onChange={() => onChange(iso)}
             style={{ width: 16, height: 16 }}
           />
-          <span style={{ fontWeight: 400, color: "var(--ink)" }}>{fmtSlot(iso)}</span>
+          <span style={{ fontWeight: 400, color: "var(--ink)" }}>
+            {formatInViewerLocalTime(iso)}
+            <span style={{ color: "var(--muted)", fontSize: "0.82rem" }}>
+              {" "}({formatInCompanyTimezone(iso)} {COMPANY_TIMEZONE_LABEL})
+            </span>
+          </span>
         </label>
       ))}
     </div>

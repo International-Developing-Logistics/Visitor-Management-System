@@ -1,3 +1,7 @@
+-- Run this in the Supabase SQL editor for your EXISTING project.
+-- Only widens the allowed values for the `status` column — does not touch,
+-- rename, or delete any existing rows.
+
 do $$
 declare
   con record;

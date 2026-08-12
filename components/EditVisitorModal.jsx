@@ -3,16 +3,11 @@
 import { useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
-
-// Converts a UTC ISO timestamp to the local "YYYY-MM-DDTHH:mm" format
-// <input type="datetime-local"> needs, so the field shows the visitor's
-// checkout time in the browser's own timezone rather than raw UTC.
-function toLocalInputValue(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import {
+  companyLocalToUtcIso,
+  utcIsoToCompanyLocalInputValue,
+  COMPANY_TIMEZONE_LABEL,
+} from "@/lib/timezone";
 
 export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
   const [values, setValues] = useState({
@@ -26,8 +21,10 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
     additional_visitor_count: String(visitor.additional_visitor_count || 0),
     additional_visitor_names: visitor.additional_visitor_names || "",
   });
-  const [checkedOutAt, setCheckedOutAt] = useState(toLocalInputValue(visitor.checked_out_at));
-  const [meetingTime, setMeetingTime] = useState(toLocalInputValue(visitor.selected_time_slot));
+  const [checkedOutAt, setCheckedOutAt] = useState(utcIsoToCompanyLocalInputValue(visitor.checked_out_at));
+  const [meetingTime, setMeetingTime] = useState(
+    utcIsoToCompanyLocalInputValue(visitor.selected_time_slot || visitor.proposed_alternative_time)
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,10 +39,10 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
-          // Empty string clears the checkout (reverts to checked_in);
-          // a value converts local time back to a real ISO timestamp.
-          checked_out_at: checkedOutAt ? new Date(checkedOutAt).toISOString() : "",
-          selected_time_slot: meetingTime ? new Date(meetingTime).toISOString() : "",
+          // Empty string clears the field; a value converts Dubai wall-clock
+          // time (what the input represents) back to a real UTC timestamp.
+          checked_out_at: checkedOutAt ? companyLocalToUtcIso(checkedOutAt) : "",
+          selected_time_slot: meetingTime ? companyLocalToUtcIso(meetingTime) : "",
         }),
       });
       const data = await res.json();
@@ -129,19 +126,21 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
         <label>Notes</label>
         <textarea rows={2} value={values.notes} onChange={set("notes")} />
 
-        <label>Meeting time</label>
+        <label>Meeting time ({COMPANY_TIMEZONE_LABEL})</label>
         <input
           type="datetime-local"
           value={meetingTime}
           onChange={(e) => setMeetingTime(e.target.value)}
         />
         <p className="helper-text" style={{ marginTop: 6 }}>
-          {visitor.proposed_time_slots?.length > 0 && !meetingTime
+          {visitor.proposed_alternative_time && !visitor.selected_time_slot
+            ? "Pre-filled from the guest's proposed alternative time — adjust or save to confirm it."
+            : visitor.proposed_time_slots?.length > 0 && !meetingTime
             ? "Guest hasn't picked one of the proposed times yet."
             : "Set or correct the agreed meeting time."}
         </p>
 
-        <label>Checkout time</label>
+        <label>Checkout time ({COMPANY_TIMEZONE_LABEL})</label>
         <input
           type="datetime-local"
           value={checkedOutAt}
