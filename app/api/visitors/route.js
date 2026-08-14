@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { DEFAULT_FACILITY } from "@/lib/facilities";
 import { randomUUID } from "crypto";
 
 export async function POST(req) {
@@ -23,6 +24,7 @@ export async function POST(req) {
     visit_type, // "walkin" | "prereg"
     additional_visitor_count,
     additional_visitor_names,
+    facility,
   } = body;
 
   // Email is intentionally NOT required here — visitors can check in without one.
@@ -56,6 +58,7 @@ export async function POST(req) {
       checked_in_at: status === "checked_in" ? new Date().toISOString() : null,
       additional_visitor_count: groupCount,
       additional_visitor_names: additional_visitor_names || null,
+      facility: facility || DEFAULT_FACILITY,
     };
 
     const { data: visitor, error } = await supabaseAdmin

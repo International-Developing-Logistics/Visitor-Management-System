@@ -5,6 +5,7 @@ import { authFetch } from "@/lib/apiFetch";
 import EditVisitorModal from "@/components/EditVisitorModal";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
 import { formatInCompanyTimezone, formatTimeInCompanyTimezone } from "@/lib/timezone";
+import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
 
 const TABS = [
   { key: "", label: "All" },
@@ -43,6 +44,7 @@ function currentMonth() {
 }
 
 export default function AdminDashboard() {
+  const [facility, setFacility] = useState(DEFAULT_FACILITY);
   const [tab, setTab] = useState("");
   const [visitors, setVisitors] = useState([]);
   const [hosts, setHosts] = useState([]);
@@ -58,8 +60,9 @@ export default function AdminDashboard() {
     setLoading(true);
     setError("");
     try {
-      const url = tab ? `/api/admin/visitors?status=${tab}` : "/api/admin/visitors";
-      const res = await authFetch(url);
+      const params = new URLSearchParams({ facility });
+      if (tab) params.set("status", tab);
+      const res = await authFetch(`/api/admin/visitors?${params.toString()}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setVisitors(data.visitors || []);
@@ -68,7 +71,7 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  }, [tab, facility]);
 
   useEffect(() => {
     load();
@@ -157,13 +160,13 @@ export default function AdminDashboard() {
     setExporting(true);
     setError("");
     try {
-      const res = await authFetch(`/api/admin/export?month=${exportMonth}`);
+      const res = await authFetch(`/api/admin/export?month=${exportMonth}&facility=${facility}`);
       if (!res.ok) throw new Error((await res.json()).error);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `visitor-log-${exportMonth}.csv`;
+      a.download = `visitor-log-${facility}-${exportMonth}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -177,6 +180,21 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-card">
+      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {Object.values(FACILITIES).map((f) => (
+            <button
+              key={f.key}
+              className={`tab ${facility === f.key ? "active" : ""}`}
+              onClick={() => setFacility(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="tabs">
         {TABS.map((t) => (
           <button

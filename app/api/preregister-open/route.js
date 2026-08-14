@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { DEFAULT_FACILITY } from "@/lib/facilities";
 import { randomUUID } from "crypto";
 
 // POST /api/preregister-open
 // Public, no login, no invite needed — a guest fully self-registers for a
 // future visit in one step. Same trust model as /walkin (which is also
 // fully open): the host is notified immediately by email either way, so
-// anything suspicious is visible to a real person right away.
+// anything suspicious is visible to a real person right away. `facility`
+// defaults to "harmony" when omitted, preserving the original page's behavior.
 export async function POST(req) {
   const limited = checkRateLimit(req, "preregister-open");
   if (limited) return limited;
@@ -28,6 +30,7 @@ export async function POST(req) {
     additional_visitor_count,
     additional_visitor_names,
     proposed_alternative_time,
+    facility,
   } = body;
 
   if (!full_name || !purpose || !host_id) {
@@ -65,6 +68,7 @@ export async function POST(req) {
         proposed_alternative_time: proposed_alternative_time
           ? new Date(proposed_alternative_time).toISOString()
           : null,
+        facility: facility || DEFAULT_FACILITY,
       })
       .select()
       .single();

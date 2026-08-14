@@ -35,6 +35,7 @@ create table if not exists visitors (
   proposed_time_slots jsonb, -- JSON array of ISO timestamps the host offers
   selected_time_slot timestamptz, -- the one the guest picked, if any
   proposed_alternative_time timestamptz, -- guest's own suggested time, if none of the offered slots worked
+  facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
   created_at timestamptz not null default now(),
   checked_in_at timestamptz,
   checked_out_at timestamptz

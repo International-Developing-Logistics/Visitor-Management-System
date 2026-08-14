@@ -1,6 +1,6 @@
 import PreregisterOpenForm from "@/components/PreregisterOpenForm";
 import { FACILITIES } from "@/lib/facilities";
 
-export default function PreregisterOpenPage() {
-  return <PreregisterOpenForm facility={FACILITIES.harmony} />;
+export default function IdlPreregisterOpenPage() {
+  return <PreregisterOpenForm facility={FACILITIES.idl} />;
 }

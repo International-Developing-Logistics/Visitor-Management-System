@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
+import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 function csvEscape(value) {
   const s = value === null || value === undefined ? "" : String(value);
@@ -25,6 +26,7 @@ export async function GET(req) {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) {
     return NextResponse.json({ error: "Provide a month as YYYY-MM" }, { status: 400 });
   }
+  const facility = req.nextUrl.searchParams.get("facility") || DEFAULT_FACILITY;
 
   const start = new Date(`${month}-01T00:00:00.000Z`);
   const end = new Date(start);
@@ -34,6 +36,7 @@ export async function GET(req) {
   const { data, error } = await supabaseAdmin
     .from("visitors")
     .select("*, hosts(name, email)")
+    .eq("facility", facility)
     .gte("created_at", start.toISOString())
     .lt("created_at", end.toISOString())
     .order("created_at", { ascending: true });
@@ -83,7 +86,7 @@ export async function GET(req) {
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="visitor-log-${month}.csv"`,
+      "Content-Disposition": `attachment; filename="visitor-log-${facility}-${month}.csv"`,
     },
   });
 }
