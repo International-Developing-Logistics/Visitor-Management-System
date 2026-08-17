@@ -222,7 +222,7 @@ function InviteForm() {
 
 export default function PreregisterInvitePage() {
   return (
-    <AdminGuard>
+    <AdminGuard requiredRole="admin">
       <main className="kiosk-shell">
         <div className="kiosk-header">
           <BrandHeader label="Invite a guest" />

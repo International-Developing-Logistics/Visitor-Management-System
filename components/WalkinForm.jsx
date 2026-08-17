@@ -69,7 +69,7 @@ export default function WalkinForm({ facility }) {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <BrandHeader companyName={facility.label} logoSrc={facility.logo} />
+        <BrandHeader companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
       <StepProgress steps={STEPS} currentIndex={step} />

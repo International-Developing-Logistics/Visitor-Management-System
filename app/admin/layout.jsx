@@ -44,6 +44,7 @@ function AdminNav() {
         {link("/admin", "Dashboard")}
         {link("/admin/hosts", "Hosts")}
         {link("/admin/contractors", "Contractors")}
+        {link("/admin/guard-logs", "Guard Log")}
         {link("/preregister", "Invite a guest")}
       </div>
       <button
@@ -68,7 +69,7 @@ export default function AdminLayout({ children }) {
   const isLoginPage = pathname === "/admin/login";
 
   return (
-    <AdminGuard>
+    <AdminGuard requiredRole="admin">
       <main className="kiosk-shell" style={{ alignItems: "center" }}>
         <div className="kiosk-header" style={{ maxWidth: 960 }}>
           <BrandHeader label="Admin" />

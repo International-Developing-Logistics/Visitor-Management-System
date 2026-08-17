@@ -4,10 +4,11 @@ import { useState } from "react";
 
 const DEFAULT_COMPANY_NAME = process.env.NEXT_PUBLIC_COMPANY_NAME || "Reception";
 
-// companyName/logoSrc are optional overrides for facility-branded pages
-// (e.g. IDL's pages pass these explicitly). Omit them and this behaves
-// exactly as before, using the global NEXT_PUBLIC_COMPANY_NAME + /logo.png.
-export default function BrandHeader({ label = "Check-in", companyName, logoSrc = "/logo.png" }) {
+// companyName/logoSrc/logoHeight are optional overrides for facility-branded
+// pages (e.g. IDL's pages pass these explicitly). Omit them and this
+// behaves exactly as before, using the global NEXT_PUBLIC_COMPANY_NAME,
+// /logo.png, and the original 26px height.
+export default function BrandHeader({ label = "Check-in", companyName, logoSrc = "/logo.png", logoHeight = 26 }) {
   const [logoFailed, setLogoFailed] = useState(false);
   const name = companyName || DEFAULT_COMPANY_NAME;
 
@@ -18,7 +19,7 @@ export default function BrandHeader({ label = "Check-in", companyName, logoSrc =
           src={logoSrc}
           alt=""
           onError={() => setLogoFailed(true)}
-          style={{ height: 26, width: "auto", display: "block" }}
+          style={{ height: logoHeight, width: "auto", display: "block" }}
         />
       )}
       <span>

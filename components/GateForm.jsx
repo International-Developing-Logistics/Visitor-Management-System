@@ -33,7 +33,7 @@ export default function GateForm({ facility }) {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <BrandHeader label="Gate entry" companyName={facility.label} logoSrc={facility.logo} />
+        <BrandHeader label="Gate entry" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
       <div className="card">

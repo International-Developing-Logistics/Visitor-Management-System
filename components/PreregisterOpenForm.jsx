@@ -74,7 +74,7 @@ export default function PreregisterOpenForm({ facility }) {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <BrandHeader label="Pre-registration" companyName={facility.label} logoSrc={facility.logo} />
+        <BrandHeader label="Pre-registration" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
       <StepProgress steps={STEPS} currentIndex={step} />

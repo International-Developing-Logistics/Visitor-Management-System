@@ -91,3 +91,37 @@ create table if not exists contractors (
 
 create index if not exists contractors_pass_token_idx on contractors(pass_token);
 alter table contractors enable row level security;
+
+-- Security guard vehicle/visitor log — separate from visitors, since this
+-- tracks physical gate activity (who came through, in what vehicle) rather
+-- than a hosted visit.
+create table if not exists guard_logs (
+  id uuid primary key default gen_random_uuid(),
+  facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
+  visitor_name text not null,
+  phone text,
+  company text,
+  vehicle_plate_photo_url text, -- private storage path (vehicle-plates bucket)
+  car_type text check (car_type in ('sedan', 'suv', 'van', 'semi-truck')),
+  logged_by_email text,
+  checked_in_at timestamptz not null default now(),
+  checked_out_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists guard_logs_facility_idx on guard_logs(facility);
+alter table guard_logs enable row level security;
+
+-- Role-based access: any account with no row here defaults to 'admin' (see
+-- lib/verifyAdmin.js). Only explicitly add a row here to restrict someone
+-- to 'guard' (guard stations only, no /admin access).
+create table if not exists user_roles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  role text not null check (role in ('admin', 'guard')),
+  created_at timestamptz not null default now()
+);
+
+alter table user_roles enable row level security;
+create policy "select own role" on user_roles
+  for select using (auth.uid() = user_id);
