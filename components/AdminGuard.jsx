@@ -23,7 +23,11 @@ export default function AdminGuard({ children, requiredRole = "staff" }) {
 
     async function check(session) {
       if (!session) {
-        router.replace("/admin/login");
+        // Preserve where the person was actually trying to go (e.g. /guard,
+        // /idl/guard) so login sends them back there instead of always to
+        // /admin — that mismatch was blocking guard accounts from ever
+        // reaching their own page.
+        router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
         return;
       }
       if (requiredRole !== "admin") {
@@ -45,24 +49,36 @@ export default function AdminGuard({ children, requiredRole = "staff" }) {
     supabase.auth.getSession().then(({ data }) => check(data?.session));
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session && !isLoginPage) router.replace("/admin/login");
+      if (!session && !isLoginPage) {
+        router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
+      }
     });
     return () => {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [isLoginPage, router, requiredRole]);
+  }, [isLoginPage, pathname, router, requiredRole]);
 
   if (status === "checking") {
     return <p className="helper-text" style={{ padding: 24 }}>Loading…</p>;
   }
 
   if (status === "denied") {
+    const signOut = async () => {
+      await supabase.auth.signOut();
+      router.replace("/admin/login");
+    };
+
     return (
       <main className="kiosk-shell">
         <div className="card" style={{ textAlign: "center" }}>
           <h3>Access restricted</h3>
-          <p className="helper-text">Your account doesn't have access to this page.</p>
+          <p className="helper-text" style={{ marginBottom: 20 }}>
+            This account doesn't have access to this page.
+          </p>
+          <button className="btn btn-primary" onClick={signOut} style={{ marginTop: 0 }}>
+            Sign out
+          </button>
         </div>
       </main>
     );

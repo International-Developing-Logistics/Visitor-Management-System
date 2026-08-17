@@ -1,11 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function AdminLoginPage() {
+// Only ever treat `next` as a same-site relative path (starts with a single
+// "/", not "//") — never redirect somewhere an attacker could control via
+// the URL.
+function safeNext(raw) {
+  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  return "/admin";
+}
+
+function LoginForm() {
   const router = useRouter();
+  const next = safeNext(useSearchParams().get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +30,7 @@ export default function AdminLoginPage() {
       setError("Incorrect email or password.");
       return;
     }
-    router.push("/admin");
+    router.push(next);
   };
 
   return (
@@ -41,5 +50,13 @@ export default function AdminLoginPage() {
         Staff accounts are created in the Supabase dashboard — see the README.
       </p>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<p className="helper-text" style={{ padding: 24 }}>Loading…</p>}>
+      <LoginForm />
+    </Suspense>
   );
 }
