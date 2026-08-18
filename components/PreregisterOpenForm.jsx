@@ -93,7 +93,7 @@ export default function PreregisterOpenForm({ facility }) {
           <div>
             <h3>Preferred time (optional)</h3>
             <p className="helper-text" style={{ marginBottom: 4 }}>
-              Let your host know when you'd like to visit — they'll confirm or suggest another time.
+              Let your host know when you'd like to visit - they'll confirm or suggest another time.
             </p>
             <ProposeTimeForm
               value={preferredTime}
@@ -120,7 +120,7 @@ export default function PreregisterOpenForm({ facility }) {
               <div className="confirm-icon">✓</div>
               <h2>You're pre-registered</h2>
               <p className="helper-text" style={{ marginBottom: 20 }}>
-                Your host has been notified. Save this link — open it when you arrive to check in:
+                Your host has been notified. Save this link - open it when you arrive to check in:
               </p>
             </div>
             <HyperlinkCopier url={checkinUrl} defaultText="My check-in link" />

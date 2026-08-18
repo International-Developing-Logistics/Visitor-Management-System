@@ -45,6 +45,7 @@ function AdminNav() {
         {link("/admin/hosts", "Hosts")}
         {link("/admin/contractors", "Contractors")}
         {link("/admin/guard-logs", "Guard Log")}
+        {link("/admin/vehicle-requests", "Vehicle Requests")}
         {link("/preregister", "Invite a guest")}
       </div>
       <button

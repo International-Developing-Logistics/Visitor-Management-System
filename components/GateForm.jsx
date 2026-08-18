@@ -3,7 +3,6 @@
 import { useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 
-// facility: { key, label, logo } from lib/facilities.js
 export default function GateForm({ facility }) {
   const [full_name, setFullName] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -42,7 +41,7 @@ export default function GateForm({ facility }) {
             <div className="confirm-icon">✓</div>
             <h2>Thank you</h2>
             <p className="helper-text">
-              Your request has been sent for approval. Please wait here — once approved,
+              Your request has been sent for approval. Please wait here - once approved,
               you can proceed to reception to check in.
             </p>
           </div>

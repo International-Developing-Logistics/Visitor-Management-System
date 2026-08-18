@@ -16,10 +16,20 @@ const GATE_STATUS_LABEL = {
   gate_denied: "Denied",
 };
 
+const VEHICLE_STATUS_LABEL = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
+const VEHICLE_STATUS_BADGE_CLASS = { pending: "invited", approved: "checked_in", rejected: "gate_denied" };
+
 const CAR_TYPES = ["sedan", "suv", "van", "semi-truck"];
 
+const TABS = [
+  { key: "gate", label: "Gate Approvals" },
+  { key: "form", label: "Guard Form" },
+  { key: "log", label: "Guard Log" },
+  { key: "vehicles", label: "Vehicle Requests" },
+];
+
 function GuardStationInner({ facility }) {
-  const [tab, setTab] = useState("gate"); // "gate" | "log"
+  const [tab, setTab] = useState("gate");
 
   const [gateVisitors, setGateVisitors] = useState([]);
   const [gateError, setGateError] = useState("");
@@ -30,16 +40,19 @@ function GuardStationInner({ facility }) {
   const [logsLoading, setLogsLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
 
+  const [vehicleRequests, setVehicleRequests] = useState([]);
+  const [vehicleError, setVehicleError] = useState("");
+  const [vehicleLoading, setVehicleLoading] = useState(true);
+
   const [form, setForm] = useState({ visitor_name: "", phone: "", company: "", car_type: "" });
   const [platePhoto, setPlatePhoto] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   const loadGate = useCallback(async () => {
     try {
-      const res = await authFetch(
-        `/api/guard/gate-status?facility=${facility.key}`
-      );
+      const res = await authFetch(`/api/guard/gate-status?facility=${facility.key}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setGateVisitors(data.visitors || []);
@@ -65,21 +78,39 @@ function GuardStationInner({ facility }) {
     }
   }, [facility.key]);
 
-  // Poll both every 5s so entries logged by other guards, or gate approvals
-  // decided by email/admin, show up here without a manual refresh.
+  const loadVehicleRequests = useCallback(async () => {
+    try {
+      const res = await authFetch(`/api/guard/vehicle-requests?facility=${facility.key}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setVehicleRequests(data.requests || []);
+      setVehicleError("");
+    } catch (e) {
+      setVehicleError(e.message);
+    } finally {
+      setVehicleLoading(false);
+    }
+  }, [facility.key]);
+
+  // Poll everything every 5s so entries from other guards, gate approvals
+  // decided by email/admin, and vehicle request decisions all show up here
+  // without a manual refresh.
   useEffect(() => {
     loadGate();
     loadLogs();
+    loadVehicleRequests();
     const interval = setInterval(() => {
       loadGate();
       loadLogs();
+      loadVehicleRequests();
     }, POLL_MS);
     return () => clearInterval(interval);
-  }, [loadGate, loadLogs]);
+  }, [loadGate, loadLogs, loadVehicleRequests]);
 
   const submitLog = async () => {
     setSubmitting(true);
     setFormError("");
+    setFormSubmitted(false);
     try {
       const res = await authFetch("/api/guard-logs", {
         method: "POST",
@@ -90,6 +121,7 @@ function GuardStationInner({ facility }) {
       if (!res.ok) throw new Error(data.error);
       setForm({ visitor_name: "", phone: "", company: "", car_type: "" });
       setPlatePhoto(null);
+      setFormSubmitted(true);
       await loadLogs();
     } catch (e) {
       setFormError(e.message);
@@ -124,18 +156,17 @@ function GuardStationInner({ facility }) {
       </div>
 
       <div className="tabs" style={{ maxWidth: 720, width: "100%" }}>
-        <button className={`tab ${tab === "gate" ? "active" : ""}`} onClick={() => setTab("gate")}>
-          Gate Approvals
-        </button>
-        <button className={`tab ${tab === "log" ? "active" : ""}`} onClick={() => setTab("log")}>
-          Vehicle Log
-        </button>
+        {TABS.map((t) => (
+          <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {tab === "gate" && (
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Gate approvals</h3>
-          <p className="helper-text" style={{ marginBottom: 16 }}>Updates automatically every few seconds.</p>
+          <p className="helper-text" style={{ marginBottom: 16 }}>Refresh the page for updates.</p>
 
           {gateError && <p className="error-text">{gateError}</p>}
           {gateLoading && <p className="helper-text">Loading…</p>}
@@ -168,9 +199,18 @@ function GuardStationInner({ facility }) {
         </div>
       )}
 
-      {tab === "log" && (
+      {tab === "form" && (
         <div className="admin-card">
-          <h3 style={{ marginBottom: 16 }}>Log a vehicle / visitor</h3>
+          <h3 style={{ marginBottom: 4 }}>Log a vehicle / visitor</h3>
+          <p className="helper-text" style={{ marginBottom: 16 }}>
+            Submit a new entry here. See the <strong>Guard Log</strong> tab to view and check out existing entries.
+          </p>
+
+          {formSubmitted && (
+            <p className="helper-text" style={{ color: "var(--accent-dark)", marginBottom: 12 }}>
+              ✓ Logged. Switch to the Guard Log tab to see it, or log another entry below.
+            </p>
+          )}
 
           <label>Visitor name</label>
           <input type="text" value={form.visitor_name} onChange={set("visitor_name")} placeholder="Jane Cooper" />
@@ -206,11 +246,15 @@ function GuardStationInner({ facility }) {
           >
             {submitting ? "Logging…" : "Log entry"}
           </button>
+        </div>
+      )}
 
-          <hr style={{ margin: "24px 0", border: "none", borderTop: "1px solid var(--line)" }} />
-
-          <h3 style={{ marginBottom: 4 }}>Today's log</h3>
-          <p className="helper-text" style={{ marginBottom: 16 }}>Updates automatically every few seconds.</p>
+      {tab === "log" && (
+        <div className="admin-card">
+          <h3 style={{ marginBottom: 4 }}>Guard log</h3>
+          <p className="helper-text" style={{ marginBottom: 16 }}>
+            Use the <strong>Guard Form</strong> tab to log a new entry.
+          </p>
 
           {logsError && <p className="error-text">{logsError}</p>}
           {logsLoading && <p className="helper-text">Loading…</p>}
@@ -258,6 +302,50 @@ function GuardStationInner({ facility }) {
                             {busyId === g.id ? "…" : "Check out"}
                           </button>
                         )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {tab === "vehicles" && (
+        <div className="admin-card">
+          <h3 style={{ marginBottom: 4 }}>Vehicle requests</h3>
+          <p className="helper-text" style={{ marginBottom: 16 }}>
+            Check the status before releasing a vehicle.
+          </p>
+
+          {vehicleError && <p className="error-text">{vehicleError}</p>}
+          {vehicleLoading && <p className="helper-text">Loading…</p>}
+          {!vehicleLoading && vehicleRequests.length === 0 && <p className="helper-text">No vehicle requests yet.</p>}
+
+          {!vehicleLoading && vehicleRequests.length > 0 && (
+            <div className="vtable-scroll">
+              <table className="vtable">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Vehicle</th>
+                    <th>Destination</th>
+                    <th>Est. time</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {vehicleRequests.map((r) => (
+                    <tr key={r.id}>
+                      <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
+                      <td>{r.vehicle}</td>
+                      <td>{r.destination}</td>
+                      <td>{r.estimated_time || "—"}</td>
+                      <td>
+                        <span className={`badge ${VEHICLE_STATUS_BADGE_CLASS[r.status]}`}>
+                          {VEHICLE_STATUS_LABEL[r.status]}
+                        </span>
                       </td>
                     </tr>
                   ))}
