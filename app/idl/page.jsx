@@ -1,6 +1,6 @@
 import ServiceHub from "@/components/ServiceHub";
 import { FACILITIES } from "@/lib/facilities";
 
-export default function Home() {
-  return <ServiceHub facility={FACILITIES.harmony} />;
+export default function IdlHome() {
+  return <ServiceHub facility={FACILITIES.idl} />;
 }

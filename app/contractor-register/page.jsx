@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
+import HyperlinkCopier from "@/components/HyperlinkCopier";
 
 const MAX_FILE_BYTES = 3 * 1024 * 1024; // 3MB — stays safely under Vercel's request size limit once base64-encoded
 
@@ -83,37 +84,16 @@ export default function ContractorRegisterPage() {
 
       <div className="card">
         {result ? (
-          <div className="confirm-wrap">
-            <div className="confirm-icon">✓</div>
-            <h2>Registration received</h2>
-            <p className="helper-text" style={{ marginBottom: 20 }}>
-              An admin will review and activate your pass. Save this link — it's your pass once activated:
-            </p>
-            <div
-              style={{
-                display: "flex",
-                gap: 8,
-                alignItems: "center",
-                background: "var(--paper)",
-                border: "1px solid var(--line)",
-                borderRadius: 10,
-                padding: "10px 12px",
-              }}
-            >
-              <input
-                type="text"
-                readOnly
-                value={result.passUrl}
-                style={{ border: "none", background: "none", padding: 0, flex: 1, fontSize: "0.85rem" }}
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                className="btn-small"
-                onClick={() => navigator.clipboard.writeText(result.passUrl)}
-              >
-                Copy
-              </button>
+          <div>
+            <div className="confirm-wrap" style={{ paddingBottom: 8 }}>
+              <div className="confirm-icon">✓</div>
+              <h2>Registration received</h2>
+              <p className="helper-text" style={{ marginBottom: 20 }}>
+                An admin will review and activate your pass — we'll email you when it's ready.
+                Save this link too, it's your pass once activated:
+              </p>
             </div>
+            <HyperlinkCopier url={result.passUrl} defaultText="My contractor pass" />
           </div>
         ) : (
           <div>
@@ -122,28 +102,29 @@ export default function ContractorRegisterPage() {
               For contractors who'll be visiting regularly for a project.
             </p>
 
-            <label>Full name</label>
-            <input type="text" value={values.full_name} onChange={set("full_name")} placeholder="Jane Cooper" />
+            <label htmlFor="cr-full-name">Full name</label>
+            <input id="cr-full-name" type="text" value={values.full_name} onChange={set("full_name")} placeholder="Enter your full name" />
 
-            <label>Email</label>
-            <input type="email" value={values.email} onChange={set("email")} placeholder="jane@contractor.com" />
+            <label htmlFor="cr-email">Email</label>
+            <input id="cr-email" type="email" value={values.email} onChange={set("email")} placeholder="Enter your email address" />
 
-            <label>Resident ID</label>
-            <input type="text" value={values.resident_id} onChange={set("resident_id")} placeholder="784-XXXX-XXXXXXX-X" />
+            <label htmlFor="cr-resident-id">Resident ID</label>
+            <input id="cr-resident-id" type="text" value={values.resident_id} onChange={set("resident_id")} placeholder="Enter your resident ID number" />
 
-            <label>Company</label>
-            <input type="text" value={values.company} onChange={set("company")} placeholder="Acme Contracting LLC" />
+            <label htmlFor="cr-company">Company</label>
+            <input id="cr-company" type="text" value={values.company} onChange={set("company")} placeholder="Enter your company name" />
 
-            <label>Estimated duration of access needed</label>
+            <label htmlFor="cr-duration">Estimated duration of access needed</label>
             <input
+              id="cr-duration"
               type="text"
               value={values.estimated_duration}
               onChange={set("estimated_duration")}
               placeholder="e.g. 3 months, until March 2027"
             />
 
-            <label>Passport copy</label>
-            <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFile} />
+            <label htmlFor="cr-passport">Passport copy</label>
+            <input id="cr-passport" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFile} />
             {passportFile && !fileError && (
               <p className="helper-text" style={{ marginTop: 6 }}>Selected: {passportFile.name}</p>
             )}

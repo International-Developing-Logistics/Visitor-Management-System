@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
+import { sendContractorPassActivatedEmail } from "@/lib/email";
 
 const EDITABLE_FIELDS = ["full_name", "email", "resident_id", "company", "estimated_duration"];
 
@@ -48,6 +49,12 @@ export async function PATCH(req, { params }) {
   }
 
   const supabaseAdmin = getSupabaseAdmin();
+
+  // Check the prior status so we only email on a pending/inactive -> active
+  // transition, not every save while already active.
+  const { data: before } = await supabaseAdmin.from("contractors").select("status").eq("id", params.id).single();
+  const isActivating = "status" in updates && updates.status === "active" && before?.status !== "active";
+
   const { data, error } = await supabaseAdmin
     .from("contractors")
     .update(updates)
@@ -56,5 +63,14 @@ export async function PATCH(req, { params }) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (isActivating) {
+    const origin = req.nextUrl.origin;
+    const passUrl = `${origin}/contractor-pass?token=${data.pass_token}`;
+    await sendContractorPassActivatedEmail({ contractor: data, passUrl }).catch((err) =>
+      console.error("[contractors] activation email failed:", err.message)
+    );
+  }
+
   return NextResponse.json({ contractor: data });
 }

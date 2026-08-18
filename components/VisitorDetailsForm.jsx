@@ -18,25 +18,25 @@ export default function VisitorDetailsForm({ hosts, values, onChange, onNext }) 
 
   return (
     <div>
-      <label>Full name</label>
-      <input type="text" value={values.full_name} onChange={set("full_name")} placeholder="Jane Cooper" />
+      <label htmlFor="vd-full-name">Full name</label>
+      <input id="vd-full-name" type="text" value={values.full_name} onChange={set("full_name")} placeholder="Enter your full name" />
 
       <div className="row-2">
         <div>
-          <label>Email (optional)</label>
-          <input type="email" value={values.email} onChange={set("email")} placeholder="jane@example.com" />
+          <label htmlFor="vd-email">Email (optional)</label>
+          <input id="vd-email" type="email" value={values.email} onChange={set("email")} placeholder="Enter your email address" />
         </div>
         <div>
-          <label>Phone</label>
-          <input type="tel" value={values.phone} onChange={set("phone")} placeholder="+971 50 000 0000" />
+          <label htmlFor="vd-phone">Phone</label>
+          <input id="vd-phone" type="tel" value={values.phone} onChange={set("phone")} placeholder="Enter your phone number" />
         </div>
       </div>
 
-      <label>Company / organization</label>
-      <input type="text" value={values.company} onChange={set("company")} placeholder="Acme Inc." />
+      <label htmlFor="vd-company">Company / organization</label>
+      <input id="vd-company" type="text" value={values.company} onChange={set("company")} placeholder="Enter your company name" />
 
-      <label>Purpose of visit</label>
-      <select value={values.purpose} onChange={set("purpose")}>
+      <label htmlFor="vd-purpose">Purpose of visit</label>
+      <select id="vd-purpose" value={values.purpose} onChange={set("purpose")}>
         <option value="">Select…</option>
         {PURPOSE_OPTIONS.map((p) => (
           <option key={p} value={p}>{p}</option>
@@ -45,8 +45,9 @@ export default function VisitorDetailsForm({ hosts, values, onChange, onNext }) 
 
       {values.purpose === "Other" && (
         <div>
-          <label>Please specify</label>
+          <label htmlFor="vd-purpose-detail">Please specify</label>
           <input
+            id="vd-purpose-detail"
             type="text"
             value={values.purpose_detail || ""}
             onChange={set("purpose_detail")}
@@ -55,8 +56,8 @@ export default function VisitorDetailsForm({ hosts, values, onChange, onNext }) 
         </div>
       )}
 
-      <label>Who are you visiting?</label>
-      <select value={values.host_id} onChange={set("host_id")}>
+      <label htmlFor="vd-host">Who are you visiting?</label>
+      <select id="vd-host" value={values.host_id} onChange={set("host_id")}>
         <option value="">Select a host…</option>
         {hosts.map((h) => (
           <option key={h.id} value={h.id}>{h.name}</option>
@@ -84,16 +85,18 @@ export default function VisitorDetailsForm({ hosts, values, onChange, onNext }) 
 
       {isGroup && (
         <div>
-          <label>How many additional visitors?</label>
+          <label htmlFor="vd-group-count">How many additional visitors?</label>
           <input
+            id="vd-group-count"
             type="text"
             inputMode="numeric"
             value={values.additional_visitor_count}
             onChange={set("additional_visitor_count")}
             placeholder="e.g. 2"
           />
-          <label>Their names (optional)</label>
+          <label htmlFor="vd-group-names">Their names (optional)</label>
           <textarea
+            id="vd-group-names"
             rows={2}
             value={values.additional_visitor_names}
             onChange={set("additional_visitor_names")}
@@ -102,8 +105,8 @@ export default function VisitorDetailsForm({ hosts, values, onChange, onNext }) 
         </div>
       )}
 
-      <label>Notes (optional)</label>
-      <textarea rows={2} value={values.notes} onChange={set("notes")} placeholder="Anything your host should know" />
+      <label htmlFor="vd-notes">Notes (optional)</label>
+      <textarea id="vd-notes" rows={2} value={values.notes} onChange={set("notes")} placeholder="Anything your host should know" />
 
       <button className="btn btn-primary" onClick={onNext} disabled={!canContinue}>
         Continue

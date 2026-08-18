@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import AdminGuard from "@/components/AdminGuard";
 import CameraCapture from "@/components/CameraCapture";
 import { authFetch } from "@/lib/apiFetch";
 import { formatTimeInCompanyTimezone } from "@/lib/timezone";
+import { FACILITIES } from "@/lib/facilities";
 
 const POLL_MS = 5000; // "real time" here means polled every 5s — see README
                        // for why this app uses polling rather than websockets.
@@ -28,12 +29,15 @@ const TABS = [
   { key: "vehicles", label: "Vehicle Requests" },
 ];
 
-function GuardStationInner({ facility }) {
+function GuardStationInner({ initialFacility }) {
+  const [facility, setFacility] = useState(initialFacility);
   const [tab, setTab] = useState("gate");
 
   const [gateVisitors, setGateVisitors] = useState([]);
   const [gateError, setGateError] = useState("");
   const [gateLoading, setGateLoading] = useState(true);
+  const [gateAnnounce, setGateAnnounce] = useState("");
+  const prevGateCount = useRef(null);
 
   const [logs, setLogs] = useState([]);
   const [logsError, setLogsError] = useState("");
@@ -43,6 +47,8 @@ function GuardStationInner({ facility }) {
   const [vehicleRequests, setVehicleRequests] = useState([]);
   const [vehicleError, setVehicleError] = useState("");
   const [vehicleLoading, setVehicleLoading] = useState(true);
+  const [vehicleAnnounce, setVehicleAnnounce] = useState("");
+  const prevVehicleCount = useRef(null);
 
   const [form, setForm] = useState({ visitor_name: "", phone: "", company: "", car_type: "" });
   const [platePhoto, setPlatePhoto] = useState(null);
@@ -55,7 +61,12 @@ function GuardStationInner({ facility }) {
       const res = await authFetch(`/api/guard/gate-status?facility=${facility.key}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setGateVisitors(data.visitors || []);
+      const visitors = data.visitors || [];
+      if (prevGateCount.current !== null && visitors.length !== prevGateCount.current) {
+        setGateAnnounce(`Gate approvals updated — ${visitors.length} request${visitors.length === 1 ? "" : "s"} now.`);
+      }
+      prevGateCount.current = visitors.length;
+      setGateVisitors(visitors);
       setGateError("");
     } catch (e) {
       setGateError(e.message);
@@ -83,13 +94,29 @@ function GuardStationInner({ facility }) {
       const res = await authFetch(`/api/guard/vehicle-requests?facility=${facility.key}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setVehicleRequests(data.requests || []);
+      const requests = data.requests || [];
+      if (prevVehicleCount.current !== null && requests.length !== prevVehicleCount.current) {
+        setVehicleAnnounce(`Vehicle requests updated — ${requests.length} request${requests.length === 1 ? "" : "s"} now.`);
+      }
+      prevVehicleCount.current = requests.length;
+      setVehicleRequests(requests);
       setVehicleError("");
     } catch (e) {
       setVehicleError(e.message);
     } finally {
       setVehicleLoading(false);
     }
+  }, [facility.key]);
+
+  // Reset the "has this loaded before" trackers when switching facility, so
+  // we don't announce a bogus "updated" the moment the new facility's first
+  // load comes in.
+  useEffect(() => {
+    prevGateCount.current = null;
+    prevVehicleCount.current = null;
+    setGateLoading(true);
+    setLogsLoading(true);
+    setVehicleLoading(true);
   }, [facility.key]);
 
   // Poll everything every 5s so entries from other guards, gate approvals
@@ -155,6 +182,21 @@ function GuardStationInner({ facility }) {
         <BrandHeader label="Security" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
+      <div style={{ maxWidth: 720, width: "100%", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
+        <div style={{ display: "flex", gap: 6 }}>
+          {Object.values(FACILITIES).map((f) => (
+            <button
+              key={f.key}
+              className={`tab ${facility.key === f.key ? "active" : ""}`}
+              onClick={() => setFacility(f)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="tabs" style={{ maxWidth: 720, width: "100%" }}>
         {TABS.map((t) => (
           <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
@@ -163,10 +205,13 @@ function GuardStationInner({ facility }) {
         ))}
       </div>
 
+      <div aria-live="polite" className="sr-only">{gateAnnounce}</div>
+      <div aria-live="polite" className="sr-only">{vehicleAnnounce}</div>
+
       {tab === "gate" && (
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Gate approvals</h3>
-          <p className="helper-text" style={{ marginBottom: 16 }}>Refresh the page for updates.</p>
+          <p className="helper-text" style={{ marginBottom: 16 }}>Updates automatically every few seconds.</p>
 
           {gateError && <p className="error-text">{gateError}</p>}
           {gateLoading && <p className="helper-text">Loading…</p>}
@@ -212,30 +257,32 @@ function GuardStationInner({ facility }) {
             </p>
           )}
 
-          <label>Visitor name</label>
-          <input type="text" value={form.visitor_name} onChange={set("visitor_name")} placeholder="Jane Cooper" />
+          <label htmlFor="gf-name">Visitor name</label>
+          <input id="gf-name" type="text" value={form.visitor_name} onChange={set("visitor_name")} placeholder="Enter visitor's full name" />
 
           <div className="row-2">
             <div>
-              <label>Phone number</label>
-              <input type="tel" value={form.phone} onChange={set("phone")} />
+              <label htmlFor="gf-phone">Phone number</label>
+              <input id="gf-phone" type="tel" value={form.phone} onChange={set("phone")} />
             </div>
             <div>
-              <label>Company</label>
-              <input type="text" value={form.company} onChange={set("company")} />
+              <label htmlFor="gf-company">Company</label>
+              <input id="gf-company" type="text" value={form.company} onChange={set("company")} />
             </div>
           </div>
 
-          <label>Car type</label>
-          <select value={form.car_type} onChange={set("car_type")}>
+          <label htmlFor="gf-car-type">Car type</label>
+          <select id="gf-car-type" value={form.car_type} onChange={set("car_type")}>
             <option value="">Select…</option>
             {CAR_TYPES.map((t) => (
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
             ))}
           </select>
 
-          <label>Vehicle plate photo</label>
-          <CameraCapture capturedPhoto={platePhoto} onCapture={setPlatePhoto} label="Take plate photo" />
+          <label htmlFor="gf-plate">Vehicle plate photo</label>
+          <div id="gf-plate">
+            <CameraCapture capturedPhoto={platePhoto} onCapture={setPlatePhoto} label="Take plate photo" />
+          </div>
 
           {formError && <p className="error-text">{formError}</p>}
 
@@ -253,7 +300,7 @@ function GuardStationInner({ facility }) {
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Guard log</h3>
           <p className="helper-text" style={{ marginBottom: 16 }}>
-            Use the <strong>Guard Form</strong> tab to log a new entry.
+            Updates automatically every few seconds. Use the <strong>Guard Form</strong> tab to log a new entry.
           </p>
 
           {logsError && <p className="error-text">{logsError}</p>}
@@ -316,7 +363,7 @@ function GuardStationInner({ facility }) {
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Vehicle requests</h3>
           <p className="helper-text" style={{ marginBottom: 16 }}>
-            Check the status before releasing a vehicle.
+            Check the status before releasing a vehicle. Updates automatically every few seconds.
           </p>
 
           {vehicleError && <p className="error-text">{vehicleError}</p>}
@@ -362,7 +409,7 @@ function GuardStationInner({ facility }) {
 export default function GuardStation({ facility }) {
   return (
     <AdminGuard requiredRole="staff">
-      <GuardStationInner facility={facility} />
+      <GuardStationInner initialFacility={facility} />
     </AdminGuard>
   );
 }

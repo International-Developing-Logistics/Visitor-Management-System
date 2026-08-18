@@ -46,8 +46,8 @@ export default function ProposeTimeForm({ value, onChange, label = "Propose a di
 
   return (
     <div style={{ marginTop: 10 }}>
-      <label>Your preferred date and time</label>
-      <input type="datetime-local" value={naiveValue} onChange={handleChange} />
+      <label htmlFor="propose-time">Your preferred date and time</label>
+      <input id="propose-time" type="datetime-local" value={naiveValue} onChange={handleChange} />
       {value && (
         <p className="helper-text" style={{ marginTop: 6 }}>
           Your host will see this as {formatInCompanyTimezone(value)} ({COMPANY_TIMEZONE_LABEL}).

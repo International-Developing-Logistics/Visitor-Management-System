@@ -146,20 +146,23 @@ function CheckinInner() {
     return (
       <div>
         <h3>Complete your pre-registration</h3>
-        <label>Full name</label>
+        <label htmlFor="ck-full-name">Full name</label>
         <input
+          id="ck-full-name"
           type="text"
           value={values.full_name}
           onChange={(e) => setValues({ ...values, full_name: e.target.value })}
         />
-        <label>Phone</label>
+        <label htmlFor="ck-phone">Phone</label>
         <input
+          id="ck-phone"
           type="tel"
           value={values.phone}
           onChange={(e) => setValues({ ...values, phone: e.target.value })}
         />
-        <label>Company / organization</label>
+        <label htmlFor="ck-company">Company / organization</label>
         <input
+          id="ck-company"
           type="text"
           value={values.company}
           onChange={(e) => setValues({ ...values, company: e.target.value })}
@@ -204,16 +207,18 @@ function CheckinInner() {
 
         {values.is_group && (
           <div>
-            <label>How many additional visitors?</label>
+            <label htmlFor="ck-group-count">How many additional visitors?</label>
             <input
+              id="ck-group-count"
               type="text"
               inputMode="numeric"
               value={values.additional_visitor_count}
               onChange={(e) => setValues({ ...values, additional_visitor_count: e.target.value })}
               placeholder="e.g. 2"
             />
-            <label>Their names (optional)</label>
+            <label htmlFor="ck-group-names">Their names (optional)</label>
             <textarea
+              id="ck-group-names"
               rows={2}
               value={values.additional_visitor_names}
               onChange={(e) => setValues({ ...values, additional_visitor_names: e.target.value })}

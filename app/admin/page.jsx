@@ -363,6 +363,11 @@ export default function AdminDashboard() {
                             {busyId === v.id ? "…" : "Check out"}
                           </button>
                         )}
+                        {(v.status === "gate_approved" || v.status === "gate_denied") && (
+                          <button className="btn-small" onClick={() => decideGate(v.id, "revert")} disabled={busyId === v.id}>
+                            {busyId === v.id ? "…" : "Undo"}
+                          </button>
+                        )}
                       </>
                     )}
                   </div>

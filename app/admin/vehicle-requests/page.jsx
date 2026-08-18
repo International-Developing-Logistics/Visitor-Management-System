@@ -100,7 +100,7 @@ export default function AdminVehicleRequestsPage() {
                     <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
                   </td>
                   <td>
-                    {r.status === "pending" && (
+                    {r.status === "pending" ? (
                       <div style={{ display: "flex", gap: 6 }}>
                         <button className="btn-small" onClick={() => decide(r.id, "approve")} disabled={busyId === r.id}>
                           {busyId === r.id ? "…" : "Approve"}
@@ -109,6 +109,10 @@ export default function AdminVehicleRequestsPage() {
                           Reject
                         </button>
                       </div>
+                    ) : (
+                      <button className="btn-small" onClick={() => decide(r.id, "revert")} disabled={busyId === r.id}>
+                        {busyId === r.id ? "…" : "Undo"}
+                      </button>
                     )}
                   </td>
                 </tr>

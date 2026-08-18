@@ -101,22 +101,22 @@ export default function RequestInvitePage() {
               Reception will review this and send the pre-registration link to your guest.
             </p>
 
-            <label>Guest email</label>
-            <input type="email" value={values.email} onChange={set("email")} placeholder="guest@example.com" />
+            <label htmlFor="ri-email">Guest email</label>
+            <input id="ri-email" type="email" value={values.email} onChange={set("email")} placeholder="Enter guest's email address" />
 
-            <label>Guest name (optional)</label>
-            <input type="text" value={values.full_name} onChange={set("full_name")} placeholder="Jane Cooper" />
+            <label htmlFor="ri-name">Guest name (optional)</label>
+            <input id="ri-name" type="text" value={values.full_name} onChange={set("full_name")} placeholder="Enter guest's full name" />
 
-            <label>You are</label>
-            <select value={values.host_id} onChange={set("host_id")}>
+            <label htmlFor="ri-host">You are</label>
+            <select id="ri-host" value={values.host_id} onChange={set("host_id")}>
               <option value="">Select your name…</option>
               {hosts.map((h) => (
                 <option key={h.id} value={h.id}>{h.name}</option>
               ))}
             </select>
 
-            <label>Purpose of visit</label>
-            <select value={values.purpose} onChange={set("purpose")}>
+            <label htmlFor="ri-purpose">Purpose of visit</label>
+            <select id="ri-purpose" value={values.purpose} onChange={set("purpose")}>
               <option value="">Select…</option>
               {PURPOSE_OPTIONS.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -125,8 +125,9 @@ export default function RequestInvitePage() {
 
             {values.purpose === "Other" && (
               <div>
-                <label>Please specify</label>
+                <label htmlFor="ri-purpose-detail">Please specify</label>
                 <input
+                  id="ri-purpose-detail"
                   type="text"
                   value={values.purpose_detail}
                   onChange={set("purpose_detail")}
@@ -155,16 +156,18 @@ export default function RequestInvitePage() {
 
             {values.is_group && (
               <div>
-                <label>How many additional visitors?</label>
+                <label htmlFor="ri-group-count">How many additional visitors?</label>
                 <input
+                  id="ri-group-count"
                   type="text"
                   inputMode="numeric"
                   value={values.additional_visitor_count}
                   onChange={set("additional_visitor_count")}
                   placeholder="e.g. 2"
                 />
-                <label>Their names (optional)</label>
+                <label htmlFor="ri-group-names">Their names (optional)</label>
                 <textarea
+                  id="ri-group-names"
                   rows={2}
                   value={values.additional_visitor_names}
                   onChange={set("additional_visitor_names")}
@@ -173,10 +176,10 @@ export default function RequestInvitePage() {
               </div>
             )}
 
-            <label>Notes for reception (optional)</label>
-            <textarea rows={2} value={values.notes} onChange={set("notes")} />
+            <label htmlFor="ri-notes">Notes for reception (optional)</label>
+            <textarea id="ri-notes" rows={2} value={values.notes} onChange={set("notes")} />
 
-            <label>Proposed meeting times (optional)</label>
+            <p className="helper-text" style={{ marginBottom: 6, fontWeight: 600 }}>Proposed meeting times (optional)</p>
             <TimeSlotEditor slots={timeSlots} onChange={setTimeSlots} />
 
             {error && <p className="error-text">{error}</p>}

@@ -110,10 +110,10 @@ function InviteForm() {
         <div>
           <h3>Invite a guest</h3>
           <label>Guest email</label>
-          <input type="email" value={values.email} onChange={set("email")} placeholder="guest@example.com" />
+          <input type="email" value={values.email} onChange={set("email")} placeholder="Enter guest's email address" />
 
           <label>Guest name (optional)</label>
-          <input type="text" value={values.full_name} onChange={set("full_name")} placeholder="Jane Cooper" />
+          <input type="text" value={values.full_name} onChange={set("full_name")} placeholder="Enter guest's full name" />
 
           <label>Host (you)</label>
           <select value={values.host_id} onChange={set("host_id")}>

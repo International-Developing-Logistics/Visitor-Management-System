@@ -23,6 +23,7 @@ export default function TimeSlotEditor({ slots, onChange }) {
             type="datetime-local"
             value={slot}
             onChange={(e) => updateSlot(i, e.target.value)}
+            aria-label={`Proposed time slot ${i + 1}`}
             style={{ flex: 1 }}
           />
           <button
