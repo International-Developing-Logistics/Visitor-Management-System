@@ -65,7 +65,7 @@ function EditContractorModal({ contractor, onClose, onSaved }) {
         <label>Email</label>
         <input type="email" value={values.email} onChange={set("email")} />
 
-        <label>Resident ID</label>
+        <label>Emirates ID</label>
         <input type="text" value={values.resident_id} onChange={set("resident_id")} />
 
         <label>Company</label>
@@ -158,7 +158,7 @@ export default function AdminContractorsPage() {
             <tr>
               <th>Contractor</th>
               <th>Company</th>
-              <th>Resident ID</th>
+              <th>Emirates ID</th>
               <th>Duration</th>
               <th>Validity</th>
               <th>Passport</th>
@@ -173,19 +173,19 @@ export default function AdminContractorsPage() {
                   <div style={{ fontWeight: 600 }}>{c.full_name}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>{c.email}</div>
                 </td>
-                <td>{c.company || "—"}</td>
-                <td>{c.resident_id || "—"}</td>
-                <td>{c.estimated_duration || "—"}</td>
+                <td>{c.company || "-"}</td>
+                <td>{c.resident_id || "-"}</td>
+                <td>{c.estimated_duration || "-"}</td>
                 <td style={{ fontSize: "0.82rem" }}>
-                  {c.validity_start ? new Date(c.validity_start).toLocaleDateString() : "—"}
+                  {c.validity_start ? new Date(c.validity_start).toLocaleDateString() : "-"}
                   {" – "}
-                  {c.validity_end ? new Date(c.validity_end).toLocaleDateString() : "—"}
+                  {c.validity_end ? new Date(c.validity_end).toLocaleDateString() : "-"}
                 </td>
                 <td>
                   {c.passport_signed_url ? (
                     <a href={c.passport_signed_url} target="_blank" rel="noreferrer">View</a>
                   ) : (
-                    "—"
+                    "-"
                   )}
                 </td>
                 <td>

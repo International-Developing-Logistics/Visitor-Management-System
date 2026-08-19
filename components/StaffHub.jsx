@@ -47,10 +47,14 @@ export default function StaffHub({ facility }) {
           title="Request a company vehicle"
           description="Submit a request for coordinator approval"
         />
+        <div style={{ padding: "10px 16px", marginBottom: 10, fontSize: "0.85rem", color: "var(--muted)" }}>
+          To check a request's status, use the link from your confirmation screen or email — it's unique to
+          your request, so there's no general status page to browse to.
+        </div>
         <ServiceLink
-          href="/vehicle-request/status"
-          title="Check a vehicle request's status"
-          description="If you already have your status link, open it directly instead"
+          href={p("/equipment-request")}
+          title="Request equipment"
+          description="Pallet jack, forklift, or reach truck — reviewed by admin"
         />
         <ServiceLink
           href="/request-invite"

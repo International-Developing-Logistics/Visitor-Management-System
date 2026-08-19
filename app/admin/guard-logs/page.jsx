@@ -112,10 +112,10 @@ export default function AdminGuardLogsPage() {
                       {[g.company, g.phone].filter(Boolean).join(" · ")}
                     </div>
                   </td>
-                  <td>{g.car_type || "—"}</td>
-                  <td style={{ fontSize: "0.82rem", color: "var(--muted)" }}>{g.logged_by_email || "—"}</td>
+                  <td>{g.car_type || "-"}</td>
+                  <td style={{ fontSize: "0.82rem", color: "var(--muted)" }}>{g.logged_by_email || "-"}</td>
                   <td>{formatTimeInCompanyTimezone(g.checked_in_at)}</td>
-                  <td>{g.checked_out_at ? formatTimeInCompanyTimezone(g.checked_out_at) : "—"}</td>
+                  <td>{g.checked_out_at ? formatTimeInCompanyTimezone(g.checked_out_at) : "-"}</td>
                   <td>
                     {!g.checked_out_at && (
                       <button className="btn-small" onClick={() => checkOut(g.id)} disabled={busyId === g.id}>

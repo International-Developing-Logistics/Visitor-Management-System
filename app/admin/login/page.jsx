@@ -5,9 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
 
-// Only ever treat `next` as a same-site relative path (starts with a single
-// "/", not "//") — never redirect somewhere an attacker could control via
-// the URL.
 function safeNext(raw) {
   if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
   return null;
@@ -18,7 +15,7 @@ function LoginForm() {
   const params = useSearchParams();
   const explicitNext = safeNext(params.get("next"));
   // Which facility's page the person clicked "sign in" from (e.g. /idl/staff)
-  // — only used as a fallback for guard accounts with no explicit `next`,
+  // - only used as a fallback for guard accounts with no explicit `next`,
   // so they land on the right facility's guard page instead of always
   // defaulting to Harmony. Admins still always default to /admin, since
   // that dashboard already has its own facility switcher.
@@ -47,7 +44,7 @@ function LoginForm() {
     }
 
     // No specific page was requested (e.g. someone bookmarked /admin/login
-    // directly) — route by role instead of always assuming /admin, so a
+    // directly) - route by role instead of always assuming /admin, so a
     // guard account doesn't land on a page it's about to get bounced from.
     const { data: roleRow } = await supabase
       .from("user_roles")
@@ -77,7 +74,7 @@ function LoginForm() {
         </button>
       </form>
       <p className="helper-text" style={{ marginTop: 18 }}>
-        Staff accounts are created in the Supabase dashboard — see the README.
+        If you require assistance contact the IT team. 
       </p>
     </div>
   );

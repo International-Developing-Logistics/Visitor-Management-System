@@ -5,10 +5,10 @@ import { authFetch } from "@/lib/apiFetch";
 import { formatInCompanyTimezone } from "@/lib/timezone";
 import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
 
-const STATUS_LABEL = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
-const STATUS_BADGE_CLASS = { pending: "invited", approved: "checked_in", rejected: "gate_denied" };
+const STATUS_LABEL = { pending: "Pending", approved: "Approved", denied: "Denied" };
+const STATUS_BADGE_CLASS = { pending: "invited", approved: "checked_in", denied: "gate_denied" };
 
-export default function AdminVehicleRequestsPage() {
+export default function AdminEquipmentRequestsPage() {
   const [facility, setFacility] = useState(DEFAULT_FACILITY);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,7 @@ export default function AdminVehicleRequestsPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await authFetch(`/api/admin/vehicle-requests?facility=${facility}`);
+      const res = await authFetch(`/api/admin/equipment-requests?facility=${facility}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setRequests(data.requests || []);
@@ -37,7 +37,7 @@ export default function AdminVehicleRequestsPage() {
   const decide = async (id, action) => {
     setBusyId(id);
     try {
-      const res = await authFetch(`/api/admin/vehicle-requests/${id}/decide`, {
+      const res = await authFetch(`/api/admin/equipment-requests/${id}/decide`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
@@ -68,11 +68,11 @@ export default function AdminVehicleRequestsPage() {
         </div>
       </div>
 
-      <h3 style={{ marginBottom: 16 }}>Vehicle requests</h3>
+      <h3 style={{ marginBottom: 16 }}>Equipment requests</h3>
 
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}
-      {!loading && requests.length === 0 && <p className="helper-text">No vehicle requests yet.</p>}
+      {!loading && requests.length === 0 && <p className="helper-text">No equipment requests yet.</p>}
 
       {!loading && requests.length > 0 && (
         <div className="vtable-scroll">
@@ -80,8 +80,8 @@ export default function AdminVehicleRequestsPage() {
             <thead>
               <tr>
                 <th>Employee</th>
-                <th>Vehicle</th>
-                <th>Destination</th>
+                <th>Equipment</th>
+                <th>Location</th>
                 <th>Estimated time</th>
                 <th>Submitted</th>
                 <th>Status</th>
@@ -92,8 +92,8 @@ export default function AdminVehicleRequestsPage() {
               {requests.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
-                  <td>{r.vehicle}</td>
-                  <td>{r.destination}</td>
+                  <td>{r.equipment}</td>
+                  <td>{r.location || "-"}</td>
                   <td>{r.estimated_time || "-"}</td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
@@ -105,8 +105,8 @@ export default function AdminVehicleRequestsPage() {
                         <button className="btn-small" onClick={() => decide(r.id, "approve")} disabled={busyId === r.id}>
                           {busyId === r.id ? "…" : "Approve"}
                         </button>
-                        <button className="btn-small" onClick={() => decide(r.id, "reject")} disabled={busyId === r.id}>
-                          Reject
+                        <button className="btn-small" onClick={() => decide(r.id, "deny")} disabled={busyId === r.id}>
+                          Deny
                         </button>
                       </div>
                     ) : (
