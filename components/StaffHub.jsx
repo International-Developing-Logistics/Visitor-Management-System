@@ -30,13 +30,13 @@ export default function StaffHub({ facility }) {
   return (
     <main className="kiosk-shell">
       <div className="kiosk-header">
-        <BrandHeader label="Staff & business services" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
+        <BrandHeader label="Staff Hub" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
       <div className="card">
         <h3 style={{ marginBottom: 4 }}>Staff & business services</h3>
         <p className="helper-text" style={{ marginBottom: 18 }}>
-          For employees, hosts, and staff — not for visitors.
+          For internal staff services only.
         </p>
 
         <p className="helper-text" style={{ marginTop: 0, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
