@@ -82,7 +82,7 @@ export default function AdminVehicleRequestsPage() {
                 <th>Employee</th>
                 <th>Vehicle</th>
                 <th>Destination</th>
-                <th>Estimated time</th>
+                <th>Needed</th>
                 <th>Submitted</th>
                 <th>Status</th>
                 <th>In use?</th>
@@ -98,7 +98,11 @@ export default function AdminVehicleRequestsPage() {
                   </td>
                   <td>{r.is_external ? "External vehicle" : r.vehicle}</td>
                   <td>{r.destination}</td>
-                  <td>{r.estimated_time || "—"}</td>
+                  <td style={{ fontSize: "0.8rem" }}>
+                    {r.needed_from
+                      ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
+                      : r.estimated_time || "—"}
+                  </td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
                     <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>

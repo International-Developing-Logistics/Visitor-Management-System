@@ -1,6 +1,3 @@
--- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch any existing data.
-
 create table if not exists equipment_requests (
   id uuid primary key default gen_random_uuid(),
   facility text not null default 'harmony' check (facility in ('harmony', 'idl')),

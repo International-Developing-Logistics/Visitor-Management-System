@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import ImageOptionGrid from "@/components/ImageOptionGrid";
+import TimeBlockPicker from "@/components/TimeBlockPicker";
 import { AVAILABLE_EQUIPMENT } from "@/lib/equipment";
+import { companyLocalToUtcIso } from "@/lib/timezone";
 
 export default function EquipmentRequestForm({ facility }) {
   const [employeeName, setEmployeeName] = useState("");
@@ -11,7 +13,7 @@ export default function EquipmentRequestForm({ facility }) {
   const [needsRental, setNeedsRental] = useState(false);
   const [rentalDescription, setRentalDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [estimatedTime, setEstimatedTime] = useState("");
+  const [timeBlock, setTimeBlock] = useState({ from: "", until: "" });
   const [inUse, setInUse] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -32,12 +34,15 @@ export default function EquipmentRequestForm({ facility }) {
 
   const toggleRental = (checked) => {
     setNeedsRental(checked);
-    if (checked) setEquipmentItems([]); 
+    if (checked) setEquipmentItems([]);
   };
+
+  const timeBlockValid =
+    needsRental || (timeBlock.from && timeBlock.until && new Date(timeBlock.until) > new Date(timeBlock.from));
 
   const canSubmit =
     employeeName.trim() &&
-    (needsRental ? rentalDescription.trim() : equipmentItems.length > 0);
+    (needsRental ? rentalDescription.trim() : equipmentItems.length > 0 && timeBlockValid);
 
   const submit = async () => {
     setSubmitting(true);
@@ -51,7 +56,8 @@ export default function EquipmentRequestForm({ facility }) {
           equipment_items: needsRental ? [] : equipmentItems,
           external_rental_request: needsRental ? rentalDescription : null,
           location,
-          estimated_time: estimatedTime,
+          needed_from: needsRental ? null : companyLocalToUtcIso(timeBlock.from),
+          needed_until: needsRental ? null : companyLocalToUtcIso(timeBlock.until),
           facility: facility.key,
         }),
       });
@@ -123,14 +129,9 @@ export default function EquipmentRequestForm({ facility }) {
             <label htmlFor="eq-location">Location / area needed</label>
             <input id="eq-location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Where will it be used?" />
 
-            <label htmlFor="eq-time">Estimated time needed</label>
-            <input
-              id="eq-time"
-              type="text"
-              value={estimatedTime}
-              onChange={(e) => setEstimatedTime(e.target.value)}
-              placeholder="eg. 2 hours"
-            />
+            <fieldset disabled={needsRental} style={{ border: "none", padding: 0, margin: 0, opacity: needsRental ? 0.45 : 1 }}>
+              <TimeBlockPicker value={timeBlock} onChange={setTimeBlock} idPrefix="eq" />
+            </fieldset>
 
             {error && <p className="error-text">{error}</p>}
 

@@ -6,7 +6,7 @@ import AdminGuard from "@/components/AdminGuard";
 import CameraCapture from "@/components/CameraCapture";
 import VehicleMovementPanel from "@/components/VehicleMovementPanel";
 import { authFetch } from "@/lib/apiFetch";
-import { formatTimeInCompanyTimezone } from "@/lib/timezone";
+import { formatTimeInCompanyTimezone, formatInCompanyTimezone } from "@/lib/timezone";
 import { FACILITIES } from "@/lib/facilities";
 
 const POLL_MS = 5000; // "real time" here means polled every 5s — see README
@@ -377,7 +377,7 @@ function GuardStationInner({ initialFacility }) {
                     <th>Employee</th>
                     <th>Vehicle</th>
                     <th>Destination</th>
-                    <th>Est. time</th>
+                    <th>Needed</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -387,7 +387,11 @@ function GuardStationInner({ initialFacility }) {
                       <td style={{ fontWeight: 600 }}>{r.is_external ? r.customer_name : r.employee_name}</td>
                       <td>{r.is_external ? "External vehicle" : r.vehicle}</td>
                       <td>{r.destination}</td>
-                      <td>{r.estimated_time || "—"}</td>
+                      <td style={{ fontSize: "0.78rem" }}>
+                        {r.needed_from
+                          ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
+                          : r.estimated_time || "—"}
+                      </td>
                       <td>
                         <span className={`badge ${VEHICLE_STATUS_BADGE_CLASS[r.status]}`}>
                           {VEHICLE_STATUS_LABEL[r.status]}

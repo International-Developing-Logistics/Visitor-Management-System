@@ -6,14 +6,14 @@ import { getFacility, DEFAULT_FACILITY } from "@/lib/facilities";
 import { randomUUID } from "crypto";
 
 // POST /api/vehicle-requests
-//   Normal:   { employee_name, vehicle, destination, estimated_time, facility? }
-//   External: { is_external: true, customer_name, destination, facility? }
+//   Normal:   { employee_name, vehicle, destination, needed_from, needed_until, facility? }
+//   External: { is_external: true, employee_name, customer_name, destination, facility? }
 export async function POST(req) {
   const limited = checkRateLimit(req, "vehicle-requests");
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { employee_name, vehicle, destination, estimated_time, is_external, customer_name, facility } =
+  const { employee_name, vehicle, destination, needed_from, needed_until, is_external, customer_name, facility } =
     await req.json();
 
   if (!destination || !employee_name) {
@@ -29,6 +29,12 @@ export async function POST(req) {
   } else {
     if (!vehicle) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (!needed_from || !needed_until) {
+      return NextResponse.json({ error: "Please select when the vehicle is needed" }, { status: 400 });
+    }
+    if (new Date(needed_until) <= new Date(needed_from)) {
+      return NextResponse.json({ error: "'Needed until' must be after 'Needed from'" }, { status: 400 });
     }
 
     // Server-side backstop for Rule B — the UI already blocks selecting an
@@ -60,7 +66,8 @@ export async function POST(req) {
       employee_name,
       vehicle: is_external ? null : vehicle,
       destination,
-      estimated_time: is_external ? null : estimated_time,
+      needed_from: is_external ? null : needed_from,
+      needed_until: is_external ? null : needed_until,
       is_external: !!is_external,
       customer_name: is_external ? customer_name : null,
       status: "pending",

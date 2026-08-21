@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
+import { formatInCompanyTimezone } from "@/lib/timezone";
 
 const STATUS_COPY = {
   pending: { label: "Pending review", tone: "invited" },
@@ -56,8 +57,12 @@ function StatusInner() {
           </tr>
           {!request.is_external && (
             <tr>
-              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Estimated time</td>
-              <td style={{ padding: "6px 0" }}>{request.estimated_time || "—"}</td>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Needed</td>
+              <td style={{ padding: "6px 0" }}>
+                {request.needed_from
+                  ? `${formatInCompanyTimezone(request.needed_from)} → ${formatInCompanyTimezone(request.needed_until)}`
+                  : request.estimated_time || "—"}
+              </td>
             </tr>
           )}
         </tbody>

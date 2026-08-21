@@ -90,7 +90,7 @@ export default function AdminEquipmentRequestsPage() {
                 <th>Employee</th>
                 <th>Equipment</th>
                 <th>Location</th>
-                <th>Estimated time</th>
+                <th>Needed</th>
                 <th>Submitted</th>
                 <th>Status</th>
                 <th>In use?</th>
@@ -103,7 +103,11 @@ export default function AdminEquipmentRequestsPage() {
                   <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
                   <td>{equipmentSummary(r)}</td>
                   <td>{r.location || "—"}</td>
-                  <td>{r.estimated_time || "—"}</td>
+                  <td style={{ fontSize: "0.8rem" }}>
+                    {r.needed_from
+                      ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
+                      : r.estimated_time || "—"}
+                  </td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
                     <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>

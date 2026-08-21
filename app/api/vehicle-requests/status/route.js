@@ -15,7 +15,7 @@ export async function GET(req) {
 
   const { data, error } = await supabaseAdmin
     .from("vehicle_requests")
-    .select("employee_name, vehicle, destination, estimated_time, is_external, customer_name, status, created_at")
+    .select("employee_name, vehicle, destination, estimated_time, needed_from, needed_until, is_external, customer_name, status, created_at")
     .eq("approval_token", token)
     .single();
 

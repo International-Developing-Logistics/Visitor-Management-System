@@ -4,16 +4,18 @@ import { useEffect, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
 import ImageOptionGrid from "@/components/ImageOptionGrid";
+import TimeBlockPicker from "@/components/TimeBlockPicker";
 import { AVAILABLE_VEHICLES } from "@/lib/vehicles";
+import { companyLocalToUtcIso } from "@/lib/timezone";
 
 export default function VehicleRequestForm({ facility }) {
   const [values, setValues] = useState({
     employee_name: "",
     vehicle: "",
     destination: "",
-    estimated_time: "",
     customer_name: "",
   });
+  const [timeBlock, setTimeBlock] = useState({ from: "", until: "" });
   const [isExternal, setIsExternal] = useState(false);
   const [inUse, setInUse] = useState({});
   const [statusUrl, setStatusUrl] = useState("");
@@ -36,9 +38,12 @@ export default function VehicleRequestForm({ facility }) {
 
   const set = (field) => (e) => setValues({ ...values, [field]: e.target.value });
 
+  const timeBlockValid =
+    isExternal || (timeBlock.from && timeBlock.until && new Date(timeBlock.until) > new Date(timeBlock.from));
+
   const canSubmit = isExternal
     ? values.employee_name.trim() && values.customer_name.trim() && values.destination.trim()
-    : values.employee_name.trim() && values.vehicle && values.destination.trim();
+    : values.employee_name.trim() && values.vehicle && values.destination.trim() && timeBlockValid;
 
   const submit = async () => {
     setSubmitting(true);
@@ -49,6 +54,8 @@ export default function VehicleRequestForm({ facility }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
+          needed_from: isExternal ? null : companyLocalToUtcIso(timeBlock.from),
+          needed_until: isExternal ? null : companyLocalToUtcIso(timeBlock.until),
           is_external: isExternal,
           facility: facility.key,
         }),
@@ -120,8 +127,7 @@ export default function VehicleRequestForm({ facility }) {
             <input id="vr-destination" type="text" value={values.destination} onChange={set("destination")} placeholder="Where are you going?" />
 
             <fieldset disabled={isExternal} style={{ border: "none", padding: 0, margin: 0, opacity: isExternal ? 0.45 : 1 }}>
-              <label htmlFor="vr-time">Estimated time needed</label>
-              <input id="vr-time" type="text" value={values.estimated_time} onChange={set("estimated_time")} />
+              <TimeBlockPicker value={timeBlock} onChange={setTimeBlock} idPrefix="vr" />
             </fieldset>
 
             {error && <p className="error-text">{error}</p>}

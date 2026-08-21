@@ -5,8 +5,9 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // POST /api/equipment-requests
 //   { employee_name, equipment_items?: string[], external_rental_request?: string,
-//     location, estimated_time, facility? }
+//     location, needed_from, needed_until, facility? }
 // At least one of equipment_items or external_rental_request is required.
+// needed_from/needed_until are required unless it's a rental request.
 // No email notification on submission (unlike gate/vehicle requests) —
 // this workflow is reviewed purely from /admin/equipment-requests.
 export async function POST(req) {
@@ -14,7 +15,7 @@ export async function POST(req) {
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { employee_name, equipment_items, external_rental_request, location, estimated_time, facility } =
+  const { employee_name, equipment_items, external_rental_request, location, needed_from, needed_until, facility } =
     await req.json();
 
   const items = Array.isArray(equipment_items) ? equipment_items.filter(Boolean) : [];
@@ -25,6 +26,15 @@ export async function POST(req) {
       { error: "Select at least one item, or describe what you need rented" },
       { status: 400 }
     );
+  }
+
+  if (!rental) {
+    if (!needed_from || !needed_until) {
+      return NextResponse.json({ error: "Please select when the equipment is needed" }, { status: 400 });
+    }
+    if (new Date(needed_until) <= new Date(needed_from)) {
+      return NextResponse.json({ error: "'Needed until' must be after 'Needed from'" }, { status: 400 });
+    }
   }
 
   const facilityKey = facility || DEFAULT_FACILITY;
@@ -62,7 +72,8 @@ export async function POST(req) {
       equipment_items: items.length > 0 ? items : null,
       external_rental_request: rental,
       location,
-      estimated_time,
+      needed_from: rental ? null : needed_from,
+      needed_until: rental ? null : needed_until,
       status: "pending",
       facility: facilityKey,
     })
