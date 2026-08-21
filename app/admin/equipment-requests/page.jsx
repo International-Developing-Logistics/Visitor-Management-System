@@ -8,6 +8,14 @@ import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
 const STATUS_LABEL = { pending: "Pending", approved: "Approved", denied: "Denied" };
 const STATUS_BADGE_CLASS = { pending: "invited", approved: "checked_in", denied: "gate_denied" };
 
+function equipmentSummary(r) {
+  const parts = [];
+  if (r.equipment_items?.length) parts.push(r.equipment_items.join(", "));
+  else if (r.equipment) parts.push(r.equipment);
+  if (r.external_rental_request) parts.push(`Rental: ${r.external_rental_request}`);
+  return parts.length ? parts.join(" · ") : "—";
+}
+
 export default function AdminEquipmentRequestsPage() {
   const [facility, setFacility] = useState(DEFAULT_FACILITY);
   const [requests, setRequests] = useState([]);
@@ -85,6 +93,7 @@ export default function AdminEquipmentRequestsPage() {
                 <th>Estimated time</th>
                 <th>Submitted</th>
                 <th>Status</th>
+                <th>In use?</th>
                 <th></th>
               </tr>
             </thead>
@@ -92,12 +101,23 @@ export default function AdminEquipmentRequestsPage() {
               {requests.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
-                  <td>{r.equipment}</td>
-                  <td>{r.location || "-"}</td>
-                  <td>{r.estimated_time || "-"}</td>
+                  <td>{equipmentSummary(r)}</td>
+                  <td>{r.location || "—"}</td>
+                  <td>{r.estimated_time || "—"}</td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
                     <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
+                  </td>
+                  <td>
+                    {r.status === "approved" ? (
+                      r.returned_at ? (
+                        <span className="helper-text" style={{ marginTop: 0 }}>Returned</span>
+                      ) : (
+                        <span className="badge gate_pending">In use</span>
+                      )
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td>
                     {r.status === "pending" ? (
@@ -109,6 +129,10 @@ export default function AdminEquipmentRequestsPage() {
                           Deny
                         </button>
                       </div>
+                    ) : r.status === "approved" && !r.returned_at ? (
+                      <button className="btn-small" onClick={() => decide(r.id, "mark_returned")} disabled={busyId === r.id}>
+                        {busyId === r.id ? "…" : "Mark returned"}
+                      </button>
                     ) : (
                       <button className="btn-small" onClick={() => decide(r.id, "revert")} disabled={busyId === r.id}>
                         {busyId === r.id ? "…" : "Undo"}

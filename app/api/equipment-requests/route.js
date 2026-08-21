@@ -3,30 +3,68 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
-// POST /api/equipment-requests { employee_name, equipment, location, estimated_time, facility? }
+// POST /api/equipment-requests
+//   { employee_name, equipment_items?: string[], external_rental_request?: string,
+//     location, estimated_time, facility? }
+// At least one of equipment_items or external_rental_request is required.
 // No email notification on submission (unlike gate/vehicle requests) —
-// this workflow is reviewed purely from /admin/equipment-requests. Ask if
-// you'd like an admin-notification email added here later.
+// this workflow is reviewed purely from /admin/equipment-requests.
 export async function POST(req) {
   const limited = checkRateLimit(req, "equipment-requests");
   if (limited) return limited;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { employee_name, equipment, location, estimated_time, facility } = await req.json();
+  const { employee_name, equipment_items, external_rental_request, location, estimated_time, facility } =
+    await req.json();
 
-  if (!employee_name || !equipment) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  const items = Array.isArray(equipment_items) ? equipment_items.filter(Boolean) : [];
+  const rental = external_rental_request?.trim() || null;
+
+  if (!employee_name || (items.length === 0 && !rental)) {
+    return NextResponse.json(
+      { error: "Select at least one item, or describe what you need rented" },
+      { status: 400 }
+    );
+  }
+
+  const facilityKey = facility || DEFAULT_FACILITY;
+
+  // Server-side backstop for Rule B, same pattern as vehicle requests —
+  // re-check every selected item is still available at submission time.
+  if (items.length > 0) {
+    const { data: inUseRows } = await supabaseAdmin
+      .from("equipment_requests")
+      .select("equipment, equipment_items, employee_name")
+      .eq("facility", facilityKey)
+      .eq("status", "approved")
+      .is("returned_at", null);
+
+    const inUseMap = {};
+    for (const row of inUseRows || []) {
+      const rowItems = row.equipment_items?.length ? row.equipment_items : row.equipment ? [row.equipment] : [];
+      for (const it of rowItems) inUseMap[it] = row.employee_name;
+    }
+
+    for (const item of items) {
+      if (inUseMap[item]) {
+        return NextResponse.json(
+          { error: `${inUseMap[item]} is currently using this vehicle/equipment.` },
+          { status: 409 }
+        );
+      }
+    }
   }
 
   const { data: request, error } = await supabaseAdmin
     .from("equipment_requests")
     .insert({
       employee_name,
-      equipment,
+      equipment_items: items.length > 0 ? items : null,
+      external_rental_request: rental,
       location,
       estimated_time,
       status: "pending",
-      facility: facility || DEFAULT_FACILITY,
+      facility: facilityKey,
     })
     .select()
     .single();

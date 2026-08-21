@@ -14,11 +14,6 @@ function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const explicitNext = safeNext(params.get("next"));
-  // Which facility's page the person clicked "sign in" from (e.g. /idl/staff)
-  // - only used as a fallback for guard accounts with no explicit `next`,
-  // so they land on the right facility's guard page instead of always
-  // defaulting to Harmony. Admins still always default to /admin, since
-  // that dashboard already has its own facility switcher.
   const rawFacility = params.get("facility");
   const facilityHint = FACILITIES[rawFacility] ? rawFacility : DEFAULT_FACILITY;
 
@@ -43,9 +38,6 @@ function LoginForm() {
       return;
     }
 
-    // No specific page was requested (e.g. someone bookmarked /admin/login
-    // directly) - route by role instead of always assuming /admin, so a
-    // guard account doesn't land on a page it's about to get bounced from.
     const { data: roleRow } = await supabase
       .from("user_roles")
       .select("role")
@@ -74,7 +66,7 @@ function LoginForm() {
         </button>
       </form>
       <p className="helper-text" style={{ marginTop: 18 }}>
-        If you require assistance contact the IT team. 
+        If you need any assistance find me before I find you.
       </p>
     </div>
   );

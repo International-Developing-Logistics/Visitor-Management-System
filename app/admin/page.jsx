@@ -265,7 +265,7 @@ export default function AdminDashboard() {
       {loading && <p className="helper-text">Loading…</p>}
 
       {!loading && visitors.length === 0 && (
-        <p className="helper-text">No visitors in this view yet.</p>
+        <p className="helper-text">No visitors yet.</p>
       )}
 
       {!loading && visitors.length > 0 && (

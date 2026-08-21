@@ -80,7 +80,7 @@ function PassInner() {
 
       {pass.status === "pending" && (
         <p className="helper-text" style={{ marginTop: 16 }}>
-          Your pass is awaiting activation. Check back after registration is reviewed.
+          Your pass is awaiting activation. Check back after your registration is reviewed.
         </p>
       )}
     </div>

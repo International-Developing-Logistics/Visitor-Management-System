@@ -131,15 +131,67 @@ create policy "select own role" on user_roles
 create table if not exists vehicle_requests (
   id uuid primary key default gen_random_uuid(),
   facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
-  employee_name text not null,
-  vehicle text not null,
+  employee_name text, -- optional: not required for an external vehicle request
+  vehicle text, -- optional: not required for an external vehicle request
   destination text not null,
   estimated_time text,
+  is_external boolean not null default false,
+  customer_name text, -- used instead of employee_name/vehicle when is_external
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   approval_token text unique not null,
   decided_at timestamptz,
+  returned_at timestamptz, -- set once the vehicle's back; NULL + approved = "currently in use"
   created_at timestamptz not null default now()
 );
 
 create index if not exists vehicle_requests_facility_idx on vehicle_requests(facility);
 alter table vehicle_requests enable row level security;
+
+-- Equipment requests — admin-only, unlike vehicle requests, these are not
+-- surfaced to security guards at all (no email approval flow either;
+-- reviewed purely from /admin/equipment-requests).
+create table if not exists equipment_requests (
+  id uuid primary key default gen_random_uuid(),
+  facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
+  employee_name text not null,
+  equipment text, -- legacy single-item field, kept for old rows
+  equipment_items text[], -- current multi-select field
+  external_rental_request text, -- free text: equipment requested from a third party, not our own inventory
+  location text,
+  estimated_time text,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'denied')),
+  decided_at timestamptz,
+  returned_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists equipment_requests_facility_idx on equipment_requests(facility);
+alter table equipment_requests enable row level security;
+
+-- Guard-operated vehicle check-in/check-out tracking — a physical fleet
+-- movement log, separate from vehicle_requests (employee request +
+-- coordinator approval). Tracks availability at the vehicle-TYPE level
+-- (matching lib/vehicles.js), with license plate identifying the specific
+-- unit for a given movement.
+create table if not exists vehicle_movements (
+  id uuid primary key default gen_random_uuid(),
+  facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
+  vehicle text not null,
+  license_plate text not null,
+  driver_name text not null,
+  destination text,
+  checked_out_at timestamptz not null default now(),
+  checked_out_by text,
+  checkout_condition_notes text,
+  checkout_photo_url text,
+  checked_in_at timestamptz,
+  checked_in_by text,
+  checkin_condition_notes text,
+  checkin_photo_url text,
+  incident_notes text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists vehicle_movements_facility_idx on vehicle_movements(facility);
+create index if not exists vehicle_movements_active_idx on vehicle_movements(facility, vehicle) where checked_in_at is null;
+alter table vehicle_movements enable row level security;

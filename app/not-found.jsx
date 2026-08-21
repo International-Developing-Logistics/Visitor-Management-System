@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="card" style={{ textAlign: "center" }}>
         <h2>Page not found</h2>
         <p className="helper-text" style={{ marginBottom: 20 }}>
-          That page doesn't exist, or the link may be out of date.
+          Page Not Found
         </p>
         <Link href="/">
           <button className="btn btn-primary" style={{ marginTop: 0 }}>

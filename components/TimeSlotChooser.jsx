@@ -2,7 +2,6 @@
 
 import { formatInViewerLocalTime, formatInCompanyTimezone, COMPANY_TIMEZONE_LABEL } from "@/lib/timezone";
 
-// slots: array of UTC ISO timestamp strings. value: selected ISO string or "".
 export default function TimeSlotChooser({ slots, value, onChange }) {
   if (!slots || slots.length === 0) return null;
 

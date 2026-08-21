@@ -40,7 +40,7 @@ export default function FindPassPage() {
             <div className="confirm-icon">✓</div>
             <h2>Check your email</h2>
             <p className="helper-text">
-              If we found a matching pass, we've emailed you the link.
+              If you have an active pass, we'll email you the link.
             </p>
           </div>
         ) : (

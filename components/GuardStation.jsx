@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import AdminGuard from "@/components/AdminGuard";
 import CameraCapture from "@/components/CameraCapture";
+import VehicleMovementPanel from "@/components/VehicleMovementPanel";
 import { authFetch } from "@/lib/apiFetch";
 import { formatTimeInCompanyTimezone } from "@/lib/timezone";
 import { FACILITIES } from "@/lib/facilities";
@@ -27,6 +28,7 @@ const TABS = [
   { key: "form", label: "Guard Form" },
   { key: "log", label: "Guard Log" },
   { key: "vehicles", label: "Vehicle Requests" },
+  { key: "movements", label: "Vehicle Check In/Out" },
 ];
 
 function GuardStationInner({ initialFacility }) {
@@ -299,9 +301,6 @@ function GuardStationInner({ initialFacility }) {
       {tab === "log" && (
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Guard log</h3>
-          <p className="helper-text" style={{ marginBottom: 16 }}>
-            Updates automatically every few seconds. Use the <strong>Guard Form</strong> tab to log a new entry.
-          </p>
 
           {logsError && <p className="error-text">{logsError}</p>}
           {logsLoading && <p className="helper-text">Loading…</p>}
@@ -363,7 +362,7 @@ function GuardStationInner({ initialFacility }) {
         <div className="admin-card">
           <h3 style={{ marginBottom: 4 }}>Vehicle requests</h3>
           <p className="helper-text" style={{ marginBottom: 16 }}>
-            Check the status before releasing a vehicle. Updates automatically every few seconds.
+            Check the status before releasing a vehicle. 
           </p>
 
           {vehicleError && <p className="error-text">{vehicleError}</p>}
@@ -385,8 +384,8 @@ function GuardStationInner({ initialFacility }) {
                 <tbody>
                   {vehicleRequests.map((r) => (
                     <tr key={r.id}>
-                      <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
-                      <td>{r.vehicle}</td>
+                      <td style={{ fontWeight: 600 }}>{r.is_external ? r.customer_name : r.employee_name}</td>
+                      <td>{r.is_external ? "External vehicle" : r.vehicle}</td>
                       <td>{r.destination}</td>
                       <td>{r.estimated_time || "—"}</td>
                       <td>
@@ -402,6 +401,8 @@ function GuardStationInner({ initialFacility }) {
           )}
         </div>
       )}
+
+      {tab === "movements" && <VehicleMovementPanel facility={facility} />}
     </main>
   );
 }

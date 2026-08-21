@@ -182,7 +182,7 @@ function CheckinInner() {
               onChange={(iso) =>
                 setValues({ ...values, proposed_alternative_time: iso, selected_time_slot: iso ? "" : values.selected_time_slot })
               }
-              label="None of these work — propose a different time"
+              label="Propose a different time"
             />
           </div>
         )}

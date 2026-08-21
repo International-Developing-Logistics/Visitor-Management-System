@@ -3,11 +3,6 @@
 import { useState } from "react";
 import { formatInCompanyTimezone, COMPANY_TIMEZONE_LABEL } from "@/lib/timezone";
 
-// value: UTC ISO string or "". onChange receives a UTC ISO string or "".
-// Unlike host-entered time slots, this input is the GUEST's own device, so
-// their naive datetime-local value is correctly interpreted using their
-// own browser's timezone — no special conversion needed, just a plain
-// `new Date(...)`, which is exactly what happens here.
 export default function ProposeTimeForm({ value, onChange, label = "Propose a different time" }) {
   const [open, setOpen] = useState(!!value);
   const [naiveValue, setNaiveValue] = useState("");

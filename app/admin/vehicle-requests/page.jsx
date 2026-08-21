@@ -85,19 +85,34 @@ export default function AdminVehicleRequestsPage() {
                 <th>Estimated time</th>
                 <th>Submitted</th>
                 <th>Status</th>
+                <th>In use?</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {requests.map((r) => (
                 <tr key={r.id}>
-                  <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
-                  <td>{r.vehicle}</td>
+                  <td style={{ fontWeight: 600 }}>
+                    {r.is_external ? r.customer_name : r.employee_name}
+                    {r.is_external && <span className="helper-text" style={{ marginTop: 0, fontWeight: 400 }}> (external)</span>}
+                  </td>
+                  <td>{r.is_external ? "External vehicle" : r.vehicle}</td>
                   <td>{r.destination}</td>
-                  <td>{r.estimated_time || "-"}</td>
+                  <td>{r.estimated_time || "—"}</td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
                     <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
+                  </td>
+                  <td>
+                    {r.status === "approved" ? (
+                      r.returned_at ? (
+                        <span className="helper-text" style={{ marginTop: 0 }}>Returned</span>
+                      ) : (
+                        <span className={`badge gate_pending`}>In use</span>
+                      )
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td>
                     {r.status === "pending" ? (
@@ -109,6 +124,10 @@ export default function AdminVehicleRequestsPage() {
                           Reject
                         </button>
                       </div>
+                    ) : r.status === "approved" && !r.returned_at ? (
+                      <button className="btn-small" onClick={() => decide(r.id, "mark_returned")} disabled={busyId === r.id}>
+                        {busyId === r.id ? "…" : "Mark returned"}
+                      </button>
                     ) : (
                       <button className="btn-small" onClick={() => decide(r.id, "revert")} disabled={busyId === r.id}>
                         {busyId === r.id ? "…" : "Undo"}

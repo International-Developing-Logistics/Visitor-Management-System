@@ -9,8 +9,6 @@ other than the stated purpose of your visit, and to follow all site safety
 and security guidance given by your host or staff during your time on the
 premises. This acknowledgment applies for the duration of your visit today.`;
 
-// onAgree() is called once the visitor checks the box and clicks Continue —
-// no signature capture involved, just a binding confirmation click.
 export default function AgreementStep({ onAgree, submitting }) {
   const [agreed, setAgreed] = useState(false);
 

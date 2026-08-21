@@ -3,9 +3,6 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 import { sendHostNotification } from "@/lib/email";
 
-// POST /api/admin/checkin { id }
-// Lets staff manually check in a pre-registered guest (e.g. they forgot to
-// tap "I'm here" on their own link, or arrived without a phone).
 export async function POST(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 
-// Copies `url` to the clipboard as a real hyperlink (HTML anchor tag) with
-// custom visible text — e.g. paste into Gmail/Outlook and it renders as
-// "Click here to join" instead of a raw URL. Falls back to plain-text copy
-// if the browser doesn't support rich clipboard writes.
 export default function HyperlinkCopier({ url, defaultText = "Click here to join" }) {
   const [linkText, setLinkText] = useState(defaultText);
   const [copiedPlain, setCopiedPlain] = useState(false);
@@ -28,7 +24,6 @@ export default function HyperlinkCopier({ url, defaultText = "Click here to join
           }),
         ]);
       } else {
-        // Older browsers without rich clipboard support — fall back to plain text.
         await navigator.clipboard.writeText(url);
       }
       setCopiedRich(true);
@@ -66,7 +61,7 @@ export default function HyperlinkCopier({ url, defaultText = "Click here to join
         </button>
       </div>
 
-      <label style={{ marginTop: 0 }}>Link text (for pasting into email/chat as a hyperlink)</label>
+      <label style={{ marginTop: 0 }}>Link text (for pasting into email as a hyperlink)</label>
       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
         <input
           type="text"

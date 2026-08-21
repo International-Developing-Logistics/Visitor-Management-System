@@ -71,7 +71,7 @@ export default function RequestInvitePage() {
             <div className="confirm-icon">✓</div>
             <h2>Request sent</h2>
             <p className="helper-text">
-              Reception will review this and send your guest their pre-registration link.
+              An admin will review this and send your guest their pre-registration link.
             </p>
             <button
               className="btn btn-secondary"
@@ -98,7 +98,7 @@ export default function RequestInvitePage() {
           <div>
             <h3>Request a guest invite</h3>
             <p className="helper-text" style={{ marginBottom: 4 }}>
-              Reception will review this and send the pre-registration link to your guest.
+              An admin will review this and send the pre-registration link to your guest.
             </p>
 
             <label htmlFor="ri-email">Guest email</label>

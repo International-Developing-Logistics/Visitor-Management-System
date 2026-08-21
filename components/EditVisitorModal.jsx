@@ -134,7 +134,7 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
         />
         <p className="helper-text" style={{ marginTop: 6 }}>
           {visitor.proposed_alternative_time && !visitor.selected_time_slot
-            ? "Pre-filled from the guest's proposed alternative time — adjust or save to confirm it."
+            ? "Pre-filled from the guest's proposed alternative time - adjust or save to confirm it."
             : visitor.proposed_time_slots?.length > 0 && !meetingTime
             ? "Guest hasn't picked one of the proposed times yet."
             : "Set or correct the agreed meeting time."}

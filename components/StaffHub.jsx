@@ -34,9 +34,9 @@ export default function StaffHub({ facility }) {
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: 4 }}>Staff & business services</h3>
+        <h3 style={{ marginBottom: 4 }}>Staff Hub 🏢</h3>
         <p className="helper-text" style={{ marginBottom: 18 }}>
-          For internal staff services only.
+          For internal use only.
         </p>
 
         <p className="helper-text" style={{ marginTop: 0, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
@@ -45,17 +45,17 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href={p("/vehicle-request")}
           title="Request a company vehicle"
-          description="Submit a request for coordinator approval"
+          description="Car, Truck, etc..."
         />
         <ServiceLink
           href={p("/equipment-request")}
           title="Request equipment"
-          description="Submit an equipment request for coordinator approval "
+          description="Pallet jack, Forklift, etc..."
         />
         <ServiceLink
           href="/request-invite"
           title="Hosting a guest? Request an invite"
-          description="Send reception a pre-registration request for your guest"
+          description="Send a pre-registration request for your guest"
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
@@ -64,7 +64,7 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href={`/admin/login?facility=${facility.key}`}
           title="Staff / Security sign in"
-          description="Reception, admin, and security guard access"
+          description="Staff, Admin, and Security Guard access"
         />
       </div>
 

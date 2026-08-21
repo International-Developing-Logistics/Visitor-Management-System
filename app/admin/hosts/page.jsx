@@ -104,7 +104,7 @@ export default function HostsPage() {
               <tr key={h.id}>
                 <td>{h.name}</td>
                 <td>{h.email}</td>
-                <td>{h.department || "-"}</td>
+                <td>{h.department || "—"}</td>
                 <td>
                   <button className="btn-small" onClick={() => removeHost(h.id)}>Remove</button>
                 </td>

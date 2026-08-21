@@ -2,9 +2,6 @@
 
 import { COMPANY_TIMEZONE_LABEL } from "@/lib/timezone";
 
-// slots: array of "YYYY-MM-DDTHH:mm" local datetime strings, entered as
-// Dubai wall-clock time (converted to UTC by the caller before submitting
-// — see companyLocalToUtcIso in lib/timezone.js).
 export default function TimeSlotEditor({ slots, onChange }) {
   const updateSlot = (i, value) => {
     const next = [...slots];
@@ -40,8 +37,7 @@ export default function TimeSlotEditor({ slots, onChange }) {
         + Add time slot
       </button>
       <p className="helper-text" style={{ marginTop: 6 }}>
-        Times are entered in {COMPANY_TIMEZONE_LABEL} — optional, offer a few and let your
-        guest pick one when they complete their pre-registration.
+        Suggest a time and let your guest pick one.
       </p>
     </div>
   );

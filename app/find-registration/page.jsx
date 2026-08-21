@@ -40,7 +40,7 @@ export default function FindRegistrationPage() {
             <div className="confirm-icon">✓</div>
             <h2>Check your email</h2>
             <p className="helper-text">
-              If we found a matching pre-registration, we've emailed you the link to continue.
+              If you have pre-registered, we'll resend the link to your email.
             </p>
           </div>
         ) : (

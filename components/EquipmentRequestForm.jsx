@@ -1,17 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
+import ImageOptionGrid from "@/components/ImageOptionGrid";
 import { AVAILABLE_EQUIPMENT } from "@/lib/equipment";
 
-// facility: { key, label, logo, logoHeight } from lib/facilities.js
 export default function EquipmentRequestForm({ facility }) {
-  const [values, setValues] = useState({ employee_name: "", equipment: "", location: "", estimated_time: "" });
+  const [employeeName, setEmployeeName] = useState("");
+  const [equipmentItems, setEquipmentItems] = useState([]);
+  const [needsRental, setNeedsRental] = useState(false);
+  const [rentalDescription, setRentalDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [estimatedTime, setEstimatedTime] = useState("");
+  const [inUse, setInUse] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const set = (field) => (e) => setValues({ ...values, [field]: e.target.value });
+  useEffect(() => {
+    fetch(`/api/equipment-requests/availability?facility=${facility.key}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const messages = {};
+        for (const [name, employee] of Object.entries(d.inUse || {})) {
+          messages[name] = `${employee} is currently using this equipment.`;
+        }
+        setInUse(messages);
+      })
+      .catch(() => setInUse({}));
+  }, [facility.key]);
+
+  const toggleRental = (checked) => {
+    setNeedsRental(checked);
+    if (checked) setEquipmentItems([]); 
+  };
+
+  const canSubmit =
+    employeeName.trim() &&
+    (needsRental ? rentalDescription.trim() : equipmentItems.length > 0);
 
   const submit = async () => {
     setSubmitting(true);
@@ -20,7 +46,14 @@ export default function EquipmentRequestForm({ facility }) {
       const res = await fetch("/api/equipment-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, facility: facility.key }),
+        body: JSON.stringify({
+          employee_name: employeeName,
+          equipment_items: needsRental ? [] : equipmentItems,
+          external_rental_request: needsRental ? rentalDescription : null,
+          location,
+          estimated_time: estimatedTime,
+          facility: facility.key,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -43,44 +76,65 @@ export default function EquipmentRequestForm({ facility }) {
           <div className="confirm-wrap">
             <div className="confirm-icon">✓</div>
             <h2>Request sent</h2>
-            <p className="helper-text">
-              Your request has been submitted for admin review.
-            </p>
           </div>
         ) : (
           <div>
             <h3>Request equipment</h3>
 
             <label htmlFor="eq-name">Your name</label>
-            <input id="eq-name" type="text" value={values.employee_name} onChange={set("employee_name")} placeholder="Enter your full name" />
+            <input id="eq-name" type="text" value={employeeName} onChange={(e) => setEmployeeName(e.target.value)} placeholder="Enter your full name" />
 
-            <label htmlFor="eq-equipment">Equipment</label>
-            <select id="eq-equipment" value={values.equipment} onChange={set("equipment")}>
-              <option value="">Select equipment…</option>
-              {AVAILABLE_EQUIPMENT.map((e) => (
-                <option key={e} value={e}>{e}</option>
-              ))}
-            </select>
+            <fieldset disabled={needsRental} style={{ border: "none", padding: 0, margin: 0, opacity: needsRental ? 0.45 : 1 }}>
+              <label>Equipment (select any that apply)</label>
+              <ImageOptionGrid
+                items={AVAILABLE_EQUIPMENT}
+                selected={equipmentItems}
+                onChange={setEquipmentItems}
+                multi
+                unavailable={needsRental ? {} : inUse}
+              />
+            </fieldset>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 18 }}>
+              <input
+                type="checkbox"
+                checked={needsRental}
+                onChange={(e) => toggleRental(e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              <span style={{ fontWeight: 400, color: "var(--ink)", textTransform: "none", fontSize: "0.9rem" }}>
+                Request a third-party rental
+              </span>
+            </label>
+
+            {needsRental && (
+              <div>
+                <label htmlFor="eq-rental">Describe the equipment needed</label>
+                <textarea
+                  id="eq-rental"
+                  rows={2}
+                  value={rentalDescription}
+                  onChange={(e) => setRentalDescription(e.target.value)}
+                  placeholder="e.g. Mobile crane, scissor lift, etc..."
+                />
+              </div>
+            )}
 
             <label htmlFor="eq-location">Location / area needed</label>
-            <input id="eq-location" type="text" value={values.location} onChange={set("location")} placeholder="Where will it be used?" />
+            <input id="eq-location" type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Where will it be used?" />
 
             <label htmlFor="eq-time">Estimated time needed</label>
             <input
               id="eq-time"
               type="text"
-              value={values.estimated_time}
-              onChange={set("estimated_time")}
-              placeholder="e.g. 2 hours, all day Thursday"
+              value={estimatedTime}
+              onChange={(e) => setEstimatedTime(e.target.value)}
+              placeholder="eg. 2 hours"
             />
 
             {error && <p className="error-text">{error}</p>}
 
-            <button
-              className="btn btn-primary"
-              onClick={submit}
-              disabled={submitting || !values.employee_name.trim() || !values.equipment}
-            >
+            <button className="btn btn-primary" onClick={submit} disabled={submitting || !canSubmit}>
               {submitting ? "Sending…" : "Submit request"}
             </button>
           </div>

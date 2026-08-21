@@ -8,7 +8,6 @@ import BrandHeader from "@/components/BrandHeader";
 
 const STEPS = ["Details", "Agreement", "Done"];
 
-// facility: { key, label, logo } from lib/facilities.js
 export default function WalkinForm({ facility }) {
   const [step, setStep] = useState(0);
   const [hosts, setHosts] = useState([]);

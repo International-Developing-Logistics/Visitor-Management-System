@@ -4,7 +4,7 @@ import { useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
 
-const MAX_FILE_BYTES = 3 * 1024 * 1024; // 3MB — stays safely under Vercel's request size limit once base64-encoded
+const MAX_FILE_BYTES = 3 * 1024 * 1024; 
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -44,7 +44,7 @@ export default function ContractorRegisterPage() {
       return;
     }
     if (file.size > MAX_FILE_BYTES) {
-      setFileError("That file is too large — please keep it under 3MB.");
+      setFileError("The file is too large - please keep it under 3MB.");
       return;
     }
 
@@ -53,7 +53,7 @@ export default function ContractorRegisterPage() {
       setPassportFile(file);
       setPassportDataUrl(dataUrl);
     } catch {
-      setFileError("Couldn't read that file — please try again.");
+      setFileError("File unreadable - please try again.");
     }
   };
 
@@ -89,8 +89,8 @@ export default function ContractorRegisterPage() {
               <div className="confirm-icon">✓</div>
               <h2>Registration received</h2>
               <p className="helper-text" style={{ marginBottom: 20 }}>
-                An admin will review and activate your pass — we'll email you when it's ready.
-                Save this link too, it's your pass once activated:
+                An admin will review and activate your pass - we'll email you when it's ready.
+                Save this link to use you pass once activated:
               </p>
             </div>
             <HyperlinkCopier url={result.passUrl} defaultText="My contractor pass" />
@@ -99,7 +99,7 @@ export default function ContractorRegisterPage() {
           <div>
             <h3>Contractor registration</h3>
             <p className="helper-text" style={{ marginBottom: 4 }}>
-              For contractors who'll be visiting regularly for a project.
+              For contractors/vendors that require a multi-entry pass.
             </p>
 
             <label htmlFor="cr-full-name">Full name</label>
@@ -120,7 +120,7 @@ export default function ContractorRegisterPage() {
               type="text"
               value={values.estimated_duration}
               onChange={set("estimated_duration")}
-              placeholder="e.g. 3 months, until March 2027"
+              placeholder="eg. 3 months"
             />
 
             <label htmlFor="cr-passport">Passport copy</label>

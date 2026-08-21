@@ -36,10 +36,11 @@ function StatusInner() {
   if (error) return <p className="error-text">{error}</p>;
 
   const status = STATUS_COPY[request.status] || { label: request.status, tone: "invited" };
+  const requesterName = request.is_external ? request.customer_name : request.employee_name;
 
   return (
     <div style={{ textAlign: "center" }}>
-      <h2 style={{ marginBottom: 4 }}>{request.employee_name}</h2>
+      <h2 style={{ marginBottom: 4 }}>{requesterName}</h2>
       <p style={{ marginBottom: 20 }}>
         <span className={`badge ${status.tone}`}>{status.label}</span>
       </p>
@@ -47,21 +48,23 @@ function StatusInner() {
         <tbody>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0", width: 130 }}>Vehicle</td>
-            <td style={{ padding: "6px 0" }}>{request.vehicle}</td>
+            <td style={{ padding: "6px 0" }}>{request.is_external ? "External — not from our fleet" : request.vehicle}</td>
           </tr>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0" }}>Destination</td>
             <td style={{ padding: "6px 0" }}>{request.destination}</td>
           </tr>
-          <tr>
-            <td style={{ color: "var(--muted)", padding: "6px 0" }}>Estimated time</td>
-            <td style={{ padding: "6px 0" }}>{request.estimated_time || "—"}</td>
-          </tr>
+          {!request.is_external && (
+            <tr>
+              <td style={{ color: "var(--muted)", padding: "6px 0" }}>Estimated time</td>
+              <td style={{ padding: "6px 0" }}>{request.estimated_time || "—"}</td>
+            </tr>
+          )}
         </tbody>
       </table>
       {request.status === "pending" && (
         <p className="helper-text" style={{ marginTop: 16 }}>
-          Transport coordinators have been notified — check back for a decision.
+          Transport coordinators have been notified.
         </p>
       )}
     </div>

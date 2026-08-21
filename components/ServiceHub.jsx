@@ -70,9 +70,6 @@ export default function ServiceHub({ facility }) {
         </Link>
       </div>
 
-      {/* Hub mode — visitor and contractor options only. Employee/staff
-          services live on a separate page (see the link below) so a guest
-          can't accidentally end up on something meant for staff. */}
       <div className="card" style={{ marginTop: 20 }}>
         <h3 style={{ marginBottom: 4 }}>Other ways to get here</h3>
         <p className="helper-text" style={{ marginBottom: 18 }}>
@@ -104,7 +101,7 @@ export default function ServiceHub({ facility }) {
         <ServiceLink
           href="/contractor-register"
           title="Register for a site pass"
-          description="For contractors visiting regularly for a project"
+          description="For contractors/vendors visiting for a project"
         />
       </div>
 
