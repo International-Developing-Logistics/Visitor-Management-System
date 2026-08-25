@@ -197,7 +197,7 @@ export default function HangmanGame() {
             )}
             {state.status === "lost" && (
               <p style={{ fontWeight: 600, color: "var(--danger)" }}>
-                haha you lose <span style={{ textTransform: "uppercase" }}>{state.word}</span>.
+                haha you lose it's <span style={{ textTransform: "uppercase" }}>{state.word}</span>.
               </p>
             )}
 
