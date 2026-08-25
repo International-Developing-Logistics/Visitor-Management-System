@@ -44,7 +44,7 @@ export default function RecommendationForm() {
             <div className="confirm-wrap">
               <div className="confirm-icon">✓</div>
               <h2>Thanks!</h2>
-              <p className="helper-text">Your suggestion has been sent to the admin team.</p>
+              <p className="helper-text">Your suggestion has been sent to me.</p>
               <button
                 className="btn btn-secondary"
                 onClick={() => {
@@ -59,8 +59,7 @@ export default function RecommendationForm() {
             <div>
               <h3>Suggest a feature</h3>
               <p className="helper-text" style={{ marginBottom: 18 }}>
-                What would you like added or changed in this app? This is submitted
-                anonymously — we don't record who sent it.
+                What would you want?
               </p>
 
               <label htmlFor="rec-description">Your suggestion</label>
@@ -69,7 +68,7 @@ export default function RecommendationForm() {
                 rows={6}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. it would help to see who's currently checked in without opening the admin dashboard"
+                placeholder="e.g. equipment request form"
               />
 
               {error && <p className="error-text">{error}</p>}

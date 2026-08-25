@@ -140,7 +140,7 @@ export default function HangmanGame() {
       </div>
 
       <div className="card" style={{ textAlign: "center" }}>
-        <h3 style={{ marginBottom: 4 }}>Hangman 🎪</h3>
+        <h3 style={{ marginBottom: 4 }}>Hangman 𖠋</h3>
         <p className="helper-text" style={{ marginBottom: 18 }}>
           Guess the staff
         </p>
@@ -157,7 +157,7 @@ export default function HangmanGame() {
               type="text"
               value={nickname}
               onChange={handleNicknameChange}
-              placeholder="e.g. Sam from Receiving"
+              placeholder="e.g. ayman"
               style={{ maxWidth: 260, margin: "0 auto 14px" }}
             />
 

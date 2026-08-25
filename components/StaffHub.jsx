@@ -37,7 +37,7 @@ export default function StaffHub({ facility }) {
         <h3 style={{ marginBottom: 4 }}>Staff Hub 🏢</h3>
 
         <p className="helper-text" style={{ marginTop: 0, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
-          Company business
+          Staff Services
         </p>
         <ServiceLink
           href={p("/vehicle-request")}
@@ -57,7 +57,7 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href="/recommendations"
           title="Suggest a feature"
-          description="Tell us what you'd like added to this app — anonymous"
+          description="Do you have a feature you want added?"
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
@@ -66,7 +66,7 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href="/hangman"
           title="Hangman"
-          description="One shared word for everyone — take turns guessing letters"
+          description="Gaaaame"
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
