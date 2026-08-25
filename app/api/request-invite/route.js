@@ -5,10 +5,10 @@ import { randomUUID } from "crypto";
 
 // POST /api/request-invite { email, full_name?, host_id, purpose, notes?,
 //   additional_visitor_count?, additional_visitor_names? }
-// No login required — this only queues a request. It does NOT create a
-// usable check-in link or send anything to the guest. An admin must review
-// it in /admin and approve it from the "Requests" tab before any invite
-// actually goes out.
+// Public/no-login by design — see HANDOVER.md §1.4. This only queues a
+// request. It does NOT create a usable check-in link or send anything to
+// the guest. An admin must review it in /admin and approve it from the
+// "Requests" tab before any invite actually goes out.
 export async function POST(req) {
   const limited = checkRateLimit(req, "request-invite");
   if (limited) return limited;

@@ -35,9 +35,6 @@ export default function StaffHub({ facility }) {
 
       <div className="card">
         <h3 style={{ marginBottom: 4 }}>Staff Hub 🏢</h3>
-        <p className="helper-text" style={{ marginBottom: 18 }}>
-          For internal use only.
-        </p>
 
         <p className="helper-text" style={{ marginTop: 0, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
           Company business
@@ -56,6 +53,20 @@ export default function StaffHub({ facility }) {
           href="/request-invite"
           title="Hosting a guest? Request an invite"
           description="Send a pre-registration request for your guest"
+        />
+        <ServiceLink
+          href="/recommendations"
+          title="Suggest a feature"
+          description="Tell us what you'd like added to this app — anonymous"
+        />
+
+        <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
+          Just for fun
+        </p>
+        <ServiceLink
+          href="/hangman"
+          title="Hangman"
+          description="One shared word for everyone — take turns guessing letters"
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>

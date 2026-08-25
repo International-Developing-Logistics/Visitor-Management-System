@@ -48,6 +48,7 @@ function AdminNav() {
         {link("/admin/vehicle-requests", "Vehicle Requests")}
         {link("/admin/vehicle-movements", "Vehicle Check In/Out")}
         {link("/admin/equipment-requests", "Equipment Requests")}
+        {link("/admin/recommendations", "Recommendations")}
         {link("/preregister", "Invite a guest")}
       </div>
       <button

@@ -10,6 +10,7 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 // needed_from/needed_until are required unless it's a rental request.
 // No email notification on submission (unlike gate/vehicle requests) —
 // this workflow is reviewed purely from /admin/equipment-requests.
+// Public/no-login by design — see HANDOVER.md §1.4.
 export async function POST(req) {
   const limited = checkRateLimit(req, "equipment-requests");
   if (limited) return limited;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/guard/vehicle-movements/availability?facility=idl
@@ -8,7 +8,7 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 // facility with no checked_in_at yet. Returns driver name so the checkout
 // form can show who currently has it.
 export async function GET(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();

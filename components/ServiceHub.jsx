@@ -108,6 +108,9 @@ export default function ServiceHub({ facility }) {
       <p className="helper-text" style={{ marginTop: 18, textAlign: "center" }}>
         Employee or staff member? <Link href={p("/staff")}>Staff &amp; business services →</Link>
       </p>
+      <p className="helper-text" style={{ marginTop: 6, textAlign: "center" }}>
+        Waiting around? <Link href="/hangman">Play Hangman →</Link>
+      </p>
     </main>
   );
 }

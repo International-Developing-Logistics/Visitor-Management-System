@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/guard/gate-status?facility=idl
@@ -9,7 +9,7 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 // records with edit access): guards can see approval outcomes without
 // getting broader visitor data or edit capability.
 export async function GET(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();

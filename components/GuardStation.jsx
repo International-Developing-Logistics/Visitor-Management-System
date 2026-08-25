@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import BrandHeader from "@/components/BrandHeader";
 import AdminGuard from "@/components/AdminGuard";
 import CameraCapture from "@/components/CameraCapture";
@@ -184,18 +185,28 @@ function GuardStationInner({ initialFacility }) {
         <BrandHeader label="Security" companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
-      <div style={{ maxWidth: 720, width: "100%", marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button
-              key={f.key}
-              className={`tab ${facility.key === f.key ? "active" : ""}`}
-              onClick={() => setFacility(f)}
-            >
-              {f.label}
-            </button>
-          ))}
+      <div style={{ maxWidth: 720, width: "100%", marginBottom: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
+          <div style={{ display: "flex", gap: 6 }}>
+            {Object.values(FACILITIES).map((f) => (
+              <button
+                key={f.key}
+                className={`tab ${facility.key === f.key ? "active" : ""}`}
+                onClick={() => setFacility(f)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 14 }}>
+          <Link href="/hangman" className="helper-text" style={{ marginTop: 0, textDecoration: "underline" }}>
+            Hangman
+          </Link>
+          <Link href="/recommendations" className="helper-text" style={{ marginTop: 0, textDecoration: "underline" }}>
+            Suggest a feature
+          </Link>
         </div>
       </div>
 

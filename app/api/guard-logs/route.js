@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { uploadPrivateFile, signMany } from "@/lib/storage";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 import { randomUUID } from "crypto";
@@ -9,7 +9,7 @@ import { randomUUID } from "crypto";
 // newest first, with a signed URL for each vehicle plate photo. Used by
 // both the guard station page and the admin dashboard.
 export async function GET(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -44,7 +44,7 @@ export async function GET(req) {
 
 // POST /api/guard-logs — a guard logs a new vehicle/visitor entry.
 export async function POST(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();
