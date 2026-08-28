@@ -6,27 +6,23 @@ import { HANGMAN_WORDS } from "@/lib/hangmanWords";
 const MAX_WRONG = 6;
 const MAX_NICKNAME_LENGTH = 30;
 
-// Each player has their own private round — not a shared board — so their
-// score is entirely their own. A round belongs to a nickname; fetches the
-// player's current in-progress round, or starts their next one (cycling
-// through HANGMAN_WORDS in order, based on how many rounds they've already
-// played) if they don't have one going. Both GET and POST funnel through
-// this, so it's the one place "what's this player's word" gets decided.
 async function getOrCreateCurrentRound(supabaseAdmin, nickname) {
-  const { data: latest } = await supabaseAdmin
+  const { data: latest, error: latestError } = await supabaseAdmin
     .from("hangman_rounds")
     .select("*")
     .eq("nickname", nickname)
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (latestError) throw latestError;
 
   if (latest && latest.status === "playing") return latest;
 
-  const { count } = await supabaseAdmin
+  const { count, error: countError } = await supabaseAdmin
     .from("hangman_rounds")
     .select("id", { count: "exact", head: true })
     .eq("nickname", nickname);
+  if (countError) throw countError;
 
   const nextIndex = (count || 0) % HANGMAN_WORDS.length;
   const word = HANGMAN_WORDS[nextIndex];
@@ -68,10 +64,6 @@ function publicRoundState(round) {
   };
 }
 
-// GET /api/hangman?nickname=... — that player's current round (started if
-// they don't have one yet) + the top-10 leaderboard. Without a nickname,
-// just the leaderboard comes back so the page can show it before anyone's
-// started playing. Public, no login.
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const nickname = (searchParams.get("nickname") || "").trim().slice(0, MAX_NICKNAME_LENGTH);
@@ -87,7 +79,9 @@ export async function GET(req) {
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    
+    console.error("[api/hangman]", err);
+    return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
 
@@ -101,11 +95,11 @@ export async function POST(req) {
   const { letter, nickname } = await req.json();
 
   if (typeof letter !== "string" || !/^[a-zA-Z]$/.test(letter)) {
-    return NextResponse.json({ error: "Guess a single letter" }, { status: 400 });
+    return NextResponse.json({ error: "Guess a letter" }, { status: 400 });
   }
   const trimmedNickname = typeof nickname === "string" ? nickname.trim().slice(0, MAX_NICKNAME_LENGTH) : "";
   if (!trimmedNickname) {
-    return NextResponse.json({ error: "Enter a nickname first" }, { status: 400 });
+    return NextResponse.json({ error: "Enter your name" }, { status: 400 });
   }
 
   const normalizedLetter = letter.toLowerCase();
@@ -178,6 +172,10 @@ export async function POST(req) {
     const leaderboard = await getLeaderboard(supabaseAdmin);
     return NextResponse.json({ ...publicRoundState(updated), leaderboard });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    // Log the real error server-side (visible in your terminal / Vercel
+    // logs) but never hand a raw exception message back to a player —
+    // that's confusing at best and can leak internals at worst.
+    console.error("[api/hangman]", err);
+    return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }

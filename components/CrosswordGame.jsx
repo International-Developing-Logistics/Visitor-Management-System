@@ -227,7 +227,7 @@ export default function CrosswordGame() {
               value={nickname}
               onChange={handleNicknameChange}
               onKeyDown={(e) => e.key === "Enter" && startPlaying()}
-              placeholder="e.g. Sam from Receiving"
+              placeholder="e.g. Bob"
               style={{ maxWidth: 260, margin: "0 auto 12px" }}
             />
             {message && <p className="error-text">{message}</p>}

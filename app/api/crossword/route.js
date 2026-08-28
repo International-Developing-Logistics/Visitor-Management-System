@@ -15,11 +15,6 @@ function totalFillableCells(puzzle) {
   return puzzle.size * puzzle.size - puzzle.blocks.length;
 }
 
-// Builds the full answer grid from the puzzle's across/down entries, and
-// sanity-checks that every entry agrees with every other entry at each
-// crossing cell — catches a typo in lib/crosswordPuzzles.js immediately
-// (as a thrown error) instead of shipping a grid that can never be fully
-// solved.
 const solvedGridCache = new Map();
 function solvedGridFor(puzzleIndex) {
   if (solvedGridCache.has(puzzleIndex)) return solvedGridCache.get(puzzleIndex);
@@ -43,26 +38,23 @@ function solvedGridFor(puzzleIndex) {
   return grid;
 }
 
-// Each player solves their own private copy of the grid — not a shared
-// board — so their score is entirely their own. A round belongs to a
-// nickname; fetches that player's current in-progress round, or starts
-// their next one (cycling through CROSSWORD_PUZZLES in order, based on
-// how many puzzles they've already played) if they don't have one going.
 async function getOrCreateCurrentRound(supabaseAdmin, nickname) {
-  const { data: latest } = await supabaseAdmin
+  const { data: latest, error: latestError } = await supabaseAdmin
     .from("crossword_rounds")
     .select("*")
     .eq("nickname", nickname)
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (latestError) throw latestError;
 
   if (latest && latest.status === "playing") return latest;
 
-  const { count } = await supabaseAdmin
+  const { count, error: countError } = await supabaseAdmin
     .from("crossword_rounds")
     .select("id", { count: "exact", head: true })
     .eq("nickname", nickname);
+  if (countError) throw countError;
 
   const nextIndex = (count || 0) % CROSSWORD_PUZZLES.length;
 
@@ -104,10 +96,6 @@ function publicRoundState(round) {
   };
 }
 
-// GET /api/crossword?nickname=... — that player's current puzzle (started
-// if they don't have one yet) + the top-10 leaderboard. Without a
-// nickname, just the leaderboard comes back so the page can show it
-// before anyone's started playing. Public, no login.
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const nickname = (searchParams.get("nickname") || "").trim().slice(0, MAX_NICKNAME_LENGTH);
@@ -123,14 +111,11 @@ export async function GET(req) {
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("[api/crossword]", err);
+    return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
 
-// POST /api/crossword { row, col, letter, nickname }
-// Public, no login. One cell guess per call, applied to that nickname's
-// own in-progress round. A wrong guess isn't persisted at all — it's just
-// graded and handed back.
 export async function POST(req) {
   const limited = checkRateLimit(req, "crossword");
   if (limited) return limited;
@@ -171,7 +156,11 @@ export async function POST(req) {
     }
 
     const solvedGrid = solvedGridFor(round.puzzle_index);
-    const correct = solvedGrid[row][col] === normalizedLetter;
+    const solvedRow = solvedGrid[row];
+    if (!solvedRow || solvedRow[col] === undefined) {
+      throw new Error(`No answer letter defined for row ${row}, col ${col} in puzzle ${round.puzzle_index}`);
+    }
+    const correct = solvedRow[col] === normalizedLetter;
 
     if (!correct) {
       const leaderboard = await getLeaderboard(supabaseAdmin);
@@ -222,6 +211,7 @@ export async function POST(req) {
     const leaderboard = await getLeaderboard(supabaseAdmin);
     return NextResponse.json({ ...publicRoundState(updated), leaderboard, correct: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("[api/crossword]", err);
+    return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
