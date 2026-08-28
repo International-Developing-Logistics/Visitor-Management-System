@@ -6,6 +6,12 @@ import { HANGMAN_WORDS } from "@/lib/hangmanWords";
 const MAX_WRONG = 6;
 const MAX_NICKNAME_LENGTH = 30;
 
+// Each player has their own private round — not a shared board — so their
+// score is entirely their own. A round belongs to a nickname; fetches the
+// player's current in-progress round, or starts their next one (cycling
+// through HANGMAN_WORDS in order, based on how many rounds they've already
+// played) if they don't have one going. Both GET and POST funnel through
+// this, so it's the one place "what's this player's word" gets decided.
 async function getOrCreateCurrentRound(supabaseAdmin, nickname) {
   const { data: latest, error: latestError } = await supabaseAdmin
     .from("hangman_rounds")
@@ -64,23 +70,32 @@ function publicRoundState(round) {
   };
 }
 
+// GET /api/hangman?nickname=... — that player's current round (started if
+// they don't have one yet) + the top-10 leaderboard. Without a nickname,
+// just the leaderboard comes back so the page can show it before anyone's
+// started playing. Public, no login.
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const nickname = (searchParams.get("nickname") || "").trim().slice(0, MAX_NICKNAME_LENGTH);
   const supabaseAdmin = getSupabaseAdmin();
+  let stage = "start";
   try {
+    stage = "leaderboard";
     const leaderboard = await getLeaderboard(supabaseAdmin);
     if (!nickname) {
       return NextResponse.json({ leaderboard }, { headers: { "Cache-Control": "no-store, max-age=0" } });
     }
+    stage = "getOrCreateCurrentRound";
     const round = await getOrCreateCurrentRound(supabaseAdmin, nickname);
     return NextResponse.json(
       { ...publicRoundState(round), leaderboard },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {
-    
-    console.error("[api/hangman]", err);
+    // Log the real error server-side (visible in your terminal / Vercel
+    // logs) but never hand a raw exception message back to a player —
+    // that's confusing at best and can leak internals at worst.
+    console.error(`[api/hangman] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
@@ -95,19 +110,27 @@ export async function POST(req) {
   const { letter, nickname } = await req.json();
 
   if (typeof letter !== "string" || !/^[a-zA-Z]$/.test(letter)) {
-    return NextResponse.json({ error: "Guess a letter" }, { status: 400 });
+    return NextResponse.json({ error: "Guess a single letter" }, { status: 400 });
   }
   const trimmedNickname = typeof nickname === "string" ? nickname.trim().slice(0, MAX_NICKNAME_LENGTH) : "";
   if (!trimmedNickname) {
-    return NextResponse.json({ error: "Enter your name" }, { status: 400 });
+    return NextResponse.json({ error: "Enter a nickname first" }, { status: 400 });
   }
 
   const normalizedLetter = letter.toLowerCase();
   const supabaseAdmin = getSupabaseAdmin();
 
+  // Tracks which step we're on so that if something throws, the server log
+  // says exactly where — production stack traces point into a minified,
+  // single-line bundle that's otherwise useless for pinning down which
+  // line actually failed.
+  let stage = "start";
+
   try {
+    stage = "getOrCreateCurrentRound";
     const round = await getOrCreateCurrentRound(supabaseAdmin, trimmedNickname);
 
+    stage = "already-finished check";
     if (round.status !== "playing") {
       // This round already finished (e.g. a second tab caught up) — hand
       // back the finished state instead of erroring.
@@ -115,17 +138,21 @@ export async function POST(req) {
       return NextResponse.json({ ...publicRoundState(round), leaderboard });
     }
 
-    if (round.guessed_letters.includes(normalizedLetter)) {
+    stage = "already-guessed check";
+    const guessedSoFar = Array.isArray(round.guessed_letters) ? round.guessed_letters : [];
+    if (guessedSoFar.includes(normalizedLetter)) {
       return NextResponse.json({ error: "That letter's already been guessed" }, { status: 400 });
     }
 
-    const guessedLetters = [...round.guessed_letters, normalizedLetter];
+    stage = "grade guess";
+    const guessedLetters = [...guessedSoFar, normalizedLetter];
     const correct = round.word.includes(normalizedLetter);
     const wrongGuesses = correct ? round.wrong_guesses : round.wrong_guesses + 1;
     const solved = round.word.split("").every((l) => guessedLetters.includes(l));
     const failed = !solved && wrongGuesses >= round.max_wrong;
     const status = solved ? "won" : failed ? "lost" : "playing";
 
+    stage = "update round";
     const { data: updated, error: updateError } = await supabaseAdmin
       .from("hangman_rounds")
       .update({
@@ -144,15 +171,18 @@ export async function POST(req) {
     // the word. Since this round is this player's alone, every point
     // earned in it is entirely down to their own guesses.
     if (correct) {
+      stage = "score lookup";
       const points = 1 + (solved ? 6 : 0);
-      const { data: existing } = await supabaseAdmin
+      const { data: existing, error: scoreLookupError } = await supabaseAdmin
         .from("hangman_scores")
         .select("*")
         .eq("nickname", trimmedNickname)
         .maybeSingle();
+      if (scoreLookupError) throw scoreLookupError;
 
+      stage = "score update/insert";
       if (existing) {
-        await supabaseAdmin
+        const { error: scoreUpdateError } = await supabaseAdmin
           .from("hangman_scores")
           .update({
             points: existing.points + points,
@@ -160,22 +190,25 @@ export async function POST(req) {
             updated_at: new Date().toISOString(),
           })
           .eq("id", existing.id);
+        if (scoreUpdateError) throw scoreUpdateError;
       } else {
-        await supabaseAdmin.from("hangman_scores").insert({
+        const { error: scoreInsertError } = await supabaseAdmin.from("hangman_scores").insert({
           nickname: trimmedNickname,
           points,
           rounds_won: solved ? 1 : 0,
         });
+        if (scoreInsertError) throw scoreInsertError;
       }
     }
 
+    stage = "final leaderboard";
     const leaderboard = await getLeaderboard(supabaseAdmin);
     return NextResponse.json({ ...publicRoundState(updated), leaderboard });
   } catch (err) {
     // Log the real error server-side (visible in your terminal / Vercel
     // logs) but never hand a raw exception message back to a player —
     // that's confusing at best and can leak internals at worst.
-    console.error("[api/hangman]", err);
+    console.error(`[api/hangman] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }

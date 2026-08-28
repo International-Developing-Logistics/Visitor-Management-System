@@ -15,6 +15,11 @@ function totalFillableCells(puzzle) {
   return puzzle.size * puzzle.size - puzzle.blocks.length;
 }
 
+// Builds the full answer grid from the puzzle's across/down entries, and
+// sanity-checks that every entry agrees with every other entry at each
+// crossing cell — catches a typo in lib/crosswordPuzzles.js immediately
+// (as a thrown error) instead of shipping a grid that can never be fully
+// solved.
 const solvedGridCache = new Map();
 function solvedGridFor(puzzleIndex) {
   if (solvedGridCache.has(puzzleIndex)) return solvedGridCache.get(puzzleIndex);
@@ -38,6 +43,11 @@ function solvedGridFor(puzzleIndex) {
   return grid;
 }
 
+// Each player solves their own private copy of the grid — not a shared
+// board — so their score is entirely their own. A round belongs to a
+// nickname; fetches that player's current in-progress round, or starts
+// their next one (cycling through CROSSWORD_PUZZLES in order, based on
+// how many puzzles they've already played) if they don't have one going.
 async function getOrCreateCurrentRound(supabaseAdmin, nickname) {
   const { data: latest, error: latestError } = await supabaseAdmin
     .from("crossword_rounds")
@@ -96,26 +106,44 @@ function publicRoundState(round) {
   };
 }
 
+// GET /api/crossword?nickname=... — that player's current puzzle (started
+// if they don't have one yet) + the top-10 leaderboard. Without a
+// nickname, just the leaderboard comes back so the page can show it
+// before anyone's started playing. Public, no login.
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const nickname = (searchParams.get("nickname") || "").trim().slice(0, MAX_NICKNAME_LENGTH);
   const supabaseAdmin = getSupabaseAdmin();
+  let stage = "start";
   try {
+    stage = "leaderboard";
     const leaderboard = await getLeaderboard(supabaseAdmin);
     if (!nickname) {
       return NextResponse.json({ leaderboard }, { headers: { "Cache-Control": "no-store, max-age=0" } });
     }
+    stage = "getOrCreateCurrentRound";
     const round = await getOrCreateCurrentRound(supabaseAdmin, nickname);
+    stage = "publicRoundState";
+    if (!CROSSWORD_PUZZLES[round.puzzle_index]) {
+      throw new Error(`No puzzle at index ${round.puzzle_index} (round ${round.id}, nickname ${nickname})`);
+    }
     return NextResponse.json(
       { ...publicRoundState(round), leaderboard },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (err) {
-    console.error("[api/crossword]", err);
+    // Log the real error server-side (visible in your terminal / Vercel
+    // logs) but never hand a raw exception message back to a player —
+    // that's confusing at best and can leak internals at worst.
+    console.error(`[api/crossword] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
 
+// POST /api/crossword { row, col, letter, nickname }
+// Public, no login. One cell guess per call, applied to that nickname's
+// own in-progress round. A wrong guess isn't persisted at all — it's just
+// graded and handed back.
 export async function POST(req) {
   const limited = checkRateLimit(req, "crossword");
   if (limited) return limited;
@@ -136,38 +164,61 @@ export async function POST(req) {
   const normalizedLetter = letter.toLowerCase();
   const supabaseAdmin = getSupabaseAdmin();
 
-  try {
-    const round = await getOrCreateCurrentRound(supabaseAdmin, trimmedNickname);
-    const puzzle = CROSSWORD_PUZZLES[round.puzzle_index];
+  // Tracks which step we're on so that if something throws, the server log
+  // says exactly where — production stack traces point into a minified,
+  // single-line bundle (e.g. "route.js:1:5010") that's otherwise useless
+  // for pinning down which line actually failed.
+  let stage = "start";
 
+  try {
+    stage = "getOrCreateCurrentRound";
+    const round = await getOrCreateCurrentRound(supabaseAdmin, trimmedNickname);
+
+    stage = "load puzzle";
+    const puzzle = CROSSWORD_PUZZLES[round.puzzle_index];
+    if (!puzzle) {
+      throw new Error(`No puzzle at index ${round.puzzle_index} (round ${round.id}, nickname ${trimmedNickname})`);
+    }
+
+    stage = "bounds/block check";
     if (row < 0 || row >= puzzle.size || col < 0 || col >= puzzle.size || isBlock(puzzle, row, col)) {
       return NextResponse.json({ error: "That's not a playable cell" }, { status: 400 });
     }
 
+    stage = "already-finished check";
     if (round.status !== "playing") {
       const leaderboard = await getLeaderboard(supabaseAdmin);
       return NextResponse.json({ ...publicRoundState(round), leaderboard });
     }
 
-    const alreadyRevealed = round.revealed_cells.find((cell) => cell.row === row && cell.col === col);
+    stage = "already-revealed check";
+    const revealedSoFar = Array.isArray(round.revealed_cells) ? round.revealed_cells : [];
+    const alreadyRevealed = revealedSoFar.find((cell) => cell.row === row && cell.col === col);
     if (alreadyRevealed) {
       const leaderboard = await getLeaderboard(supabaseAdmin);
       return NextResponse.json({ ...publicRoundState(round), leaderboard, correct: alreadyRevealed.letter === normalizedLetter });
     }
 
+    stage = "solvedGridFor";
     const solvedGrid = solvedGridFor(round.puzzle_index);
     const solvedRow = solvedGrid[row];
     if (!solvedRow || solvedRow[col] === undefined) {
+      // Shouldn't happen — the bounds/block check above should have
+      // already rejected this cell — but fail with a clear message
+      // instead of a raw index crash if the grid and puzzle ever
+      // disagree (e.g. a future puzzle added with a typo'd shape).
       throw new Error(`No answer letter defined for row ${row}, col ${col} in puzzle ${round.puzzle_index}`);
     }
     const correct = solvedRow[col] === normalizedLetter;
 
     if (!correct) {
+      stage = "wrong-guess leaderboard";
       const leaderboard = await getLeaderboard(supabaseAdmin);
       return NextResponse.json({ ...publicRoundState(round), leaderboard, correct: false });
     }
 
-    const revealedCells = [...round.revealed_cells, { row, col, letter: normalizedLetter }];
+    stage = "update round";
+    const revealedCells = [...revealedSoFar, { row, col, letter: normalizedLetter }];
     const solved = revealedCells.length >= totalFillableCells(puzzle);
     const status = solved ? "solved" : "playing";
 
@@ -184,15 +235,18 @@ export async function POST(req) {
 
     if (updateError) throw updateError;
 
+    stage = "score lookup";
     const points = CELL_POINTS + (solved ? SOLVE_BONUS : 0);
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: scoreLookupError } = await supabaseAdmin
       .from("crossword_scores")
       .select("*")
       .eq("nickname", trimmedNickname)
       .maybeSingle();
+    if (scoreLookupError) throw scoreLookupError;
 
+    stage = "score update/insert";
     if (existing) {
-      await supabaseAdmin
+      const { error: scoreUpdateError } = await supabaseAdmin
         .from("crossword_scores")
         .update({
           points: existing.points + points,
@@ -200,18 +254,24 @@ export async function POST(req) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id);
+      if (scoreUpdateError) throw scoreUpdateError;
     } else {
-      await supabaseAdmin.from("crossword_scores").insert({
+      const { error: scoreInsertError } = await supabaseAdmin.from("crossword_scores").insert({
         nickname: trimmedNickname,
         points,
         puzzles_solved: solved ? 1 : 0,
       });
+      if (scoreInsertError) throw scoreInsertError;
     }
 
+    stage = "final leaderboard";
     const leaderboard = await getLeaderboard(supabaseAdmin);
     return NextResponse.json({ ...publicRoundState(updated), leaderboard, correct: true });
   } catch (err) {
-    console.error("[api/crossword]", err);
+    // Log the real error server-side (visible in your terminal / Vercel
+    // logs) but never hand a raw exception message back to a player —
+    // that's confusing at best and can leak internals at worst.
+    console.error(`[api/crossword] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
   }
 }
