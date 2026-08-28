@@ -204,6 +204,9 @@ function GuardStationInner({ initialFacility }) {
           <Link href="/hangman" className="helper-text" style={{ marginTop: 0, textDecoration: "underline" }}>
             Hangman
           </Link>
+          <Link href="/crossword" className="helper-text" style={{ marginTop: 0, textDecoration: "underline" }}>
+            Crossword
+          </Link>
           <Link href="/recommendations" className="helper-text" style={{ marginTop: 0, textDecoration: "underline" }}>
             Suggest a feature
           </Link>

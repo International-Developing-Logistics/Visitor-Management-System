@@ -109,7 +109,7 @@ export default function ServiceHub({ facility }) {
         Employee or staff member? <Link href={p("/staff")}>Staff &amp; business services →</Link>
       </p>
       <p className="helper-text" style={{ marginTop: 6, textAlign: "center" }}>
-        Waiting around? <Link href="/hangman">Play Hangman →</Link>
+        Waiting around? <Link href="/crossword">Try our Crossword</Link>
       </p>
     </main>
   );

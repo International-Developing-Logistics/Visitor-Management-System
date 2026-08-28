@@ -37,7 +37,7 @@ export default function StaffHub({ facility }) {
         <h3 style={{ marginBottom: 4 }}>Staff Hub 🏢</h3>
 
         <p className="helper-text" style={{ marginTop: 0, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
-          Staff Services
+          Company business
         </p>
         <ServiceLink
           href={p("/vehicle-request")}
@@ -57,7 +57,7 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href="/recommendations"
           title="Suggest a feature"
-          description="Do you have a feature you want added?"
+          description="Let me know if theres something you want me to add or change."
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
@@ -66,7 +66,12 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href="/hangman"
           title="Hangman"
-          description="Gaaaame"
+          description="Try to guess the staff name :D"
+        />
+        <ServiceLink
+          href="/crossword"
+          title="Crossword"
+          description="Get the high score and maybe you'll get a prize"
         />
 
         <p className="helper-text" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>

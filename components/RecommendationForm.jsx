@@ -31,8 +31,6 @@ export default function RecommendationForm() {
   };
 
   return (
-    // No allowedRoles — open to any signed-in account (admin, staff, or
-    // guard), same as this page's intended audience: every employee.
     <AdminGuard>
       <main className="kiosk-shell">
         <div className="kiosk-header">
@@ -44,7 +42,7 @@ export default function RecommendationForm() {
             <div className="confirm-wrap">
               <div className="confirm-icon">✓</div>
               <h2>Thanks!</h2>
-              <p className="helper-text">Your suggestion has been sent to me.</p>
+              <p className="helper-text">Thank you for the suggestion!</p>
               <button
                 className="btn btn-secondary"
                 onClick={() => {
@@ -59,7 +57,7 @@ export default function RecommendationForm() {
             <div>
               <h3>Suggest a feature</h3>
               <p className="helper-text" style={{ marginBottom: 18 }}>
-                What would you want?
+                What would you like something added or changed?
               </p>
 
               <label htmlFor="rec-description">Your suggestion</label>
@@ -68,7 +66,7 @@ export default function RecommendationForm() {
                 rows={6}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. equipment request form"
+                placeholder="e.g. request form for equipment use"
               />
 
               {error && <p className="error-text">{error}</p>}

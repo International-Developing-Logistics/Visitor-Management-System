@@ -6,26 +6,34 @@ import { HANGMAN_WORDS } from "@/lib/hangmanWords";
 const MAX_WRONG = 6;
 const MAX_NICKNAME_LENGTH = 30;
 
-// Fetches the most recent round, or starts the next one (cycling through
-// HANGMAN_WORDS in order) if there isn't one yet or the last one already
-// finished. This is the one place "what's the current word" gets decided,
-// so both GET and POST funnel through it.
-async function getOrCreateCurrentRound(supabaseAdmin) {
+// Each player has their own private round — not a shared board — so their
+// score is entirely their own. A round belongs to a nickname; fetches the
+// player's current in-progress round, or starts their next one (cycling
+// through HANGMAN_WORDS in order, based on how many rounds they've already
+// played) if they don't have one going. Both GET and POST funnel through
+// this, so it's the one place "what's this player's word" gets decided.
+async function getOrCreateCurrentRound(supabaseAdmin, nickname) {
   const { data: latest } = await supabaseAdmin
     .from("hangman_rounds")
     .select("*")
+    .eq("nickname", nickname)
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (latest && latest.status === "playing") return latest;
 
-  const nextIndex = latest ? (latest.word_index + 1) % HANGMAN_WORDS.length : 0;
-  const word = HANGMAN_WORDS[nextIndex % HANGMAN_WORDS.length];
+  const { count } = await supabaseAdmin
+    .from("hangman_rounds")
+    .select("id", { count: "exact", head: true })
+    .eq("nickname", nickname);
+
+  const nextIndex = (count || 0) % HANGMAN_WORDS.length;
+  const word = HANGMAN_WORDS[nextIndex];
 
   const { data: created, error } = await supabaseAdmin
     .from("hangman_rounds")
-    .insert({ word_index: nextIndex, word, max_wrong: MAX_WRONG })
+    .insert({ nickname, word_index: nextIndex, word, max_wrong: MAX_WRONG })
     .select()
     .single();
 
@@ -56,17 +64,24 @@ function publicRoundState(round) {
     wrongGuesses: round.wrong_guesses,
     maxWrong: round.max_wrong,
     status: round.status,
-    winningNickname: round.winning_nickname,
     ...(finished ? { word: round.word } : {}),
   };
 }
 
-// GET /api/hangman — current shared round + top-10 leaderboard. Public.
-export async function GET() {
+// GET /api/hangman?nickname=... — that player's current round (started if
+// they don't have one yet) + the top-10 leaderboard. Without a nickname,
+// just the leaderboard comes back so the page can show it before anyone's
+// started playing. Public, no login.
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const nickname = (searchParams.get("nickname") || "").trim().slice(0, MAX_NICKNAME_LENGTH);
   const supabaseAdmin = getSupabaseAdmin();
   try {
-    const round = await getOrCreateCurrentRound(supabaseAdmin);
     const leaderboard = await getLeaderboard(supabaseAdmin);
+    if (!nickname) {
+      return NextResponse.json({ leaderboard }, { headers: { "Cache-Control": "no-store, max-age=0" } });
+    }
+    const round = await getOrCreateCurrentRound(supabaseAdmin, nickname);
     return NextResponse.json(
       { ...publicRoundState(round), leaderboard },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
@@ -77,8 +92,8 @@ export async function GET() {
 }
 
 // POST /api/hangman { letter: string, nickname: string }
-// Public, no login — this is a for-fun shared feature. One letter guess
-// per call, applied to whichever round is currently in progress.
+// Public, no login. One letter guess per call, applied to that nickname's
+// own in-progress round.
 export async function POST(req) {
   const limited = checkRateLimit(req, "hangman");
   if (limited) return limited;
@@ -97,12 +112,11 @@ export async function POST(req) {
   const supabaseAdmin = getSupabaseAdmin();
 
   try {
-    const round = await getOrCreateCurrentRound(supabaseAdmin);
+    const round = await getOrCreateCurrentRound(supabaseAdmin, trimmedNickname);
 
     if (round.status !== "playing") {
-      // Someone else's guess just finished the round between this
-      // player's page load and their click — hand back the finished
-      // state instead of erroring, so the client can just re-render.
+      // This round already finished (e.g. a second tab caught up) — hand
+      // back the finished state instead of erroring.
       const leaderboard = await getLeaderboard(supabaseAdmin);
       return NextResponse.json({ ...publicRoundState(round), leaderboard });
     }
@@ -124,7 +138,6 @@ export async function POST(req) {
         guessed_letters: guessedLetters,
         wrong_guesses: wrongGuesses,
         status,
-        winning_nickname: solved ? trimmedNickname : round.winning_nickname,
         finished_at: status === "playing" ? null : new Date().toISOString(),
       })
       .eq("id", round.id)
@@ -133,11 +146,11 @@ export async function POST(req) {
 
     if (updateError) throw updateError;
 
-    // Scoring: +1 for any correct letter guess, +5 bonus for whoever
-    // guesses the letter that completes the word. No points for a wrong
-    // guess or for guessing after the round's already over.
+    // Scoring: +1 for any correct letter guess, +6 bonus for finishing
+    // the word. Since this round is this player's alone, every point
+    // earned in it is entirely down to their own guesses.
     if (correct) {
-      const points = solved ? 6 : 1;
+      const points = 1 + (solved ? 6 : 0);
       const { data: existing } = await supabaseAdmin
         .from("hangman_scores")
         .select("*")
