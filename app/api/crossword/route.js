@@ -22,15 +22,43 @@ function totalFillableCells(puzzle) {
 // solved.
 const solvedGridCache = new Map();
 function solvedGridFor(puzzleIndex) {
-  if (solvedGridCache.has(puzzleIndex)) return solvedGridCache.get(puzzleIndex);
-  const puzzle = CROSSWORD_PUZZLES[puzzleIndex];
+  // Cache key must always be the same JS type (a number) — Map treats the
+  // number 0 and the string "0" as different keys, so a mismatch here
+  // wouldn't corrupt anything, but it would silently defeat the cache.
+  const key = Number(puzzleIndex);
+
+  if (solvedGridCache.has(key)) return solvedGridCache.get(key);
+
+  const puzzle = CROSSWORD_PUZZLES[key];
+  if (!puzzle || !Number.isInteger(puzzle.size) || !Array.isArray(puzzle.entries)) {
+    throw new Error(
+      `solvedGridFor: no valid puzzle at index ${puzzleIndex} (CROSSWORD_PUZZLES has ${CROSSWORD_PUZZLES.length} entries)`
+    );
+  }
+
   const grid = Array.from({ length: puzzle.size }, () => new Array(puzzle.size).fill(null));
+
   for (const entry of puzzle.entries) {
+    if (typeof entry.answer !== "string" || entry.answer.length === 0) {
+      throw new Error(
+        `crosswordPuzzles.js puzzle ${puzzleIndex}: entry ${entry?.number}-${entry?.direction} has a missing/invalid "answer" field`
+      );
+    }
+    if (!Number.isInteger(entry.row) || !Number.isInteger(entry.col)) {
+      throw new Error(
+        `crosswordPuzzles.js puzzle ${puzzleIndex}: entry ${entry.number}-${entry.direction} has a missing/invalid row/col (row=${entry.row}, col=${entry.col})`
+      );
+    }
     const [dr, dc] = entry.direction === "across" ? [0, 1] : [1, 0];
     for (let i = 0; i < entry.answer.length; i++) {
       const r = entry.row + dr * i;
       const c = entry.col + dc * i;
       const letter = entry.answer[i];
+      if (r < 0 || r >= puzzle.size || c < 0 || c >= puzzle.size) {
+        throw new Error(
+          `crosswordPuzzles.js puzzle ${puzzleIndex}: entry ${entry.number}-${entry.direction} ("${entry.answer}") runs off the ${puzzle.size}x${puzzle.size} grid at letter ${i} (row ${r}, col ${c})`
+        );
+      }
       if (grid[r][c] && grid[r][c] !== letter) {
         throw new Error(
           `crosswordPuzzles.js puzzle ${puzzleIndex}: entry ${entry.number}-${entry.direction} conflicts with another entry at row ${r}, col ${c}`
@@ -39,7 +67,7 @@ function solvedGridFor(puzzleIndex) {
       grid[r][c] = letter;
     }
   }
-  solvedGridCache.set(puzzleIndex, grid);
+  solvedGridCache.set(key, grid);
   return grid;
 }
 
@@ -199,8 +227,9 @@ export async function POST(req) {
       return NextResponse.json({ ...publicRoundState(round), leaderboard, correct: alreadyRevealed.letter === normalizedLetter });
     }
 
-    stage = "solvedGridFor";
+    stage = "solvedGridFor:build";
     const solvedGrid = solvedGridFor(round.puzzle_index);
+    stage = "solvedGridFor:lookup";
     const solvedRow = solvedGrid[row];
     if (!solvedRow || solvedRow[col] === undefined) {
       // Shouldn't happen — the bounds/block check above should have
