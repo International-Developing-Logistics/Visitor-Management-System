@@ -10,6 +10,13 @@ function toLocalInputValue(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+const STATUS_TONE = {
+  pending: "gate_pending",
+  denied: "gate_denied",
+  active: "checked_in",
+  inactive: "checked_out",
+};
+
 function EditContractorModal({ contractor, onClose, onSaved }) {
   const [values, setValues] = useState({
     full_name: contractor.full_name || "",
@@ -100,12 +107,118 @@ function EditContractorModal({ contractor, onClose, onSaved }) {
   );
 }
 
+function DenyContractorModal({ contractor, onClose, onDenied }) {
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const deny = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await authFetch(`/api/admin/contractors/${contractor.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "denied", denial_reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      onDenied(data.contractor);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        position: "fixed", inset: 0, background: "rgba(22,33,31,0.45)",
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20,
+      }}
+      onClick={onClose}
+    >
+      <div className="card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+        <h3>Deny registration</h3>
+        <p className="helper-text" style={{ marginTop: 0 }}>
+          Denying <strong>{contractor.full_name}</strong>'s registration. A reason is optional and is only ever
+          shown here in the admin dashboard — it's never sent to the applicant.
+        </p>
+
+        <label htmlFor="deny-reason">Reason (optional)</label>
+        <textarea
+          id="deny-reason"
+          rows={3}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="e.g. Documents didn't match, incomplete details…"
+          style={{ width: "100%", resize: "vertical", fontFamily: "inherit" }}
+        />
+
+        {error && <p className="error-text">{error}</p>}
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button className="btn btn-secondary" onClick={onClose} style={{ marginTop: 0 }} disabled={saving}>
+            Cancel
+          </button>
+          <button className="btn btn-primary" onClick={deny} style={{ marginTop: 0 }} disabled={saving}>
+            {saving ? "Denying…" : "Deny registration"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocumentLinks({ contractor }) {
+  // Older records (registered before this feature) have no document_type
+  // recorded — fall back to just showing whatever passport link they have.
+  if (contractor.document_type === "freezone_pass") {
+    return (
+      <div>
+        <div className="helper-text" style={{ marginTop: 0 }}>Freezone gate pass</div>
+        {contractor.freezone_pass_signed_url ? (
+          <a href={contractor.freezone_pass_signed_url} target="_blank" rel="noreferrer">View</a>
+        ) : (
+          "—"
+        )}
+      </div>
+    );
+  }
+  if (contractor.document_type === "passport_emirates_id") {
+    return (
+      <div>
+        <div className="helper-text" style={{ marginTop: 0 }}>Passport + Emirates ID</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {contractor.passport_signed_url ? (
+            <a href={contractor.passport_signed_url} target="_blank" rel="noreferrer">Passport</a>
+          ) : (
+            <span className="helper-text" style={{ marginTop: 0 }}>Passport —</span>
+          )}
+          {contractor.emirates_id_signed_url ? (
+            <a href={contractor.emirates_id_signed_url} target="_blank" rel="noreferrer">Emirates ID</a>
+          ) : (
+            <span className="helper-text" style={{ marginTop: 0 }}>Emirates ID —</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return contractor.passport_signed_url ? (
+    <a href={contractor.passport_signed_url} target="_blank" rel="noreferrer">View</a>
+  ) : (
+    "—"
+  );
+}
+
 export default function AdminContractorsPage() {
   const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [denying, setDenying] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -156,12 +269,13 @@ export default function AdminContractorsPage() {
         <table className="vtable">
           <thead>
             <tr>
+              <th>Pass ID</th>
               <th>Contractor</th>
               <th>Company</th>
               <th>Resident ID</th>
               <th>Duration</th>
               <th>Validity</th>
-              <th>Passport</th>
+              <th>Documents</th>
               <th>Status</th>
               <th></th>
             </tr>
@@ -169,6 +283,7 @@ export default function AdminContractorsPage() {
           <tbody>
             {contractors.map((c) => (
               <tr key={c.id}>
+                <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{c.pass_id || "—"}</td>
                 <td>
                   <div style={{ fontWeight: 600 }}>{c.full_name}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>{c.email}</div>
@@ -181,30 +296,38 @@ export default function AdminContractorsPage() {
                   {" – "}
                   {c.validity_end ? new Date(c.validity_end).toLocaleDateString() : "—"}
                 </td>
+                <td><DocumentLinks contractor={c} /></td>
                 <td>
-                  {c.passport_signed_url ? (
-                    <a href={c.passport_signed_url} target="_blank" rel="noreferrer">View</a>
-                  ) : (
-                    "—"
+                  <span className={`badge ${STATUS_TONE[c.status] || "invited"}`}>{c.status}</span>
+                  {c.status === "denied" && c.denial_reason && (
+                    <div className="helper-text" style={{ marginTop: 4, maxWidth: 180 }}>{c.denial_reason}</div>
                   )}
-                </td>
-                <td>
-                  <span className={`badge ${c.status === "active" ? "checked_in" : c.status === "inactive" ? "checked_out" : "invited"}`}>
-                    {c.status}
-                  </span>
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button className="btn-small" onClick={() => setEditing(c)}>Edit</button>
-                    {c.status !== "active" && (
-                      <button className="btn-small" onClick={() => setStatus(c.id, "active")} disabled={busyId === c.id}>
-                        {busyId === c.id ? "…" : "Activate"}
-                      </button>
-                    )}
-                    {c.status !== "inactive" && (
-                      <button className="btn-small" onClick={() => setStatus(c.id, "inactive")} disabled={busyId === c.id}>
-                        {busyId === c.id ? "…" : "Deactivate"}
-                      </button>
+                    {c.status === "pending" ? (
+                      <>
+                        <button className="btn-small" onClick={() => setStatus(c.id, "active")} disabled={busyId === c.id}>
+                          {busyId === c.id ? "…" : "Approve"}
+                        </button>
+                        <button className="btn-small" onClick={() => setDenying(c)} disabled={busyId === c.id}>
+                          Deny
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {c.status !== "active" && (
+                          <button className="btn-small" onClick={() => setStatus(c.id, "active")} disabled={busyId === c.id}>
+                            {busyId === c.id ? "…" : "Activate"}
+                          </button>
+                        )}
+                        {c.status !== "inactive" && (
+                          <button className="btn-small" onClick={() => setStatus(c.id, "inactive")} disabled={busyId === c.id}>
+                            {busyId === c.id ? "…" : "Deactivate"}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </td>
@@ -221,6 +344,17 @@ export default function AdminContractorsPage() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
+            load();
+          }}
+        />
+      )}
+
+      {denying && (
+        <DenyContractorModal
+          contractor={denying}
+          onClose={() => setDenying(null)}
+          onDenied={() => {
+            setDenying(null);
             load();
           }}
         />

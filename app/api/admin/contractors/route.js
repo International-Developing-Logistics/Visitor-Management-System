@@ -3,8 +3,11 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 import { signMany } from "@/lib/storage";
 
-// GET /api/admin/contractors — list every contractor, newest first, with a
-// short-lived signed URL for their passport (never a permanent public one).
+// GET /api/admin/contractors — list every contractor, newest first, with
+// short-lived signed URLs for whichever documents they submitted (never a
+// permanent public one). A contractor submits ONE of two document sets —
+// a Freezone gate pass, or a passport + Emirates ID pair — so most rows
+// will only have one or two of the three possible URLs signed.
 export async function GET(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,16 +20,14 @@ export async function GET(req) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const photoMap = await signMany(
-    supabaseAdmin,
-    "contractor-documents",
-    data.map((c) => c.passport_url),
-    600
-  );
+  const allPaths = data.flatMap((c) => [c.passport_url, c.freezone_pass_url, c.emirates_id_url]);
+  const signedMap = await signMany(supabaseAdmin, "contractor-documents", allPaths, 600);
 
   const contractors = data.map((c) => ({
     ...c,
-    passport_signed_url: c.passport_url ? photoMap.get(c.passport_url) || null : null,
+    passport_signed_url: c.passport_url ? signedMap.get(c.passport_url) || null : null,
+    freezone_pass_signed_url: c.freezone_pass_url ? signedMap.get(c.freezone_pass_url) || null : null,
+    emirates_id_signed_url: c.emirates_id_url ? signedMap.get(c.emirates_id_url) || null : null,
   }));
 
   return NextResponse.json(

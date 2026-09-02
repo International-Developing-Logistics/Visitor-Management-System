@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import BrandHeader from "@/components/BrandHeader";
 
 const STATUS_COPY = {
-  pending: { label: "Pending activation", tone: "invited" },
+  pending: { label: "Pending review", tone: "gate_pending" },
+  denied: { label: "Denied", tone: "gate_denied" },
   active: { label: "Active", tone: "checked_in" },
   inactive: { label: "Inactive", tone: "checked_out" },
 };
@@ -20,11 +21,6 @@ function PassInner() {
   const [pass, setPass] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [origin, setOrigin] = useState("");
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -46,10 +42,6 @@ function PassInner() {
   if (error) return <p className="error-text">{error}</p>;
 
   const status = STATUS_COPY[pass.status] || { label: pass.status, tone: "invited" };
-  const passUrl = origin ? `${origin}/contractor-pass?token=${token}` : "";
-  const qrSrc = passUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(passUrl)}`
-    : "";
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -61,12 +53,12 @@ function PassInner() {
         <span className={`badge ${status.tone}`}>{status.label}</span>
       </p>
 
-      {qrSrc && (
-        <img src={qrSrc} alt="Contractor pass QR code" width={160} height={160} style={{ margin: "0 auto 20px" }} />
-      )}
-
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem", textAlign: "left" }}>
         <tbody>
+          <tr>
+            <td style={{ color: "var(--muted)", padding: "6px 0" }}>Pass ID</td>
+            <td style={{ padding: "6px 0" }}>{pass.pass_id || "—"}</td>
+          </tr>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0" }}>Valid from</td>
             <td style={{ padding: "6px 0" }}>{fmtDate(pass.validity_start)}</td>
@@ -80,7 +72,12 @@ function PassInner() {
 
       {pass.status === "pending" && (
         <p className="helper-text" style={{ marginTop: 16 }}>
-          Your pass is awaiting activation. Check back after your registration is reviewed.
+          Your registration is awaiting review. Check back after it's been decided.
+        </p>
+      )}
+      {pass.status === "denied" && (
+        <p className="helper-text" style={{ marginTop: 16 }}>
+          Your registration was not approved. Contact your point of contact if you have questions.
         </p>
       )}
     </div>

@@ -1,14 +1,25 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
-import { sendContractorPassActivatedEmail } from "@/lib/email";
+import { sendContractorPassActivatedEmail, sendContractorRegistrationApprovedEmail } from "@/lib/email";
 
 const EDITABLE_FIELDS = ["full_name", "email", "resident_id", "company", "estimated_duration"];
 
 // PATCH /api/admin/contractors/[id]
 // Body can include any editable field, plus:
-//   status: "active" | "inactive" | "pending"
+//   status: "pending" | "active" | "inactive" | "denied"
 //   validity_start / validity_end: ISO strings or "" to clear
+//   denial_reason: optional text, only meaningful alongside status: "denied"
+//
+// Approving is just status: "active" — there's no separate resting
+// "approved" state; a pending registration goes straight to active the
+// moment an admin approves it, same one PATCH the existing Activate button
+// already used. On approval, both the contractor (their pass link) and the
+// two ADMIN_NOTIFICATION_EMAIL / HR_NOTIFICATION_EMAIL recipients get
+// emailed — same two addresses used for gate approvals and the original
+// "registration submitted" notice. Denying is status: "denied", optionally
+// with a reason that's stored for admins only — a denial is never emailed
+// to anyone, it's visible only in the admin dashboard.
 export async function PATCH(req, { params }) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,10 +32,14 @@ export async function PATCH(req, { params }) {
   }
 
   if ("status" in body) {
-    if (!["pending", "active", "inactive"].includes(body.status)) {
+    if (!["pending", "active", "inactive", "denied"].includes(body.status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
     updates.status = body.status;
+  }
+
+  if ("denial_reason" in body) {
+    updates.denial_reason = body.denial_reason ? String(body.denial_reason).trim() : null;
   }
 
   if ("validity_start" in body) {
@@ -50,10 +65,21 @@ export async function PATCH(req, { params }) {
 
   const supabaseAdmin = getSupabaseAdmin();
 
-  // Check the prior status so we only email on a pending/inactive -> active
-  // transition, not every save while already active.
+  // Check the prior status so we only email / stamp decided_at on an
+  // actual pending -> active or pending -> denied decision, not every save
+  // while already in that state (e.g. editing details on an active pass).
   const { data: before } = await supabaseAdmin.from("contractors").select("status").eq("id", params.id).single();
   const isActivating = "status" in updates && updates.status === "active" && before?.status !== "active";
+  const isDenying = "status" in updates && updates.status === "denied" && before?.status !== "denied";
+
+  if (isActivating || isDenying) {
+    updates.decided_at = new Date().toISOString();
+  }
+  // A denial reason only makes sense attached to an actual denial — clear
+  // any stale one if this save moves the record to a non-denied status.
+  if ("status" in updates && updates.status !== "denied" && !("denial_reason" in updates)) {
+    updates.denial_reason = null;
+  }
 
   const { data, error } = await supabaseAdmin
     .from("contractors")
@@ -70,7 +96,12 @@ export async function PATCH(req, { params }) {
     await sendContractorPassActivatedEmail({ contractor: data, passUrl }).catch((err) =>
       console.error("[contractors] activation email failed:", err.message)
     );
+    await sendContractorRegistrationApprovedEmail({ contractor: data, reviewUrl: `${origin}/admin/contractors` }).catch((err) =>
+      console.error("[contractors] approval notification email failed:", err.message)
+    );
   }
+  // Denials are internal-only — no email is sent on isDenying, by design
+  // (the reason and the decision itself stay in the admin dashboard).
 
   return NextResponse.json({ contractor: data });
 }
