@@ -10,17 +10,6 @@ function toLocalInputValue(iso) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-function fmtDateTime(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString([], {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 const STATUS_TONE = {
   pending: "gate_pending",
   denied: "gate_denied",
@@ -182,78 +171,6 @@ function DenyContractorModal({ contractor, onClose, onDenied }) {
   );
 }
 
-function VisitLogModal({ contractor, onClose }) {
-  const [visits, setVisits] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await authFetch(`/api/admin/contractors/${contractor.id}/visits`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        if (!cancelled) setVisits(data.visits || []);
-      } catch (e) {
-        if (!cancelled) setError(e.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [contractor.id]);
-
-  return (
-    <div
-      style={{
-        position: "fixed", inset: 0, background: "rgba(22,33,31,0.45)",
-        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 20,
-      }}
-      onClick={onClose}
-    >
-      <div className="card" style={{ maxWidth: 520, maxHeight: "85vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-        <h3>Visit log — {contractor.full_name}</h3>
-
-        {loading && <p className="helper-text">Loading…</p>}
-        {error && <p className="error-text">{error}</p>}
-        {!loading && !error && visits.length === 0 && (
-          <p className="helper-text">No visits logged yet.</p>
-        )}
-
-        {!loading && visits.length > 0 && (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", color: "var(--muted)", padding: "6px 0" }}>Checked in</th>
-                <th style={{ textAlign: "left", color: "var(--muted)", padding: "6px 0" }}>Checked out</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visits.map((v) => (
-                <tr key={v.id}>
-                  <td style={{ padding: "6px 0" }}>{fmtDateTime(v.checked_in_at)}</td>
-                  <td style={{ padding: "6px 0" }}>
-                    {v.checked_out_at ? fmtDateTime(v.checked_out_at) : <span className="badge checked_in">On site</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-
-        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button className="btn btn-secondary" onClick={onClose} style={{ marginTop: 0 }}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function DocumentLinks({ contractor }) {
   // Older records (registered before this feature) have no document_type
   // recorded — fall back to just showing whatever passport link they have.
@@ -300,10 +217,8 @@ export default function AdminContractorsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
-  const [visitBusyId, setVisitBusyId] = useState(null);
   const [editing, setEditing] = useState(null);
   const [denying, setDenying] = useState(null);
-  const [viewingLog, setViewingLog] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -341,23 +256,6 @@ export default function AdminContractorsPage() {
     }
   };
 
-  const toggleVisit = async (id, action) => {
-    setVisitBusyId(id);
-    try {
-      const res = await authFetch(`/api/admin/contractors/${id}/visits`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setVisitBusyId(null);
-    }
-  };
-
   return (
     <div className="admin-card">
       <h3 style={{ marginBottom: 16 }}>Contractor passes</h3>
@@ -379,7 +277,6 @@ export default function AdminContractorsPage() {
               <th>Validity</th>
               <th>Documents</th>
               <th>Status</th>
-              <th>Visits</th>
               <th></th>
             </tr>
           </thead>
@@ -405,35 +302,6 @@ export default function AdminContractorsPage() {
                   {c.status === "denied" && c.denial_reason && (
                     <div className="helper-text" style={{ marginTop: 4, maxWidth: 180 }}>{c.denial_reason}</div>
                   )}
-                </td>
-                <td>
-                  <span className={`badge ${c.currently_checked_in ? "checked_in" : "checked_out"}`}>
-                    {c.currently_checked_in ? "On site" : "Off site"}
-                  </span>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-                    {c.status === "active" ? (
-                      c.currently_checked_in ? (
-                        <button
-                          className="btn-small"
-                          onClick={() => toggleVisit(c.id, "checkout")}
-                          disabled={visitBusyId === c.id}
-                        >
-                          {visitBusyId === c.id ? "…" : "Check out"}
-                        </button>
-                      ) : (
-                        <button
-                          className="btn-small"
-                          onClick={() => toggleVisit(c.id, "checkin")}
-                          disabled={visitBusyId === c.id}
-                        >
-                          {visitBusyId === c.id ? "…" : "Check in"}
-                        </button>
-                      )
-                    ) : (
-                      <span className="helper-text" style={{ marginTop: 0 }}>Pass must be active</span>
-                    )}
-                    <button className="btn-small" onClick={() => setViewingLog(c)}>Log</button>
-                  </div>
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -490,10 +358,6 @@ export default function AdminContractorsPage() {
             load();
           }}
         />
-      )}
-
-      {viewingLog && (
-        <VisitLogModal contractor={viewingLog} onClose={() => setViewingLog(null)} />
       )}
     </div>
   );

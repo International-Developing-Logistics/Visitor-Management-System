@@ -44,6 +44,7 @@ function AdminNav() {
         {link("/admin", "Dashboard")}
         {link("/admin/hosts", "Hosts")}
         {link("/admin/contractors", "Contractors")}
+        {link("/admin/contractor-visits", "Contractor Check In/Out")}
         {link("/admin/guard-logs", "Guard Log")}
         {link("/admin/vehicle-requests", "Vehicle Requests")}
         {link("/admin/vehicle-movements", "Vehicle Check In/Out")}
