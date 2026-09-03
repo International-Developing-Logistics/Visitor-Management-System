@@ -41,7 +41,7 @@ function EditTimesModal({ visit, onClose, onSaved }) {
       onClick={onClose}
     >
       <div className="card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-        <h3>Correct times — {visit.contractor?.full_name || "Contractor"}</h3>
+        <h3>Correct times - {visit.contractor?.full_name || "Contractor"}</h3>
 
         <label htmlFor="ev-checkin">Check-in time</label>
         <input id="ev-checkin" type="datetime-local" value={checkedInAt} onChange={(e) => setCheckedInAt(e.target.value)} />
@@ -63,6 +63,96 @@ function EditTimesModal({ visit, onClose, onSaved }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function contractorLabel(c) {
+  return `${c.full_name} - ${c.company || "-"} (${c.pass_id || "no pass id"})`;
+}
+
+function matchesQuery(c, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  return (
+    c.full_name.toLowerCase().includes(q) ||
+    (c.pass_id || "").toLowerCase().includes(q)
+  );
+}
+
+// A searchable stand-in for a <select> — type a contractor's name or pass
+// ID to filter the list instead of scrolling a long dropdown. Only an
+// actual pick from the list counts as a selection (onSelect("") whenever
+// the typed text no longer matches it), so the Check in button still only
+// enables once a real contractor is chosen.
+function ContractorPicker({ contractors, selectedId, onSelect, disabled }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const selected = contractors.find((c) => c.id === selectedId);
+    setQuery(selected ? contractorLabel(selected) : "");
+  }, [selectedId, contractors]);
+
+  const matches = contractors.filter((c) => matchesQuery(c, query)).slice(0, 30);
+
+  return (
+    <div style={{ position: "relative", minWidth: 280 }}>
+      <input
+        type="text"
+        value={query}
+        placeholder={
+          disabled && contractors.length === 0
+            ? "No active contractors available to check in"
+            : "Type a name or pass ID…"
+        }
+        disabled={disabled}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          if (selectedId) onSelect("");
+          setOpen(true);
+        }}
+        style={{ width: "100%" }}
+      />
+      {open && matches.length > 0 && (
+        <div
+          className="card"
+          style={{
+            position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20,
+            padding: 6, maxHeight: 240, overflowY: "auto",
+          }}
+        >
+          {matches.map((c) => (
+            <div
+              key={c.id}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onSelect(c.id);
+                setQuery(contractorLabel(c));
+                setOpen(false);
+              }}
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                cursor: "pointer",
+                background: c.id === selectedId ? "var(--accent-soft)" : "transparent",
+              }}
+            >
+              <div style={{ fontWeight: 600 }}>{c.full_name}</div>
+              <div className="helper-text" style={{ marginTop: 0 }}>
+                {c.company || "—"} · {c.pass_id || "no pass id"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {open && query.trim() && matches.length === 0 && (
+        <div className="card" style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20, padding: 10 }}>
+          <span className="helper-text" style={{ marginTop: 0 }}>No match found.</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -158,28 +248,18 @@ export default function AdminContractorVisitsPage() {
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Contractor check in / out</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
-        Log every time a contractor arrives or leaves. Pass approval and activation happen on the
-        Contractors page — only contractors with an active pass can be checked in here.
+        Log every time a contractor arrives or leaves. 
       </p>
 
       {error && <p className="error-text">{error}</p>}
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 20 }}>
-        <select
-          value={selectedContractorId}
-          onChange={(e) => setSelectedContractorId(e.target.value)}
-          style={{ minWidth: 260 }}
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start", flexWrap: "wrap", marginBottom: 20 }}>
+        <ContractorPicker
+          contractors={eligibleToCheckIn}
+          selectedId={selectedContractorId}
+          onSelect={setSelectedContractorId}
           disabled={loading || eligibleToCheckIn.length === 0}
-        >
-          <option value="">
-            {eligibleToCheckIn.length === 0 ? "No active contractors available to check in" : "Select a contractor to check in…"}
-          </option>
-          {eligibleToCheckIn.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.full_name} — {c.company || "—"} ({c.pass_id || "no pass id"})
-            </option>
-          ))}
-        </select>
+        />
         <button className="btn-small" onClick={checkIn} disabled={!selectedContractorId || checkinBusy}>
           {checkinBusy ? "Checking in…" : "Check in"}
         </button>
