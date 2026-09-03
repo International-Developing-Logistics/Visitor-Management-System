@@ -23,11 +23,25 @@ export async function GET(req) {
   const allPaths = data.flatMap((c) => [c.passport_url, c.freezone_pass_url, c.emirates_id_url]);
   const signedMap = await signMany(supabaseAdmin, "contractor-documents", allPaths, 600);
 
+  // Which of these contractors currently has an open visit (checked in,
+  // not yet checked out) — one query for the whole list rather than one
+  // per row. See app/api/admin/contractors/[id]/visits/route.js.
+  let checkedInIds = new Set();
+  if (data.length > 0) {
+    const { data: openVisits } = await supabaseAdmin
+      .from("contractor_visits")
+      .select("contractor_id")
+      .in("contractor_id", data.map((c) => c.id))
+      .is("checked_out_at", null);
+    checkedInIds = new Set((openVisits || []).map((v) => v.contractor_id));
+  }
+
   const contractors = data.map((c) => ({
     ...c,
     passport_signed_url: c.passport_url ? signedMap.get(c.passport_url) || null : null,
     freezone_pass_signed_url: c.freezone_pass_url ? signedMap.get(c.freezone_pass_url) || null : null,
     emirates_id_signed_url: c.emirates_id_url ? signedMap.get(c.emirates_id_url) || null : null,
+    currently_checked_in: checkedInIds.has(c.id),
   }));
 
   return NextResponse.json(
