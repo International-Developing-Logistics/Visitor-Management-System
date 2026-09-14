@@ -33,7 +33,7 @@ function CheckinInner() {
 
   // Visitor type was already picked when this pre-registration was
   // created (by the guest themselves via open pre-registration, or by
-  // staff via the invite tools) — it's not re-asked here, but it decides
+  // staff via the invite tools) - it's not re-asked here, but it decides
   // whether "bringing others" collects a structured name+phone list.
   const isStructuredType = visitor?.visitor_type === STRUCTURED_GROUP_VISITOR_TYPE;
 

@@ -6,7 +6,7 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/equipment-log?unit=<unitId>          -> status for one unit
 // GET /api/equipment-log?facility=idl           -> status for every unit at that facility
-// Public, no login — this backs both the QR-scan landing page and the
+// Public, no login - this backs both the QR-scan landing page and the
 // "browse all equipment" index linked from the Staff Hub.
 export async function GET(req) {
   const supabaseAdmin = getSupabaseAdmin();
@@ -52,8 +52,8 @@ export async function GET(req) {
   );
 }
 
-// POST /api/equipment-log { unit_id, user_name, facility } — record a
-// checkout (pickup). Public, no login — matches the trust model used by
+// POST /api/equipment-log { unit_id, user_name, facility } - record a
+// checkout (pickup). Public, no login - matches the trust model used by
 // every other guest/employee-facing form in this app (see HANDOVER.md
 // §1.4): the resulting entry is visible to admin/guard immediately.
 export async function POST(req) {
@@ -70,7 +70,7 @@ export async function POST(req) {
   const unit = getEquipmentUnit(unit_id);
   if (!unit) return NextResponse.json({ error: "Unknown equipment QR code." }, { status: 404 });
 
-  // Server-side backstop for the two-scan lifecycle — the UI only ever
+  // Server-side backstop for the two-scan lifecycle - the UI only ever
   // shows the "pick up" form when the unit isn't already out, but
   // re-check here too in case of a race (two people scanning the same
   // unit within the same second).

@@ -5,7 +5,7 @@ import { requireAnyRole } from "@/lib/verifyAdmin";
 import { randomUUID } from "crypto";
 
 // POST /api/recommendations { description: string }
-// Open to any signed-in account — admin, staff, or guard. Deliberately
+// Open to any signed-in account - admin, staff, or guard. Deliberately
 // anonymous: requireAnyRole confirms the caller is a real employee
 // account (keeps this off the public internet), but the account's
 // identity is never written to the feature_recommendations row below.

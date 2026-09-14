@@ -17,12 +17,12 @@ function totalFillableCells(puzzle) {
 
 // Builds the full answer grid from the puzzle's across/down entries, and
 // sanity-checks that every entry agrees with every other entry at each
-// crossing cell — catches a typo in lib/crosswordPuzzles.js immediately
+// crossing cell - catches a typo in lib/crosswordPuzzles.js immediately
 // (as a thrown error) instead of shipping a grid that can never be fully
 // solved.
 const solvedGridCache = new Map();
 function solvedGridFor(puzzleIndex) {
-  // Cache key must always be the same JS type (a number) — Map treats the
+  // Cache key must always be the same JS type (a number) - Map treats the
   // number 0 and the string "0" as different keys, so a mismatch here
   // wouldn't corrupt anything, but it would silently defeat the cache.
   const key = Number(puzzleIndex);
@@ -71,8 +71,8 @@ function solvedGridFor(puzzleIndex) {
   return grid;
 }
 
-// Each player solves their own private copy of the grid — not a shared
-// board — so their score is entirely their own. A round belongs to a
+// Each player solves their own private copy of the grid - not a shared
+// board - so their score is entirely their own. A round belongs to a
 // nickname; fetches that player's current in-progress round, or starts
 // their next one (cycling through CROSSWORD_PUZZLES in order, based on
 // how many puzzles they've already played) if they don't have one going.
@@ -134,7 +134,7 @@ function publicRoundState(round) {
   };
 }
 
-// GET /api/crossword?nickname=... — that player's current puzzle (started
+// GET /api/crossword?nickname=... - that player's current puzzle (started
 // if they don't have one yet) + the top-10 leaderboard. Without a
 // nickname, just the leaderboard comes back so the page can show it
 // before anyone's started playing. Public, no login.
@@ -161,7 +161,7 @@ export async function GET(req) {
     );
   } catch (err) {
     // Log the real error server-side (visible in your terminal / Vercel
-    // logs) but never hand a raw exception message back to a player —
+    // logs) but never hand a raw exception message back to a player -
     // that's confusing at best and can leak internals at worst.
     console.error(`[api/crossword] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
@@ -170,7 +170,7 @@ export async function GET(req) {
 
 // POST /api/crossword { row, col, letter, nickname }
 // Public, no login. One cell guess per call, applied to that nickname's
-// own in-progress round. A wrong guess isn't persisted at all — it's just
+// own in-progress round. A wrong guess isn't persisted at all - it's just
 // graded and handed back.
 export async function POST(req) {
   const limited = checkRateLimit(req, "crossword");
@@ -193,7 +193,7 @@ export async function POST(req) {
   const supabaseAdmin = getSupabaseAdmin();
 
   // Tracks which step we're on so that if something throws, the server log
-  // says exactly where — production stack traces point into a minified,
+  // says exactly where - production stack traces point into a minified,
   // single-line bundle (e.g. "route.js:1:5010") that's otherwise useless
   // for pinning down which line actually failed.
   let stage = "start";
@@ -232,8 +232,8 @@ export async function POST(req) {
     stage = "solvedGridFor:lookup";
     const solvedRow = solvedGrid[row];
     if (!solvedRow || solvedRow[col] === undefined) {
-      // Shouldn't happen — the bounds/block check above should have
-      // already rejected this cell — but fail with a clear message
+      // Shouldn't happen - the bounds/block check above should have
+      // already rejected this cell - but fail with a clear message
       // instead of a raw index crash if the grid and puzzle ever
       // disagree (e.g. a future puzzle added with a typo'd shape).
       throw new Error(`No answer letter defined for row ${row}, col ${col} in puzzle ${round.puzzle_index}`);
@@ -298,7 +298,7 @@ export async function POST(req) {
     return NextResponse.json({ ...publicRoundState(updated), leaderboard, correct: true });
   } catch (err) {
     // Log the real error server-side (visible in your terminal / Vercel
-    // logs) but never hand a raw exception message back to a player —
+    // logs) but never hand a raw exception message back to a player -
     // that's confusing at best and can leak internals at worst.
     console.error(`[api/crossword] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });

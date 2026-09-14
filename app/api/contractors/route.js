@@ -14,10 +14,10 @@ const DOCUMENT_TYPES = ["freezone_pass", "passport_emirates_id"];
 //   passport (data URL, required for passport_emirates_id),
 //   emirates_id (data URL, required for passport_emirates_id) }
 //
-// Public, no login — creates a "pending" contractor record. An admin must
+// Public, no login - creates a "pending" contractor record. An admin must
 // approve it from /admin/contractors before the pass is usable. Applicants
 // choose ONE of two document options; which files are required depends on
-// that choice, so the check below is the real gate — the registration page
+// that choice, so the check below is the real gate - the registration page
 // only disables its submit button as a convenience, never the source of
 // truth (client-side validation is never trusted alone here).
 export async function POST(req) {

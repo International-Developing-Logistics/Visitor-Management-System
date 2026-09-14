@@ -6,7 +6,7 @@ import VisitorDetailsForm from "@/components/VisitorDetailsForm";
 import BrandHeader from "@/components/BrandHeader";
 import { OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
 
-// No separate "Agreement" step anymore — the visitor-terms notice is shown
+// No separate "Agreement" step anymore - the visitor-terms notice is shown
 // directly on the Details form (see VisitorDetailsForm's showAgreementNotice
 // prop below), and clicking "Check-in" there is the acknowledgment.
 const STEPS = ["Details", "Done"];
@@ -42,7 +42,7 @@ export default function WalkinForm({ facility }) {
     setSubmitting(true);
     setSubmitError("");
     // "Other" combines the picked type + the free-text detail into one
-    // string before sending, e.g. "Other: Passport renewal" — same
+    // string before sending, e.g. "Other: Passport renewal" - same
     // convention already used for `purpose` on the request-invite/preregister
     // staff tools (see lib/visitorTypes.js).
     const finalVisitorType =

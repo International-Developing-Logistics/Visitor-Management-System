@@ -4,7 +4,7 @@ import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/guard/gate-status?facility=idl
-// A guard's view of visitors — name, purpose, status only. This is
+// A guard's view of visitors - name, purpose, status only. This is
 // deliberately narrower than /api/admin/visitors (admin-only, full visitor
 // records with edit access): guards can see the same Expected/At Gate/On
 // Site/Completed picture as the admin Visitors page, without getting

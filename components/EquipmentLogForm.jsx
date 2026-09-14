@@ -7,7 +7,7 @@ import { formatInCompanyTimezone } from "@/lib/timezone";
 import { FACILITIES } from "@/lib/facilities";
 
 // The page a physical QR code lands on. One form, two shapes, decided by
-// the unit's current state (fetched fresh on load, not passed in) — this
+// the unit's current state (fetched fresh on load, not passed in) - this
 // is what makes a second "pick up" scan on an already-checked-out unit
 // impossible from the UI: there's no pickup form to show, only the return
 // one. See app/api/equipment-log/route.js POST for the server-side
@@ -110,7 +110,7 @@ function CheckoutForm({ unit, onDone }) {
     <div>
       <h3>{unit.name}</h3>
       <p className="helper-text" style={{ marginTop: 0, marginBottom: 16 }}>
-        {unit.type} · Available — check it out below.
+        {unit.type} · Available - check it out below.
       </p>
 
       <label htmlFor="eq-user-name">Your name (company or employee)</label>

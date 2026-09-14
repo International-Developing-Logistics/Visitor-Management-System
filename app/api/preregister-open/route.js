@@ -7,7 +7,7 @@ import { isValidVisitorType, sanitizeGroupMembers } from "@/lib/visitorTypes";
 import { randomUUID } from "crypto";
 
 // POST /api/preregister-open
-// Public, no login, no invite needed — a guest fully self-registers for a
+// Public, no login, no invite needed - a guest fully self-registers for a
 // future visit in one step. Same trust model as /walkin (which is also
 // fully open): the host is notified immediately by email either way, so
 // anything suspicious is visible to a real person right away. `facility`
@@ -21,10 +21,10 @@ export async function POST(req) {
 
   const {
     full_name,
-    email, // optional — same as elsewhere in the app
+    email, // optional - same as elsewhere in the app
     phone,
     company,
-    visitor_type, // visitor-facing category — see lib/visitorTypes.js
+    visitor_type, // visitor-facing category - see lib/visitorTypes.js
     host_id,
     notes,
     agreed,
@@ -35,7 +35,7 @@ export async function POST(req) {
     facility,
   } = body;
 
-  // `purpose` is deliberately NOT required (or accepted) here anymore —
+  // `purpose` is deliberately NOT required (or accepted) here anymore -
   // it's assigned later by an admin from the Visitors dashboard.
   if (!full_name || !phone || !host_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

@@ -4,7 +4,7 @@ import Link from "next/link";
 import BrandHeader from "@/components/BrandHeader";
 import { facilityPath, DEFAULT_FACILITY } from "@/lib/facilities";
 
-// Staff Extras — the non-work stuff (Hangman, Crossword) that used to live
+// Staff Extras - the non-work stuff (Hangman, Crossword) that used to live
 // inline on the Staff Hub. Split out per the IA overhaul so the Home page
 // can lead with primary work actions, per item #4 of the spec ("move
 // Hangman and Crossword to Staff Extras").
@@ -44,12 +44,12 @@ export default function StaffExtras({ facility }) {
         <ExtraLink
           href="/hangman"
           title="Hangman"
-          description="One shared word for everyone — take turns guessing letters"
+          description="One shared word for everyone - take turns guessing letters"
         />
         <ExtraLink
           href="/crossword"
           title="Crossword"
-          description="Logistics/freight themed — one shared grid for everyone"
+          description="Logistics/freight themed - one shared grid for everyone"
         />
       </div>
 

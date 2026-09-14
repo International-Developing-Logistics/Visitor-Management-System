@@ -6,7 +6,7 @@ import { EQUIPMENT_UNITS } from "@/lib/equipmentUnits";
 
 // Generates a QR label per unit in lib/equipmentUnits.js, encoding this
 // deployment's own origin (window.location.origin) so labels always point
-// at wherever the app is actually running — no domain hardcoded here.
+// at wherever the app is actually running - no domain hardcoded here.
 // Print, cut along the border, and stick one on each physical unit.
 export default function PrintEquipmentLabelsPage() {
   const [labels, setLabels] = useState([]);

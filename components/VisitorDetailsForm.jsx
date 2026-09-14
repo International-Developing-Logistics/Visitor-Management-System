@@ -5,7 +5,7 @@ import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
 
 // Shared by the self-service kiosk check-in (WalkinForm) and open
 // pre-registration (PreregisterOpenForm). "Purpose of visit" was removed
-// from this form by design — it's now an admin-assigned field added after
+// from this form by design - it's now an admin-assigned field added after
 // check-in from the Visitors dashboard, rather than something a visitor
 // picks off a list on their way in. Visitor Type replaces it as the
 // required, visitor-facing categorization, and it also decides the shape
@@ -13,7 +13,7 @@ import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
 // Client visitors, or the simpler count + optional names for everyone else.
 //
 // showAgreementNotice / submitLabel / submitting / busyLabel: this form has
-// no agreement step of its own anymore — when it IS the last screen before
+// no agreement step of its own anymore - when it IS the last screen before
 // submission (true for the walk-in kiosk, but not open pre-registration,
 // which has a Time step after this one), the parent passes
 // showAgreementNotice to show the visitor-terms notice right above the
@@ -61,7 +61,7 @@ export default function VisitorDetailsForm({
 
   // Switching visitor type while a group is already entered would leave
   // stale data in the shape the new type doesn't use (e.g. typed group
-  // members left behind after switching from Business to Vendor) — clear
+  // members left behind after switching from Business to Vendor) - clear
   // whichever shape no longer applies so the two representations never
   // silently disagree with each other. Same idea for visitor_type_detail:
   // clear it whenever the type isn't "Other" so a stale detail can't get

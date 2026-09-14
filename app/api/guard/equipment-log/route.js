@@ -5,7 +5,7 @@ import { signMany } from "@/lib/storage";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/guard/equipment-log?facility=idl&view=active|history
-// Read-only for both admin and guard (requireAdminOrGuard) — there's no
+// Read-only for both admin and guard (requireAdminOrGuard) - there's no
 // decide/action step here (unlike equipment_requests), so one endpoint
 // serves both the admin Equipment > Log page and the guard dashboard's
 // Equipment Log tab, same shared-endpoint approach already used for

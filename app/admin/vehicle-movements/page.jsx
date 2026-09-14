@@ -47,7 +47,7 @@ function EditTimesModal({ movement, onClose, onSaved }) {
       onClick={onClose}
     >
       <div className="card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-        <h3>Correct times — {movement.vehicle} ({movement.license_plate})</h3>
+        <h3>Correct times - {movement.vehicle} ({movement.license_plate})</h3>
 
         <label htmlFor="em-checkout">Check-out time</label>
         <input id="em-checkout" type="datetime-local" value={checkedOutAt} onChange={(e) => setCheckedOutAt(e.target.value)} />
@@ -131,7 +131,7 @@ export default function AdminVehicleMovementsPage() {
                   <td style={{ fontWeight: 600 }}>{m.license_plate}</td>
                   <td>{m.driver_name}</td>
                   <td style={{ fontSize: "0.8rem" }}>{formatInCompanyTimezone(m.checked_out_at)}</td>
-                  <td style={{ fontSize: "0.8rem" }}>{m.checked_in_at ? formatInCompanyTimezone(m.checked_in_at) : "—"}</td>
+                  <td style={{ fontSize: "0.8rem" }}>{m.checked_in_at ? formatInCompanyTimezone(m.checked_in_at) : "-"}</td>
                   <td>{durationOutside(m.checked_out_at, m.checked_in_at)}</td>
                   <td>
                     <span className={`badge ${m.checked_in_at ? "checked_out" : "gate_pending"}`}>
@@ -145,7 +145,7 @@ export default function AdminVehicleMovementsPage() {
                     </div>
                   </td>
                   <td style={{ fontSize: "0.78rem", maxWidth: 160 }}>
-                    {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "—"}
+                    {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "-"}
                   </td>
                   <td>
                     <button className="btn-small" onClick={() => setEditing(m)}>Edit</button>

@@ -10,13 +10,13 @@ import { authFetch } from "@/lib/apiFetch";
 import { formatTimeInCompanyTimezone, formatInCompanyTimezone } from "@/lib/timezone";
 import { FACILITIES } from "@/lib/facilities";
 
-const POLL_MS = 5000; // "real time" here means polled every 5s — see README
+const POLL_MS = 5000; // "real time" here means polled every 5s - see README
                        // for why this app uses polling rather than websockets.
 
-// The Security dashboard — item #8 of the IA overhaul: gate-focused,
+// The Security dashboard - item #8 of the IA overhaul: gate-focused,
 // consolidating what used to be 5 separate tabs (Gate Approvals / Guard
 // Form / Guard Log / Vehicle Requests / Vehicle Check In/Out) into a
-// smaller, more direct set. "Gate Operations" is now the actionable home —
+// smaller, more direct set. "Gate Operations" is now the actionable home -
 // visitors grouped Expected/At Gate/On Site/Completed (same grouping as
 // the admin Visitors page) with approve/deny right on the At Gate rows, so
 // deciding a walk-in is a 2-click action instead of a separate dashboard
@@ -93,7 +93,7 @@ function GuardStationInner({ initialFacility }) {
       if (!res.ok) throw new Error(data.error);
       const visitors = data.visitors || [];
       if (prevGateCount.current !== null && visitors.length !== prevGateCount.current) {
-        setGateAnnounce(`Gate updated — ${visitors.length} visitor${visitors.length === 1 ? "" : "s"} tracked now.`);
+        setGateAnnounce(`Gate updated - ${visitors.length} visitor${visitors.length === 1 ? "" : "s"} tracked now.`);
       }
       prevGateCount.current = visitors.length;
       setGateVisitors(visitors);
@@ -126,7 +126,7 @@ function GuardStationInner({ initialFacility }) {
       if (!res.ok) throw new Error(data.error);
       const requests = data.requests || [];
       if (prevVehicleCount.current !== null && requests.length !== prevVehicleCount.current) {
-        setVehicleAnnounce(`Vehicle requests updated — ${requests.length} request${requests.length === 1 ? "" : "s"} now.`);
+        setVehicleAnnounce(`Vehicle requests updated - ${requests.length} request${requests.length === 1 ? "" : "s"} now.`);
       }
       prevVehicleCount.current = requests.length;
       setVehicleRequests(requests);
@@ -319,7 +319,7 @@ function GuardStationInner({ initialFacility }) {
                   {stageVisitors.map((v) => (
                     <tr key={v.id}>
                       <td style={{ fontWeight: 600 }}>{v.full_name}</td>
-                      <td>{v.purpose || "—"}</td>
+                      <td>{v.purpose || "-"}</td>
                       <td>
                         <span className={`badge ${v.status}`}>{STATUS_LABEL[v.status] || v.status}</span>
                       </td>
@@ -335,7 +335,7 @@ function GuardStationInner({ initialFacility }) {
                               </button>
                             </div>
                           ) : (
-                            "—"
+                            "-"
                           )}
                         </td>
                       )}
@@ -347,7 +347,7 @@ function GuardStationInner({ initialFacility }) {
           )}
 
           <h3 style={{ marginTop: 24, marginBottom: 4 }}>Vehicles Expected</h3>
-          <p className="helper-text" style={{ marginBottom: 16 }}>Approved requests not yet returned — watch for these at the gate.</p>
+          <p className="helper-text" style={{ marginBottom: 16 }}>Approved requests not yet returned - watch for these at the gate.</p>
 
           {vehicleError && <p className="error-text">{vehicleError}</p>}
           {vehicleLoading && <p className="helper-text">Loading…</p>}
@@ -373,7 +373,7 @@ function GuardStationInner({ initialFacility }) {
                       <td style={{ fontSize: "0.78rem" }}>
                         {r.needed_from
                           ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
-                          : r.estimated_time || "—"}
+                          : r.estimated_time || "-"}
                       </td>
                     </tr>
                   ))}
@@ -478,9 +478,9 @@ function GuardStationInner({ initialFacility }) {
                           {[g.company, g.phone].filter(Boolean).join(" · ")}
                         </div>
                       </td>
-                      <td>{g.car_type || "—"}</td>
+                      <td>{g.car_type || "-"}</td>
                       <td>{formatTimeInCompanyTimezone(g.checked_in_at)}</td>
-                      <td>{g.checked_out_at ? formatTimeInCompanyTimezone(g.checked_out_at) : "—"}</td>
+                      <td>{g.checked_out_at ? formatTimeInCompanyTimezone(g.checked_out_at) : "-"}</td>
                       <td>
                         {!g.checked_out_at && (
                           <button className="btn-small" onClick={() => checkOutLog(g.id)} disabled={logBusyId === g.id}>
@@ -529,7 +529,7 @@ function GuardStationInner({ initialFacility }) {
                       <td style={{ fontSize: "0.78rem" }}>
                         {r.needed_from
                           ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
-                          : r.estimated_time || "—"}
+                          : r.estimated_time || "-"}
                       </td>
                       <td>
                         <span className={`badge ${VEHICLE_STATUS_BADGE_CLASS[r.status]}`}>
@@ -551,7 +551,7 @@ function GuardStationInner({ initialFacility }) {
         <div className="admin-card" style={{ width: "100%", maxWidth: 720 }}>
           <h3 style={{ marginBottom: 4 }}>Equipment Log</h3>
           <p className="helper-text" style={{ marginBottom: 16 }}>
-            Read-only — entries come from staff scanning the QR code on each piece of equipment.
+            Read-only - entries come from staff scanning the QR code on each piece of equipment.
           </p>
 
           {equipmentLogError && <p className="error-text">{equipmentLogError}</p>}
@@ -577,7 +577,7 @@ function GuardStationInner({ initialFacility }) {
                       <td>{m.user_name}</td>
                       <td style={{ fontSize: "0.8rem" }}>{formatInCompanyTimezone(m.checked_out_at)}</td>
                       <td style={{ fontSize: "0.8rem" }}>{m.checked_in_at ? formatInCompanyTimezone(m.checked_in_at) : "Still out"}</td>
-                      <td>{m.damaged ? <span className="badge gate_denied">Reported</span> : "—"}</td>
+                      <td>{m.damaged ? <span className="badge gate_denied">Reported</span> : "-"}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -63,7 +63,7 @@ function CheckInPanel({ movement, onDone, onCancel }) {
       }}
     >
       <p style={{ fontWeight: 600, marginBottom: 10 }}>
-        Check in {movement.vehicle} — {movement.license_plate}
+        Check in {movement.vehicle} - {movement.license_plate}
       </p>
 
       <label htmlFor="ci-notes">Vehicle condition notes</label>
@@ -235,7 +235,7 @@ export default function VehicleMovementPanel({ facility }) {
             <div key={m.id} style={{ borderBottom: "1px solid var(--line)", padding: "12px 0" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <div>
-                  <div style={{ fontWeight: 600 }}>{m.vehicle} — {m.license_plate}</div>
+                  <div style={{ fontWeight: 600 }}>{m.vehicle} - {m.license_plate}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>
                     Driver: {m.driver_name}{m.destination ? ` · ${m.destination}` : ""}
                   </div>
@@ -319,7 +319,7 @@ export default function VehicleMovementPanel({ facility }) {
                         </div>
                       </td>
                       <td style={{ fontSize: "0.78rem", maxWidth: 160 }}>
-                        {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "—"}
+                        {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "-"}
                       </td>
                     </tr>
                   ))}

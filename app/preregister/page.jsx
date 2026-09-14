@@ -89,7 +89,7 @@ function InviteForm() {
             <div className="confirm-icon">✓</div>
             <h2>Link ready</h2>
             <p className="helper-text" style={{ marginBottom: 20 }}>
-              Share this with your guest however you like — email, WhatsApp, Slack, text.
+              Share this with your guest however you like - email, WhatsApp, Slack, text.
             </p>
           </div>
 
@@ -99,7 +99,7 @@ function InviteForm() {
             <p className={result.emailSent ? "helper-text" : "error-text"}>
               {result.emailSent
                 ? "Also emailed to the guest."
-                : `Email didn't send${result.emailError ? ` (${result.emailError})` : ""} — the link above still works, just share it manually.`}
+                : `Email didn't send${result.emailError ? ` (${result.emailError})` : ""} - the link above still works, just share it manually.`}
             </p>
           )}
 

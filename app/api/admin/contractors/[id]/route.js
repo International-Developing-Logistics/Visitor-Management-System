@@ -11,14 +11,14 @@ const EDITABLE_FIELDS = ["full_name", "email", "resident_id", "company", "estima
 //   validity_start / validity_end: ISO strings or "" to clear
 //   denial_reason: optional text, only meaningful alongside status: "denied"
 //
-// Approving is just status: "active" — there's no separate resting
+// Approving is just status: "active" - there's no separate resting
 // "approved" state; a pending registration goes straight to active the
 // moment an admin approves it, same one PATCH the existing Activate button
 // already used. On approval, both the contractor (their pass link) and the
 // two ADMIN_NOTIFICATION_EMAIL / HR_NOTIFICATION_EMAIL recipients get
-// emailed — same two addresses used for gate approvals and the original
+// emailed - same two addresses used for gate approvals and the original
 // "registration submitted" notice. Denying is status: "denied", optionally
-// with a reason that's stored for admins only — a denial is never emailed
+// with a reason that's stored for admins only - a denial is never emailed
 // to anyone, it's visible only in the admin dashboard.
 export async function PATCH(req, { params }) {
   const user = await requireAdmin(req);
@@ -75,7 +75,7 @@ export async function PATCH(req, { params }) {
   if (isActivating || isDenying) {
     updates.decided_at = new Date().toISOString();
   }
-  // A denial reason only makes sense attached to an actual denial — clear
+  // A denial reason only makes sense attached to an actual denial - clear
   // any stale one if this save moves the record to a non-denied status.
   if ("status" in updates && updates.status !== "denied" && !("denial_reason" in updates)) {
     updates.denial_reason = null;
@@ -100,7 +100,7 @@ export async function PATCH(req, { params }) {
       console.error("[contractors] approval notification email failed:", err.message)
     );
   }
-  // Denials are internal-only — no email is sent on isDenying, by design
+  // Denials are internal-only - no email is sent on isDenying, by design
   // (the reason and the decision itself stay in the admin dashboard).
 
   return NextResponse.json({ contractor: data });

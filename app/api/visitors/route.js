@@ -15,22 +15,22 @@ export async function POST(req) {
 
   const {
     full_name,
-    email, // optional — may be empty/null
+    email, // optional - may be empty/null
     phone,
     company,
-    visitor_type, // the visitor-facing category — see lib/visitorTypes.js. NOT the same as visit_type below.
+    visitor_type, // the visitor-facing category - see lib/visitorTypes.js. NOT the same as visit_type below.
     host_id,
     notes,
-    agreed, // boolean — replaces the old signature capture
-    visit_type, // "walkin" | "prereg" — which channel this came through
+    agreed, // boolean - replaces the old signature capture
+    visit_type, // "walkin" | "prereg" - which channel this came through
     additional_visitor_count,
     additional_visitor_names,
     group_members,
     facility,
   } = body;
 
-  // Email is intentionally NOT required here — visitors can check in without one.
-  // `purpose` is deliberately NOT required (or even accepted) here anymore —
+  // Email is intentionally NOT required here - visitors can check in without one.
+  // `purpose` is deliberately NOT required (or even accepted) here anymore -
   // it's assigned later by an admin from the Visitors dashboard.
   if (!full_name || !phone || !host_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });

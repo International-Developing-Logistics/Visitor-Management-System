@@ -3,12 +3,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
-// GET /api/admin/search?q=jane&facility=idl — global search, item #10 of
+// GET /api/admin/search?q=jane&facility=idl - global search, item #10 of
 // the IA overhaul. Admin-only (permission-respecting, per the spec: this
 // touches full visitor/contractor/request records the same way the admin
 // list pages do, so it uses the same requireAdmin gate rather than a
 // separate lighter-weight one). Runs a handful of small, capped ilike
-// queries rather than one big federated query — simplest thing that works
+// queries rather than one big federated query - simplest thing that works
 // for a dataset this size, consistent with the rest of the app's admin
 // list routes (all a single query with a limit, no pagination).
 const RESULT_LIMIT = 6;

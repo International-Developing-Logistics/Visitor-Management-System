@@ -6,13 +6,13 @@ import { useFacility } from "@/lib/facilityContext";
 import { formatInCompanyTimezone } from "@/lib/timezone";
 import EditVisitorModal from "@/components/EditVisitorModal";
 
-// The unified Visitors page — consolidates what used to be scattered
+// The unified Visitors page - consolidates what used to be scattered
 // across "requested" (employee ask-for-an-invite), "invited"/"pre_registered"
 // (pre-registration), "gate_pending"/"gate_approved"/"gate_denied"
 // (walk-in gate approval), and "checked_in"/"checked_out", none of which
 // previously had one admin screen. Every one of those underlying statuses
 // still exists exactly as before in the database and other flows (email
-// links, the gate/checkin pages, etc.) — this page only adds a display
+// links, the gate/checkin pages, etc.) - this page only adds a display
 // layer on top that groups them into four stages of one visit, per the
 // "avoid the confusing status soup" ask.
 const TABS = [
@@ -58,7 +58,7 @@ function partyNames(v) {
 export default function AdminVisitorsPage() {
   const { facility } = useFacility();
   // Reads ?tab= on first render only (e.g. an Action Required link from
-  // Home) — a plain lazy initializer instead of useSearchParams so this
+  // Home) - a plain lazy initializer instead of useSearchParams so this
   // page doesn't need a Suspense boundary just for a deep link.
   const [tab, setTab] = useState(() => {
     if (typeof window === "undefined") return "expected";
@@ -169,7 +169,7 @@ export default function AdminVisitorsPage() {
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Visitors</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
-        Everyone expected, at the gate, on site, or done — across pre-registrations, walk-ins, and guest
+        Everyone expected, at the gate, on site, or done - across pre-registrations, walk-ins, and guest
         invitations, in one place.
       </p>
 
@@ -217,17 +217,17 @@ export default function AdminVisitorsPage() {
               {filtered.map((v) => (
                 <tr key={v.id}>
                   <td>
-                    <div style={{ fontWeight: 600 }}>{v.full_name || "—"}</div>
-                    <div className="helper-text" style={{ marginTop: 0 }}>{v.email || "—"}</div>
+                    <div style={{ fontWeight: 600 }}>{v.full_name || "-"}</div>
+                    <div className="helper-text" style={{ marginTop: 0 }}>{v.email || "-"}</div>
                     {v.additional_visitor_count > 0 && (
                       <div className="helper-text" style={{ marginTop: 0 }} title={partyNames(v) || undefined}>
                         Party of {v.additional_visitor_count + 1}
                       </div>
                     )}
                   </td>
-                  <td style={{ fontSize: "0.82rem" }}>{v.visitor_type || "—"}</td>
-                  <td>{v.company || "—"}</td>
-                  <td>{v.hosts?.name || "—"}</td>
+                  <td style={{ fontSize: "0.82rem" }}>{v.visitor_type || "-"}</td>
+                  <td>{v.company || "-"}</td>
+                  <td>{v.hosts?.name || "-"}</td>
                   <td style={{ maxWidth: 160 }}>
                     {v.purpose || (
                       <button className="btn-small" onClick={() => setEditing(v)}>+ Add purpose</button>

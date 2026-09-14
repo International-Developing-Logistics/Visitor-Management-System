@@ -9,7 +9,7 @@ import HyperlinkCopier from "@/components/HyperlinkCopier";
 import { OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
 import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
 
-// No separate "Agreement" step anymore — the visitor-terms notice is shown
+// No separate "Agreement" step anymore - the visitor-terms notice is shown
 // on the last screen before submission (the Time step, since it comes after
 // Details here), and clicking "Register" there is the acknowledgment.
 const STEPS = ["Details", "Time", "Done"];
@@ -47,7 +47,7 @@ export default function PreregisterOpenForm({ facility }) {
     setSubmitting(true);
     setSubmitError("");
     // "Other" combines the picked type + the free-text detail into one
-    // string before sending, e.g. "Other: Passport renewal" — same
+    // string before sending, e.g. "Other: Passport renewal" - same
     // convention already used for `purpose` on the request-invite/preregister
     // staff tools (see lib/visitorTypes.js).
     const finalVisitorType =

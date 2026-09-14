@@ -4,7 +4,7 @@ import Link from "next/link";
 import BrandHeader from "@/components/BrandHeader";
 import { facilityPath, DEFAULT_FACILITY } from "@/lib/facilities";
 
-// Staff Home (formerly "Staff Hub") — item #4 of the IA overhaul spec:
+// Staff Home (formerly "Staff Hub") - item #4 of the IA overhaul spec:
 // lead with the three primary actions, then requests/guests lookup and
 // support, and move the games out to a separate "Staff Extras" page/section
 // so they don't compete with work tasks for attention.
@@ -83,12 +83,12 @@ export default function StaffHub({ facility }) {
         <PrimaryAction
           href={p("/vehicle-request")}
           title="Request Vehicle"
-          description="Car, truck, etc. — you'll get a status link by email"
+          description="Car, truck, etc. - you'll get a status link by email"
         />
         <PrimaryAction
           href={`/equipment-log?facility=${facility.key}`}
           title="Equipment Log"
-          description="Scan the QR code on the equipment — or pick it from the list here"
+          description="Scan the QR code on the equipment - or pick it from the list here"
         />
 
         <SectionLabel>My Guests</SectionLabel>
@@ -102,14 +102,14 @@ export default function StaffHub({ facility }) {
         <ServiceLink
           href="/recommendations"
           title="Feature Requests"
-          description="Tell us what you'd like added to this app — anonymous"
+          description="Tell us what you'd like added to this app - anonymous"
         />
 
         <SectionLabel>Staff Extras</SectionLabel>
         <ServiceLink
           href={p("/staff/extras")}
           title="Games"
-          description="Hangman and Crossword — shared with everyone on shift"
+          description="Hangman and Crossword - shared with everyone on shift"
         />
 
         <SectionLabel>Staff & Security</SectionLabel>

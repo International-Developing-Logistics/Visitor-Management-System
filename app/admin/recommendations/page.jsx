@@ -109,7 +109,7 @@ export default function AdminRecommendationsPage() {
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Feature Requests</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
-        Submitted anonymously from Home and Security — no submitter identity is captured.
+        Submitted anonymously from Home and Security - no submitter identity is captured.
       </p>
 
       {error && <p className="error-text">{error}</p>}

@@ -15,14 +15,14 @@ export default function CrosswordGame() {
   const [state, setState] = useState(null); // GET /api/crossword response
   const [message, setMessage] = useState("");
   const [selected, setSelected] = useState(null); // { row, col, direction }
-  const [wrongCell, setWrongCell] = useState(null); // { row, col } — brief "not quite" flash
+  const [wrongCell, setWrongCell] = useState(null); // { row, col } - brief "not quite" flash
   const pendingCells = useRef(new Set());
   const wrongTimeout = useRef(null);
 
   useEffect(() => {
     const saved = loadNickname();
     setNickname(saved);
-    if (saved) setActiveNickname(saved); // returning player — jump straight in
+    if (saved) setActiveNickname(saved); // returning player - jump straight in
   }, []);
 
   const load = useCallback(async (nick) => {
@@ -53,7 +53,7 @@ export default function CrosswordGame() {
   };
 
   // Index every cell by which across/down entry (if any) covers it, and
-  // which entry (if any) starts there — built once per puzzle load.
+  // which entry (if any) starts there - built once per puzzle load.
   const cellIndex = useMemo(() => {
     if (!state?.entries) return {};
     const map = {};

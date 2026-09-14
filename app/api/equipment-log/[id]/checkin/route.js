@@ -7,7 +7,7 @@ import { uploadPrivateFile } from "@/lib/storage";
 // { hour_meter_photo, damaged, damage_photo, damage_notes }
 // Records the return scan: a photo of the motor hour counter is always
 // required; a damage photo is required only if `damaged` is checked.
-// Public, no login — same trust model as the checkout POST above.
+// Public, no login - same trust model as the checkout POST above.
 export async function POST(req, { params }) {
   const limited = checkRateLimit(req, "equipment-log");
   if (limited) return limited;

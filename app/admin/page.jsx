@@ -6,11 +6,11 @@ import { authFetch } from "@/lib/apiFetch";
 import { useFacility } from "@/lib/facilityContext";
 import { utcIsoToCompanyLocalDateValue } from "@/lib/timezone";
 
-// Admin Home — item #9 of the IA overhaul: today's counts across the
+// Admin Home - item #9 of the IA overhaul: today's counts across the
 // domains staff actually ask about (Visitors/Vehicles/Contractors), then
 // an "Action Required" list of exactly what needs a decision right now,
 // each item jumping straight to the right screen and tab. Everything here
-// reuses the same list endpoints the domain pages already call — no new
+// reuses the same list endpoints the domain pages already call - no new
 // aggregation route, just re-slicing data those pages already fetch.
 const QUICK_LINKS = [
   { href: "/preregister", label: "Invite a guest" },

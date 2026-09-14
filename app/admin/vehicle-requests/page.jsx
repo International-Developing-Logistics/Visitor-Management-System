@@ -6,7 +6,7 @@ import { formatInCompanyTimezone } from "@/lib/timezone";
 import { useFacility } from "@/lib/facilityContext";
 
 // Stage = status, except "approved" splits into "approved" (still out) and
-// "completed" (returned) — so the tabs match the Pending/Approved/
+// "completed" (returned) - so the tabs match the Pending/Approved/
 // Rejected/Completed shape from the IA spec without changing the DB status
 // values anything else relies on (email links, guard views, etc.).
 function stageOf(r) {
@@ -31,7 +31,7 @@ export default function AdminVehicleRequestsPage() {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   // Reads ?tab= on first render only (e.g. an Action Required link from
-  // Home) — see the same note in app/admin/visitors/page.jsx.
+  // Home) - see the same note in app/admin/visitors/page.jsx.
   const [tab, setTab] = useState(() => {
     if (typeof window === "undefined") return "pending";
     const t = new URLSearchParams(window.location.search).get("tab");
@@ -138,7 +138,7 @@ export default function AdminVehicleRequestsPage() {
                   <td style={{ fontSize: "0.8rem" }}>
                     {r.needed_from
                       ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
-                      : r.estimated_time || "—"}
+                      : r.estimated_time || "-"}
                   </td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>

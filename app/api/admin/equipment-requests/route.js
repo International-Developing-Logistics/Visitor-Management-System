@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/admin/equipment-requests?facility=idl
-// Admin-only by design — equipment requests aren't surfaced to guards at
+// Admin-only by design - equipment requests aren't surfaced to guards at
 // all, unlike vehicle requests.
 export async function GET(req) {
   const user = await requireAdmin(req);

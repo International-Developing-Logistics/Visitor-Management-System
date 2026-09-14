@@ -16,7 +16,7 @@ function fmt(ts) {
   return new Date(ts).toISOString().replace("T", " ").slice(0, 16);
 }
 
-// GET /api/admin/export?month=2026-08 — CSV of every visitor whose
+// GET /api/admin/export?month=2026-08 - CSV of every visitor whose
 // created_at falls within that calendar month. Opens directly in Excel.
 export async function GET(req) {
   const user = await requireAdmin(req);

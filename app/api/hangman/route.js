@@ -6,7 +6,7 @@ import { HANGMAN_WORDS } from "@/lib/hangmanWords";
 const MAX_WRONG = 6;
 const MAX_NICKNAME_LENGTH = 30;
 
-// Each player has their own private round — not a shared board — so their
+// Each player has their own private round - not a shared board - so their
 // score is entirely their own. A round belongs to a nickname; fetches the
 // player's current in-progress round, or starts their next one (cycling
 // through HANGMAN_WORDS in order, based on how many rounds they've already
@@ -70,7 +70,7 @@ function publicRoundState(round) {
   };
 }
 
-// GET /api/hangman?nickname=... — that player's current round (started if
+// GET /api/hangman?nickname=... - that player's current round (started if
 // they don't have one yet) + the top-10 leaderboard. Without a nickname,
 // just the leaderboard comes back so the page can show it before anyone's
 // started playing. Public, no login.
@@ -93,7 +93,7 @@ export async function GET(req) {
     );
   } catch (err) {
     // Log the real error server-side (visible in your terminal / Vercel
-    // logs) but never hand a raw exception message back to a player —
+    // logs) but never hand a raw exception message back to a player -
     // that's confusing at best and can leak internals at worst.
     console.error(`[api/hangman] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });
@@ -121,7 +121,7 @@ export async function POST(req) {
   const supabaseAdmin = getSupabaseAdmin();
 
   // Tracks which step we're on so that if something throws, the server log
-  // says exactly where — production stack traces point into a minified,
+  // says exactly where - production stack traces point into a minified,
   // single-line bundle that's otherwise useless for pinning down which
   // line actually failed.
   let stage = "start";
@@ -132,7 +132,7 @@ export async function POST(req) {
 
     stage = "already-finished check";
     if (round.status !== "playing") {
-      // This round already finished (e.g. a second tab caught up) — hand
+      // This round already finished (e.g. a second tab caught up) - hand
       // back the finished state instead of erroring.
       const leaderboard = await getLeaderboard(supabaseAdmin);
       return NextResponse.json({ ...publicRoundState(round), leaderboard });
@@ -206,7 +206,7 @@ export async function POST(req) {
     return NextResponse.json({ ...publicRoundState(updated), leaderboard });
   } catch (err) {
     // Log the real error server-side (visible in your terminal / Vercel
-    // logs) but never hand a raw exception message back to a player —
+    // logs) but never hand a raw exception message back to a player -
     // that's confusing at best and can leak internals at worst.
     console.error(`[api/hangman] stage=${stage}`, err);
     return NextResponse.json({ error: "Something went wrong on our end. Try again in a moment." }, { status: 500 });

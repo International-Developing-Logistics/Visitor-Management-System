@@ -2,14 +2,14 @@
 
 // Global facility selection, lifted out of the several admin pages that
 // used to each keep their own local "Facility: [tabs]" switcher
-// (vehicle-requests, vehicle-movements, equipment-requests, guard-logs —
+// (vehicle-requests, vehicle-movements, equipment-requests, guard-logs -
 // all four had byte-for-byte the same switcher UI). Now there's one
 // selector in the app header (see components/AppShell.jsx) and every
 // facility-aware page reads from here instead of managing its own state.
 import { createContext, useContext, useState } from "react";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
-// A pseudo-facility value, not a real key in FACILITIES — pages that
+// A pseudo-facility value, not a real key in FACILITIES - pages that
 // support it should treat it as "don't filter by facility" server-side.
 export const ALL_FACILITIES = "all";
 

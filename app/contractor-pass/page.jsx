@@ -12,7 +12,7 @@ const STATUS_COPY = {
 };
 
 function fmtDate(iso) {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" });
 }
 
@@ -57,7 +57,7 @@ function PassInner() {
         <tbody>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0" }}>Pass ID</td>
-            <td style={{ padding: "6px 0" }}>{pass.pass_id || "—"}</td>
+            <td style={{ padding: "6px 0" }}>{pass.pass_id || "-"}</td>
           </tr>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0" }}>Valid from</td>

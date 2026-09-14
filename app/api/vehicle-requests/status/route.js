@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/vehicle-requests/status?token=xxx
-// Public, read-only — safe fields only, no approve/reject capability even
+// Public, read-only - safe fields only, no approve/reject capability even
 // though it reuses the same token as the coordinator email links.
 export async function GET(req) {
   const limited = checkRateLimit(req, "vehicle-request-status");

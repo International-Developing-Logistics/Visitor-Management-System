@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/contractors/pass?token=xxx
-// Public — deliberately returns only what's safe to show on a pass someone
+// Public - deliberately returns only what's safe to show on a pass someone
 // might display at a gate: name, company, pass ID, status, validity
 // window. Never the passport/Emirates ID/Freezone pass images, resident
 // ID, or email.

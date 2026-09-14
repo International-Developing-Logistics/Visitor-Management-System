@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 import { randomUUID } from "crypto";
 
 // GET /api/admin/contractors/[id]/visits
-// Full visit history for one contractor, most recent first — powers the
+// Full visit history for one contractor, most recent first - powers the
 // "View log" modal on the admin dashboard.
 export async function GET(req, { params }) {
   const user = await requireAdmin(req);
@@ -28,7 +28,7 @@ export async function GET(req, { params }) {
 
 // POST /api/admin/contractors/[id]/visits { action: "checkin" | "checkout" }
 // Logs a single visit event. A contractor can hold a multi-entry pass, so
-// this is a log table (one row per visit) rather than a status field —
+// this is a log table (one row per visit) rather than a status field -
 // "checked in" just means the most recent row has no checked_out_at yet,
 // same pattern as vehicle_movements.
 export async function POST(req, { params }) {

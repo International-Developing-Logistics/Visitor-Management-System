@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 
 // POST /api/request-invite { email, full_name?, host_id, purpose, notes?,
 //   additional_visitor_count?, additional_visitor_names? }
-// Public/no-login by design — see HANDOVER.md §1.4. This only queues a
+// Public/no-login by design - see HANDOVER.md §1.4. This only queues a
 // request. It does NOT create a usable check-in link or send anything to
 // the guest. An admin must review it in /admin and approve it from the
 // "Requests" tab before any invite actually goes out.

@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
-// GET /api/admin/visitors?status=checked_in&facility=idl — list visitors,
+// GET /api/admin/visitors?status=checked_in&facility=idl - list visitors,
 // newest first. Pass no status to get everyone in that facility; status can
 // be a single value, a comma-separated list (e.g.
 // "gate_pending,gate_approved,gate_denied"), or omitted. facility defaults

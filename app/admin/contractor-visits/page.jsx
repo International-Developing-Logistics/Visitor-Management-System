@@ -80,7 +80,7 @@ function matchesQuery(c, query) {
   );
 }
 
-// A searchable stand-in for a <select> — type a contractor's name or pass
+// A searchable stand-in for a <select> - type a contractor's name or pass
 // ID to filter the list instead of scrolling a long dropdown. Only an
 // actual pick from the list counts as a selection (onSelect("") whenever
 // the typed text no longer matches it), so the Check in button still only
@@ -142,7 +142,7 @@ function ContractorPicker({ contractors, selectedId, onSelect, disabled }) {
             >
               <div style={{ fontWeight: 600 }}>{c.full_name}</div>
               <div className="helper-text" style={{ marginTop: 0 }}>
-                {c.company || "—"} · {c.pass_id || "no pass id"}
+                {c.company || "-"} · {c.pass_id || "no pass id"}
               </div>
             </div>
           ))}
@@ -284,9 +284,9 @@ export default function AdminContractorVisitsPage() {
             <tbody>
               {visits.map((v) => (
                 <tr key={v.id}>
-                  <td style={{ fontWeight: 600 }}>{v.contractor?.full_name || "—"}</td>
-                  <td>{v.contractor?.company || "—"}</td>
-                  <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{v.contractor?.pass_id || "—"}</td>
+                  <td style={{ fontWeight: 600 }}>{v.contractor?.full_name || "-"}</td>
+                  <td>{v.contractor?.company || "-"}</td>
+                  <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{v.contractor?.pass_id || "-"}</td>
                   <td style={{ fontSize: "0.8rem" }}>{formatInCompanyTimezone(v.checked_in_at)}</td>
                   <td style={{ fontSize: "0.8rem" }}>
                     {v.checked_out_at ? (

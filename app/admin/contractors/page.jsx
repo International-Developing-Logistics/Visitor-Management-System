@@ -143,7 +143,7 @@ function DenyContractorModal({ contractor, onClose, onDenied }) {
         <h3>Deny registration</h3>
         <p className="helper-text" style={{ marginTop: 0 }}>
           Denying <strong>{contractor.full_name}</strong>'s registration. A reason is optional and is only ever
-          shown here in the admin dashboard — it's never sent to the applicant.
+          shown here in the admin dashboard - it's never sent to the applicant.
         </p>
 
         <label htmlFor="deny-reason">Reason (optional)</label>
@@ -173,7 +173,7 @@ function DenyContractorModal({ contractor, onClose, onDenied }) {
 
 function DocumentLinks({ contractor }) {
   // Older records (registered before this feature) have no document_type
-  // recorded — fall back to just showing whatever passport link they have.
+  // recorded - fall back to just showing whatever passport link they have.
   if (contractor.document_type === "freezone_pass") {
     return (
       <div>
@@ -181,7 +181,7 @@ function DocumentLinks({ contractor }) {
         {contractor.freezone_pass_signed_url ? (
           <a href={contractor.freezone_pass_signed_url} target="_blank" rel="noreferrer">View</a>
         ) : (
-          "—"
+          "-"
         )}
       </div>
     );
@@ -194,12 +194,12 @@ function DocumentLinks({ contractor }) {
           {contractor.passport_signed_url ? (
             <a href={contractor.passport_signed_url} target="_blank" rel="noreferrer">Passport</a>
           ) : (
-            <span className="helper-text" style={{ marginTop: 0 }}>Passport —</span>
+            <span className="helper-text" style={{ marginTop: 0 }}>Passport -</span>
           )}
           {contractor.emirates_id_signed_url ? (
             <a href={contractor.emirates_id_signed_url} target="_blank" rel="noreferrer">Emirates ID</a>
           ) : (
-            <span className="helper-text" style={{ marginTop: 0 }}>Emirates ID —</span>
+            <span className="helper-text" style={{ marginTop: 0 }}>Emirates ID -</span>
           )}
         </div>
       </div>
@@ -208,7 +208,7 @@ function DocumentLinks({ contractor }) {
   return contractor.passport_signed_url ? (
     <a href={contractor.passport_signed_url} target="_blank" rel="noreferrer">View</a>
   ) : (
-    "—"
+    "-"
   );
 }
 
@@ -283,18 +283,18 @@ export default function AdminContractorsPage() {
           <tbody>
             {contractors.map((c) => (
               <tr key={c.id}>
-                <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{c.pass_id || "—"}</td>
+                <td style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{c.pass_id || "-"}</td>
                 <td>
                   <div style={{ fontWeight: 600 }}>{c.full_name}</div>
                   <div className="helper-text" style={{ marginTop: 0 }}>{c.email}</div>
                 </td>
-                <td>{c.company || "—"}</td>
-                <td>{c.resident_id || "—"}</td>
-                <td>{c.estimated_duration || "—"}</td>
+                <td>{c.company || "-"}</td>
+                <td>{c.resident_id || "-"}</td>
+                <td>{c.estimated_duration || "-"}</td>
                 <td style={{ fontSize: "0.82rem" }}>
-                  {c.validity_start ? new Date(c.validity_start).toLocaleDateString() : "—"}
+                  {c.validity_start ? new Date(c.validity_start).toLocaleDateString() : "-"}
                   {" – "}
-                  {c.validity_end ? new Date(c.validity_end).toLocaleDateString() : "—"}
+                  {c.validity_end ? new Date(c.validity_end).toLocaleDateString() : "-"}
                 </td>
                 <td><DocumentLinks contractor={c} /></td>
                 <td>

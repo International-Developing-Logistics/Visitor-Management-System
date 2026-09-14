@@ -1,6 +1,6 @@
 "use client";
 
-// The unified application shell — one header + left sidebar used across
+// The unified application shell - one header + left sidebar used across
 // the operations platform, replacing the old horizontal AdminNav. Phase 1
 // of the IA overhaul: this wires up the Admin area only (role="admin").
 // Staff and Security get their own entry points into this same shell in a
@@ -8,7 +8,7 @@
 // written generically so that wiring is additive, not a rewrite.
 //
 // Items with no `href` are parts of the target navigation tree that don't
-// have a page behind them yet (see the phase plan) — shown disabled with
+// have a page behind them yet (see the phase plan) - shown disabled with
 // a "Soon" pill so the intended shape of the app is visible now, rather
 // than silently missing.
 import Link from "next/link";
@@ -16,7 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { authFetch } from "@/lib/apiFetch";
-import { FACILITIES } from "@/lib/facilities";
+import { FACILITIES, getFacility } from "@/lib/facilities";
 import { useFacility, ALL_FACILITIES } from "@/lib/facilityContext";
 import BrandHeader from "@/components/BrandHeader";
 
@@ -24,7 +24,7 @@ const SEARCH_TYPE_HREF_PARAM = {
   Visitor: "expected",
 };
 
-// Global search — item #10 of the IA overhaul. Admin-only (the backend
+// Global search - item #10 of the IA overhaul. Admin-only (the backend
 // route is requireAdmin, matching the full-record access it returns), so
 // it only renders for role="admin". Debounced, small dropdown of results
 // grouped loosely by type; picking one navigates to that item's list page
@@ -186,7 +186,7 @@ const NAV = [
   {
     group: "Administration",
     items: [
-      { label: "Users & Roles", href: null, roles: ["admin"] },
+      { label: "Users & Roles", href: "/admin/users", roles: ["admin"] },
       { label: "Facilities", href: null, roles: ["admin"] },
       { label: "Settings", href: null, roles: ["admin"] },
     ],
@@ -214,13 +214,25 @@ export default function AppShell({ role = "admin", children }) {
     items: g.items.filter((item) => item.roles.includes(role)),
   })).filter((g) => g.items.length > 0);
 
+  // Sidebar branding follows the selected facility - falls back to the
+  // default facility's logo/name when "All Facilities" is selected, since
+  // there's no single facility to brand it with. Without this, the sidebar
+  // silently used BrandHeader's generic fallbacks (a "Reception" title and
+  // the Harmony logo) even while viewing the IDL facility.
+  const activeFacility = getFacility(facility);
+
   return (
     <div className="app-shell">
       {mobileOpen && <div className="app-sidebar-scrim open" onClick={() => setMobileOpen(false)} />}
 
       <aside className={`app-sidebar${mobileOpen ? " open" : ""}`}>
         <div style={{ padding: "4px 10px 18px" }}>
-          <BrandHeader label="Admin" />
+          <BrandHeader
+            label="Admin"
+            companyName={activeFacility.label}
+            logoSrc={activeFacility.logo}
+            logoHeight={activeFacility.logoHeight}
+          />
         </div>
         <nav>
           {groups.map((g) => (

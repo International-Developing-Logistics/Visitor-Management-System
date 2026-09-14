@@ -6,7 +6,7 @@ import { formatInCompanyTimezone } from "@/lib/timezone";
 import { useFacility } from "@/lib/facilityContext";
 
 // Stage = status, except "approved" splits into "approved" (still out) and
-// "completed" (returned) — matches the Pending/Approved/Denied/Completed
+// "completed" (returned) - matches the Pending/Approved/Denied/Completed
 // tab shape from the IA spec without changing the DB status values.
 function stageOf(r) {
   if (r.status === "approved") return r.returned_at ? "completed" : "approved";
@@ -28,7 +28,7 @@ function equipmentSummary(r) {
   if (r.equipment_items?.length) parts.push(r.equipment_items.join(", "));
   else if (r.equipment) parts.push(r.equipment);
   if (r.external_rental_request) parts.push(`Rental: ${r.external_rental_request}`);
-  return parts.length ? parts.join(" · ") : "—";
+  return parts.length ? parts.join(" · ") : "-";
 }
 
 export default function AdminEquipmentRequestsPage() {
@@ -38,7 +38,7 @@ export default function AdminEquipmentRequestsPage() {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
   // Reads ?tab= on first render only (e.g. an Action Required link from
-  // Home) — see the same note in app/admin/visitors/page.jsx.
+  // Home) - see the same note in app/admin/visitors/page.jsx.
   const [tab, setTab] = useState(() => {
     if (typeof window === "undefined") return "pending";
     const t = new URLSearchParams(window.location.search).get("tab");
@@ -136,11 +136,11 @@ export default function AdminEquipmentRequestsPage() {
                 <tr key={r.id}>
                   <td style={{ fontWeight: 600 }}>{r.employee_name}</td>
                   <td>{equipmentSummary(r)}</td>
-                  <td>{r.location || "—"}</td>
+                  <td>{r.location || "-"}</td>
                   <td style={{ fontSize: "0.8rem" }}>
                     {r.needed_from
                       ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
-                      : r.estimated_time || "—"}
+                      : r.estimated_time || "-"}
                   </td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>

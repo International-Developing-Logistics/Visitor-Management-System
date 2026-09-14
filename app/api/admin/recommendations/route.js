@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 
 // GET /api/admin/recommendations
-// Admin-only. Not facility-scoped — these are suggestions about the app
+// Admin-only. Not facility-scoped - these are suggestions about the app
 // itself, not facility operations.
 export async function GET(req) {
   const user = await requireAdmin(req);

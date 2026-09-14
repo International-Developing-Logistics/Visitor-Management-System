@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-// requiredRole: "staff" (default) — any signed-in account, no role fetch.
-//               "admin" — blocks guard (and staff) accounts entirely (used
+// requiredRole: "staff" (default) - any signed-in account, no role fetch.
+//               "admin" - blocks guard (and staff) accounts entirely (used
 //               to wrap everything under /admin and /preregister).
 // allowedRoles: optional array of exact roles allowed in, e.g.
 //               ["admin", "staff"]. When set, this takes precedence over
@@ -15,7 +15,7 @@ import { supabase } from "@/lib/supabaseClient";
 //               callers so the effect below doesn't re-run every render.
 // onRoleResolved: optional callback(role) fired once the signed-in
 //               account's real role is known (default "admin" when there's
-//               no user_roles row) — lets a page gate on allowedRoles
+//               no user_roles row) - lets a page gate on allowedRoles
 //               *and* conditionally render by role, e.g. StaffHub.jsx.
 export default function AdminGuard({ children, requiredRole = "staff", allowedRoles, onRoleResolved }) {
   const pathname = usePathname();
@@ -35,7 +35,7 @@ export default function AdminGuard({ children, requiredRole = "staff", allowedRo
       if (!session) {
         // Preserve where the person was actually trying to go (e.g. /guard,
         // /idl/guard) so login sends them back there instead of always to
-        // /admin — that mismatch was blocking guard accounts from ever
+        // /admin - that mismatch was blocking guard accounts from ever
         // reaching their own page.
         router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
         return;
@@ -47,7 +47,7 @@ export default function AdminGuard({ children, requiredRole = "staff", allowedRo
         return;
       }
 
-      // Resolve the real role — no row in user_roles defaults to "admin",
+      // Resolve the real role - no row in user_roles defaults to "admin",
       // matching the same default used server-side in lib/verifyAdmin.js.
       const { data: roleRow } = await supabase
         .from("user_roles")
@@ -61,7 +61,7 @@ export default function AdminGuard({ children, requiredRole = "staff", allowedRo
 
       // allowedRoles (when given) is the real gate. Otherwise fall back to
       // the legacy requiredRole="admin" behavior. If neither is set, the
-      // only reason we got here is onRoleResolved — any signed-in account
+      // only reason we got here is onRoleResolved - any signed-in account
       // still passes, we just needed to resolve the role to report it.
       let allowed;
       if (allowedRoles) {

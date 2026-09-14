@@ -3,10 +3,10 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
 import { signMany } from "@/lib/storage";
 
-// GET /api/admin/contractors — list every contractor, newest first, with
+// GET /api/admin/contractors - list every contractor, newest first, with
 // short-lived signed URLs for whichever documents they submitted (never a
-// permanent public one). A contractor submits ONE of two document sets —
-// a Freezone gate pass, or a passport + Emirates ID pair — so most rows
+// permanent public one). A contractor submits ONE of two document sets -
+// a Freezone gate pass, or a passport + Emirates ID pair - so most rows
 // will only have one or two of the three possible URLs signed.
 export async function GET(req) {
   const user = await requireAdmin(req);

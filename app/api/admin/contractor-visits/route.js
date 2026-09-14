@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 
 // GET /api/admin/contractor-visits
 // Every contractor visit ever logged, across every contractor, newest
-// first — the flat history table behind the "Contractor Check In/Out"
+// first - the flat history table behind the "Contractor Check In/Out"
 // admin module (separate from the "Contractors" module, which only
 // handles registration review and pass activation/deactivation).
 // Embeds the contractor's name/company/pass ID so the page doesn't need

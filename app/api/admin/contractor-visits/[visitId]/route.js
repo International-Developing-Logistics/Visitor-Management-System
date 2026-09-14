@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 // PATCH /api/admin/contractor-visits/[visitId]
 //   { checked_in_at?: ISO string, checked_out_at?: ISO string | "" }
 // Check-in/out times are recorded automatically by the check-in/check-out
-// buttons, but admins can correct a mistaken entry here — same idea as
+// buttons, but admins can correct a mistaken entry here - same idea as
 // PATCH /api/admin/vehicle-movements/[id]. checked_in_at can't be cleared
 // (a visit always has one); clearing checked_out_at reopens the visit
 // (the contractor becomes "on site" again).
@@ -64,7 +64,7 @@ export async function PATCH(req, { params }) {
   }
 
   // Reopening a visit (clearing checked_out_at) would leave this
-  // contractor with two "open" rows if another one is already open —
+  // contractor with two "open" rows if another one is already open -
   // block that rather than silently breaking the single-open-visit
   // assumption the check-in/check-out buttons rely on.
   if ("checked_out_at" in updates && updates.checked_out_at === null && existing.checked_out_at !== null) {
@@ -77,7 +77,7 @@ export async function PATCH(req, { params }) {
       .limit(1);
     if (otherOpen && otherOpen.length > 0) {
       return NextResponse.json(
-        { error: "This contractor already has a different open visit — close that one first" },
+        { error: "This contractor already has a different open visit - close that one first" },
         { status: 409 }
       );
     }

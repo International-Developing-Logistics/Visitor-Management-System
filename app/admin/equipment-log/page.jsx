@@ -5,7 +5,7 @@ import { authFetch } from "@/lib/apiFetch";
 import { formatInCompanyTimezone } from "@/lib/timezone";
 import { useFacility } from "@/lib/facilityContext";
 
-// Read-only — there's no decide/approve step for this feature (unlike the
+// Read-only - there's no decide/approve step for this feature (unlike the
 // old equipment_requests workflow it replaces). Entries are created only
 // by staff scanning a physical QR code; this page and the guard
 // dashboard's matching tab both just display what's already been logged,
@@ -54,7 +54,7 @@ export default function AdminEquipmentLogPage() {
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Equipment Log</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
-        Checkout/return entries logged by scanning each unit's QR code. Read-only — see "Print QR Labels" to manage the unit list.
+        Checkout/return entries logged by scanning each unit's QR code. Read-only - see "Print QR Labels" to manage the unit list.
       </p>
 
       <div className="tabs" style={{ marginBottom: 16 }}>
@@ -106,7 +106,7 @@ export default function AdminEquipmentLogPage() {
                     </div>
                   </td>
                   <td style={{ fontSize: "0.78rem", maxWidth: 160 }}>
-                    {m.damaged ? (m.damage_notes || "Reported, no note") : "—"}
+                    {m.damaged ? (m.damage_notes || "Reported, no note") : "-"}
                   </td>
                 </tr>
               ))}

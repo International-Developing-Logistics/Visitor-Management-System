@@ -38,7 +38,7 @@ export default function EquipmentLogIndexPage({ searchParams }) {
       <div className="card">
         <h3 style={{ marginBottom: 4 }}>Equipment</h3>
         <p className="helper-text" style={{ marginBottom: 16 }}>
-          Normally you'd scan the QR code on the equipment itself — use this list only if that's not available.
+          Normally you'd scan the QR code on the equipment itself - use this list only if that's not available.
         </p>
 
         {error && <p className="error-text">{error}</p>}

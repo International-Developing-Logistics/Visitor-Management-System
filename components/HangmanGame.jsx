@@ -7,7 +7,7 @@ import { loadNickname, saveNickname } from "@/lib/nickname";
 const LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
 
 function HangmanFigure({ wrongGuesses }) {
-  // Six stages: head, body, left arm, right arm, left leg, right leg —
+  // Six stages: head, body, left arm, right arm, left leg, right leg -
   // matches the default maxWrong of 6 from the API.
   const show = (n) => wrongGuesses >= n;
   return (
@@ -38,7 +38,7 @@ export default function HangmanGame() {
   useEffect(() => {
     const saved = loadNickname();
     setNickname(saved);
-    if (saved) setActiveNickname(saved); // returning player — jump straight in
+    if (saved) setActiveNickname(saved); // returning player - jump straight in
   }, []);
 
   const load = useCallback(async (nick) => {
@@ -98,7 +98,7 @@ export default function HangmanGame() {
     const onKeyDown = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       // Ignore keystrokes typed into a form field (e.g. the nickname
-      // input) — otherwise every letter typed there was also being sent
+      // input) - otherwise every letter typed there was also being sent
       // to the server as a real letter guess.
       const tag = e.target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.target?.isContentEditable) return;

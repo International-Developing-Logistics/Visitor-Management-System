@@ -8,9 +8,9 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 //     location, needed_from, needed_until, facility? }
 // At least one of equipment_items or external_rental_request is required.
 // needed_from/needed_until are required unless it's a rental request.
-// No email notification on submission (unlike gate/vehicle requests) —
+// No email notification on submission (unlike gate/vehicle requests) -
 // this workflow is reviewed purely from /admin/equipment-requests.
-// Public/no-login by design — see HANDOVER.md §1.4.
+// Public/no-login by design - see HANDOVER.md §1.4.
 export async function POST(req) {
   const limited = checkRateLimit(req, "equipment-requests");
   if (limited) return limited;
@@ -40,7 +40,7 @@ export async function POST(req) {
 
   const facilityKey = facility || DEFAULT_FACILITY;
 
-  // Server-side backstop for Rule B, same pattern as vehicle requests —
+  // Server-side backstop for Rule B, same pattern as vehicle requests -
   // re-check every selected item is still available at submission time.
   if (items.length > 0) {
     const { data: inUseRows } = await supabaseAdmin

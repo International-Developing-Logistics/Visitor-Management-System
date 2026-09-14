@@ -14,7 +14,7 @@ export async function POST(req) {
     full_name,
     phone,
     company,
-    agreed, // boolean — replaces the old signature capture
+    agreed, // boolean - replaces the old signature capture
     additional_visitor_count,
     additional_visitor_names,
     group_members,
@@ -44,7 +44,7 @@ export async function POST(req) {
     : 0;
   // Visitor type was already set when this pre-registration was created
   // (preregister-open or the admin/staff invite tools), so it's not
-  // re-collected here — only the group's shape (structured vs. simple)
+  // re-collected here - only the group's shape (structured vs. simple)
   // reflects it, via cleanGroupMembers being empty for non-structured types.
   const cleanGroupMembers = sanitizeGroupMembers(group_members);
 
