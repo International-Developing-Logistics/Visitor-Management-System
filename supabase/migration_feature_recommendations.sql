@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch any existing data or accounts.
+-- New table only - doesn't touch any existing data or accounts.
 --
 -- Deliberately anonymous: there is no submitter/employee column here at
 -- all, not even a hidden one. The API route (app/api/recommendations)
@@ -17,6 +17,6 @@ create table if not exists feature_recommendations (
 
 alter table feature_recommendations enable row level security;
 
--- No public policies, same lockdown as every other table — all access
+-- No public policies, same lockdown as every other table - all access
 -- goes through app/api/recommendations and app/api/admin/recommendations
 -- using the Supabase service role key.

@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- Safe to run more than once — CREATE TABLE / INDEX all use IF NOT EXISTS.
+-- Safe to run more than once - CREATE TABLE / INDEX all use IF NOT EXISTS.
 --
 -- Adds a visit log for contractors: unlike the `contractors` table itself
 -- (one row per pass, current status only), a contractor with a multi-entry
@@ -25,7 +25,7 @@ create table if not exists contractor_visits (
 );
 
 -- Fast lookup of "is this contractor currently on site" and "give me
--- every open visit" — both filter on checked_out_at is null.
+-- every open visit" - both filter on checked_out_at is null.
 create index if not exists contractor_visits_open_idx
   on contractor_visits (contractor_id)
   where checked_out_at is null;
@@ -34,7 +34,7 @@ create index if not exists contractor_visits_open_idx
 create index if not exists contractor_visits_contractor_id_checked_in_at_idx
   on contractor_visits (contractor_id, checked_in_at desc);
 
--- RLS enabled with no public policies — same pattern as `contractors`.
+-- RLS enabled with no public policies - same pattern as `contractors`.
 -- All access goes through app/api/admin/contractors/[id]/visits using the
 -- service role key.
 alter table contractor_visits enable row level security;

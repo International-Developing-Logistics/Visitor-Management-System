@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- Only ADDS two columns — does not touch, rename, or delete any existing data.
+-- Only ADDS two columns - does not touch, rename, or delete any existing data.
 
 alter table visitors add column if not exists proposed_time_slots jsonb;
 alter table visitors add column if not exists selected_time_slot timestamptz;

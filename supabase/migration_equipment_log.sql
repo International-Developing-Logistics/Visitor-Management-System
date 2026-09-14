@@ -1,10 +1,10 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch `equipment_requests` (the old
+-- New table only - doesn't touch `equipment_requests` (the old
 -- employee-request/admin-approval workflow, now retired in favor of this
--- QR-scan checkout/return log — see lib/equipmentUnits.js).
+-- QR-scan checkout/return log - see lib/equipmentUnits.js).
 --
 -- Unlike vehicle_movements (which tracks a shared VEHICLE TYPE, since any
--- sedan will do), this tracks an individual PHYSICAL UNIT — each one has
+-- sedan will do), this tracks an individual PHYSICAL UNIT - each one has
 -- its own QR code (see lib/equipmentUnits.js), so `unit_id` identifies the
 -- exact forklift/pallet jack/etc., not just its type.
 create table if not exists equipment_movements (
@@ -26,7 +26,7 @@ create table if not exists equipment_movements (
   -- blocks a second checkout against.
   checked_in_at timestamptz,
 
-  -- Captured at return, not at checkout — see app/api/equipment-log/[id]/checkin.
+  -- Captured at return, not at checkout - see app/api/equipment-log/[id]/checkin.
   hour_meter_photo_url text, -- private storage path (equipment-log-photos bucket)
   damaged boolean not null default false,
   damage_photo_url text,
@@ -41,5 +41,5 @@ alter table equipment_movements enable row level security;
 
 -- Manual step (this migration doesn't create it): add a PRIVATE storage
 -- bucket named "equipment-log-photos" in Supabase Storage, same way the
--- existing vehicle-plates / vehicle-movement-photos buckets were created —
+-- existing vehicle-plates / vehicle-movement-photos buckets were created -
 -- see HANDOVER.md §6.

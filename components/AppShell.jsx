@@ -179,7 +179,7 @@ const NAV = [
   {
     group: "Support",
     items: [
-      { label: "IT Tickets", href: null, roles: ["admin"] },
+      { label: "IT Tickets", href: "/admin/it-tickets", roles: ["admin"] },
       { label: "Feature Requests", href: "/admin/recommendations", roles: ["admin"] },
     ],
   },

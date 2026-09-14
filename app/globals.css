@@ -252,6 +252,9 @@ input:focus, select:focus, textarea:focus {
 .badge.role-admin { background: var(--accent-soft); color: var(--accent-dark); }
 .badge.role-guard { background: #eef2f5; color: #3d5a6c; }
 .badge.role-staff { background: #eef1e6; color: #55622f; }
+.badge.priority-low { background: #efeceb; color: var(--muted); }
+.badge.priority-normal { background: #eef2f5; color: #3d5a6c; }
+.badge.priority-urgent { background: #f7e6e2; color: var(--danger); }
 
 .btn-small {
   padding: 7px 14px;

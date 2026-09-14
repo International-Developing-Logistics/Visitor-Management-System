@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- Safe to run more than once — every ADD COLUMN is guarded with
+-- Safe to run more than once - every ADD COLUMN is guarded with
 -- IF NOT EXISTS and the sequence/function/index are all CREATE ... IF NOT
 -- EXISTS / CREATE OR REPLACE.
 --
@@ -10,12 +10,12 @@
 --     and in the admin dashboard instead of the long internal UUID
 --   - which of the two document options a contractor submitted, and
 --     storage paths for the two new document types (a Freezone gate pass,
---     or a passport + Emirates ID pair) — the existing passport_url column
+--     or a passport + Emirates ID pair) - the existing passport_url column
 --     is reused for the passport half of the second option
 --   - decided_at, set the moment an admin approves or denies
 --
 -- Approving a pending registration goes straight from 'pending' to
--- 'active' — there's no separate resting "approved" state to migrate
+-- 'active' - there's no separate resting "approved" state to migrate
 -- through. See app/api/admin/contractors/[id]/route.js.
 
 alter table contractors add column if not exists pass_id text;
@@ -33,7 +33,7 @@ alter table contractors drop constraint if exists contractors_document_type_chec
 alter table contractors add constraint contractors_document_type_check
   check (document_type is null or document_type in ('freezone_pass', 'passport_emirates_id'));
 
--- Atomic short-ID generator — a sequence (not "count existing rows + 1")
+-- Atomic short-ID generator - a sequence (not "count existing rows + 1")
 -- so two registrations submitted at the same moment can never collide.
 create sequence if not exists contractor_pass_seq;
 
@@ -50,7 +50,7 @@ update contractors set pass_id = next_contractor_pass_id() where pass_id is null
 
 create unique index if not exists contractors_pass_id_key on contractors (pass_id);
 
--- No new tables, so no new RLS setup needed — contractors already has RLS
+-- No new tables, so no new RLS setup needed - contractors already has RLS
 -- enabled with no public policies; all access continues to go through
 -- app/api/contractors and app/api/admin/contractors using the service
 -- role key.

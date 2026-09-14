@@ -1,18 +1,18 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
 -- Safe to run whether or not you've already run migration_hangman_game.sql
--- and migration_crossword_game.sql — the CREATE TABLE lines are skipped if
+-- and migration_crossword_game.sql - the CREATE TABLE lines are skipped if
 -- those tables already exist, and the ADD COLUMN lines are skipped if the
 -- column's already there.
 --
 -- Hangman and Crossword both switched from one shared board everyone
--- played together to each player getting their own private round — see
+-- played together to each player getting their own private round - see
 -- app/api/hangman/route.js and app/api/crossword/route.js. That's what
 -- the new `nickname` column is for: a round now belongs to one player, so
 -- their score is entirely their own instead of whoever happened to click
 -- fastest on a shared board.
 --
 -- Any rounds already sitting in these tables from the old shared model
--- have no nickname and are just abandoned — they'll never be matched by
+-- have no nickname and are just abandoned - they'll never be matched by
 -- the new per-player lookup, so there's nothing else to clean up.
 
 create table if not exists hangman_rounds (
@@ -59,6 +59,6 @@ alter table hangman_scores enable row level security;
 alter table crossword_rounds enable row level security;
 alter table crossword_scores enable row level security;
 
--- No public policies, same lockdown as every other table — all access
+-- No public policies, same lockdown as every other table - all access
 -- goes through app/api/hangman and app/api/crossword using the Supabase
 -- service role key.

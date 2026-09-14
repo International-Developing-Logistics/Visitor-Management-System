@@ -100,6 +100,11 @@ export default function StaffHub({ facility }) {
 
         <SectionLabel>Support</SectionLabel>
         <ServiceLink
+          href={p("/it-tickets")}
+          title="IT Tickets"
+          description="Report broken hardware, software issues, or account access problems"
+        />
+        <ServiceLink
           href="/recommendations"
           title="Feature Requests"
           description="Tell us what you'd like added to this app - anonymous"
