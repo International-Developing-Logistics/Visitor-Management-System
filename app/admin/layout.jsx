@@ -1,87 +1,38 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { usePathname } from "next/navigation";
 import AdminGuard from "@/components/AdminGuard";
+import AppShell from "@/components/AppShell";
 import BrandHeader from "@/components/BrandHeader";
+import { FacilityProvider } from "@/lib/facilityContext";
 
-function AdminNav() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-  };
-
-  const link = (href, label) => (
-    <Link
-      href={href}
-      style={{
-        color: pathname === href ? "var(--accent-dark)" : "var(--muted)",
-        fontWeight: pathname === href ? 700 : 500,
-        textDecoration: "none",
-        fontSize: "0.92rem",
-      }}
-    >
-      {label}
-    </Link>
-  );
-
-  return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: 960,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 20,
-      }}
-    >
-      <div style={{ display: "flex", gap: 22 }}>
-        {link("/admin", "Dashboard")}
-        {link("/admin/hosts", "Hosts")}
-        {link("/admin/contractors", "Contractors")}
-        {link("/admin/contractor-visits", "Contractor Check In/Out")}
-        {link("/admin/guard-logs", "Guard Log")}
-        {link("/admin/vehicle-requests", "Vehicle Requests")}
-        {link("/admin/vehicle-movements", "Vehicle Check In/Out")}
-        {link("/admin/equipment-requests", "Equipment Requests")}
-        {link("/admin/recommendations", "Recommendations")}
-        {link("/preregister", "Invite a guest")}
-      </div>
-      <button
-        onClick={signOut}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--muted)",
-          fontSize: "0.85rem",
-          cursor: "pointer",
-          textDecoration: "underline",
-        }}
-      >
-        Sign out
-      </button>
-    </div>
-  );
-}
-
+// The old horizontal AdminNav has been replaced by the unified sidebar
+// shell (components/AppShell.jsx) — see that file for the nav tree and
+// role filtering. The login page is the one exception: it's not part of
+// the operations UI, so it keeps the plain centered kiosk-style layout
+// instead of getting a sidebar around a sign-in form.
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/admin/login";
 
+  if (isLoginPage) {
+    return (
+      <AdminGuard requiredRole="admin">
+        <main className="kiosk-shell">
+          <div className="kiosk-header">
+            <BrandHeader label="Admin" />
+          </div>
+          {children}
+        </main>
+      </AdminGuard>
+    );
+  }
+
   return (
     <AdminGuard requiredRole="admin">
-      <main className="kiosk-shell" style={{ alignItems: "center" }}>
-        <div className="kiosk-header" style={{ maxWidth: 960 }}>
-          <BrandHeader label="Admin" />
-        </div>
-        {!isLoginPage && <AdminNav />}
-        {children}
-      </main>
+      <FacilityProvider>
+        <AppShell role="admin">{children}</AppShell>
+      </FacilityProvider>
     </AdminGuard>
   );
 }

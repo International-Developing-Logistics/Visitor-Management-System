@@ -7,7 +7,10 @@ import { randomUUID } from "crypto";
 
 // GET /api/guard-logs?facility=idl — today's log entries for that facility,
 // newest first, with a signed URL for each vehicle plate photo. Used by
-// both the guard station page and the admin dashboard.
+// both the guard station page and the admin dashboard. facility=all skips
+// the filter entirely (admin's header facility selector's "All Facilities"
+// option) — no current caller passes that but the guard station's own
+// facility switcher, so this is purely additive.
 export async function GET(req) {
   const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,12 +18,9 @@ export async function GET(req) {
   const supabaseAdmin = getSupabaseAdmin();
   const facility = req.nextUrl.searchParams.get("facility") || DEFAULT_FACILITY;
 
-  const { data, error } = await supabaseAdmin
-    .from("guard_logs")
-    .select("*")
-    .eq("facility", facility)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  let query = supabaseAdmin.from("guard_logs").select("*");
+  if (facility !== "all") query = query.eq("facility", facility);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

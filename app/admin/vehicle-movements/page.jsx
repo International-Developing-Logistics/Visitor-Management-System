@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
-import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
+import { useFacility } from "@/lib/facilityContext";
 import { formatInCompanyTimezone, utcIsoToCompanyLocalInputValue, companyLocalToUtcIso } from "@/lib/timezone";
 
 function durationOutside(checkedOutAt, checkedInAt) {
@@ -71,7 +71,7 @@ function EditTimesModal({ movement, onClose, onSaved }) {
 }
 
 export default function AdminVehicleMovementsPage() {
-  const [facility, setFacility] = useState(DEFAULT_FACILITY);
+  const { facility } = useFacility();
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,17 +98,6 @@ export default function AdminVehicleMovementsPage() {
 
   return (
     <div className="admin-card">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button key={f.key} className={`tab ${facility === f.key ? "active" : ""}`} onClick={() => setFacility(f.key)}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <h3 style={{ marginBottom: 4 }}>Vehicle movement history</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
         Use the Edit button to correct any mistaken entries.

@@ -246,7 +246,7 @@ export default function AdminContractorVisitsPage() {
 
   return (
     <div className="admin-card">
-      <h3 style={{ marginBottom: 4 }}>Contractor check in / out</h3>
+      <h3 style={{ marginBottom: 4 }}>Contractor Movement</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
         Log every time a contractor arrives or leaves. 
       </p>

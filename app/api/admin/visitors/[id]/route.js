@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { requireAdmin } from "@/lib/verifyAdmin";
+import { isValidVisitorType, sanitizeGroupMembers } from "@/lib/visitorTypes";
 
 const EDITABLE_FIELDS = [
   "full_name",
   "email",
   "phone",
   "company",
+  "visitor_type",
   "purpose",
   "host_id",
   "notes",
   "additional_visitor_count",
   "additional_visitor_names",
+  "group_members",
 ];
 
 // PATCH /api/admin/visitors/[id] — edit visitor details. Never deletes
@@ -64,8 +67,15 @@ export async function PATCH(req, { params }) {
   if ("full_name" in updates && !String(updates.full_name || "").trim()) {
     return NextResponse.json({ error: "Full name can't be empty" }, { status: 400 });
   }
-  if ("purpose" in updates && !String(updates.purpose || "").trim()) {
-    return NextResponse.json({ error: "Purpose can't be empty" }, { status: 400 });
+  // purpose is intentionally allowed to be empty here — it's assigned by
+  // an admin sometime after check-in, so a visitor row with no purpose yet
+  // is the normal, expected state, not an error.
+  if ("visitor_type" in updates && updates.visitor_type && !isValidVisitorType(updates.visitor_type)) {
+    return NextResponse.json({ error: "That visitor type isn't recognized" }, { status: 400 });
+  }
+  if ("group_members" in updates) {
+    updates.group_members = sanitizeGroupMembers(updates.group_members);
+    if (updates.group_members.length === 0) updates.group_members = null;
   }
   if ("email" in updates && updates.email) {
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email);

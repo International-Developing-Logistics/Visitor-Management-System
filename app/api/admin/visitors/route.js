@@ -7,7 +7,9 @@ import { DEFAULT_FACILITY } from "@/lib/facilities";
 // newest first. Pass no status to get everyone in that facility; status can
 // be a single value, a comma-separated list (e.g.
 // "gate_pending,gate_approved,gate_denied"), or omitted. facility defaults
-// to the original facility so results never silently mix facilities.
+// to the original facility so results never silently mix facilities;
+// facility=all skips the filter (the header facility selector's "All
+// Facilities" option), matching the other admin list routes.
 export async function GET(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,9 +21,10 @@ export async function GET(req) {
   let query = supabaseAdmin
     .from("visitors")
     .select("*, hosts(name, email)")
-    .eq("facility", facility)
     .order("created_at", { ascending: false })
     .limit(200);
+
+  if (facility !== "all") query = query.eq("facility", facility);
 
   if (status) {
     const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);

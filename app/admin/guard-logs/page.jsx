@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { formatTimeInCompanyTimezone } from "@/lib/timezone";
-import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
+import { useFacility } from "@/lib/facilityContext";
 
 const POLL_MS = 5000;
 
 export default function AdminGuardLogsPage() {
-  const [facility, setFacility] = useState(DEFAULT_FACILITY);
+  const { facility } = useFacility();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,22 +54,7 @@ export default function AdminGuardLogsPage() {
 
   return (
     <div className="admin-card">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button
-              key={f.key}
-              className={`tab ${facility === f.key ? "active" : ""}`}
-              onClick={() => setFacility(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <h3 style={{ marginBottom: 4 }}>Guard vehicle log</h3>
+      <h3 style={{ marginBottom: 4 }}>Security log</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>Refresh the page if the information has not updated.</p>
 
       {error && <p className="error-text">{error}</p>}

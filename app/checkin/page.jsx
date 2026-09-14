@@ -2,17 +2,22 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
 import TimeSlotChooser from "@/components/TimeSlotChooser";
 import ProposeTimeForm from "@/components/ProposeTimeForm";
+import { STRUCTURED_GROUP_VISITOR_TYPE } from "@/lib/visitorTypes";
+import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
+
+function emptyMember() {
+  return { name: "", phone: "" };
+}
 
 function CheckinInner() {
   const token = useSearchParams().get("token");
   const [loading, setLoading] = useState(true);
   const [visitor, setVisitor] = useState(null);
   const [error, setError] = useState("");
-  const [stage, setStage] = useState("details"); // details -> agreement -> arrived
+  const [stage, setStage] = useState("details"); // details -> ready/arrived
   const [values, setValues] = useState({
     full_name: "",
     phone: "",
@@ -20,10 +25,17 @@ function CheckinInner() {
     is_group: false,
     additional_visitor_count: "",
     additional_visitor_names: "",
+    group_members: [],
     selected_time_slot: "",
     proposed_alternative_time: "",
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Visitor type was already picked when this pre-registration was
+  // created (by the guest themselves via open pre-registration, or by
+  // staff via the invite tools) — it's not re-asked here, but it decides
+  // whether "bringing others" collects a structured name+phone list.
+  const isStructuredType = visitor?.visitor_type === STRUCTURED_GROUP_VISITOR_TYPE;
 
   useEffect(() => {
     if (!token) {
@@ -44,6 +56,7 @@ function CheckinInner() {
           is_group: groupCount > 0,
           additional_visitor_count: groupCount > 0 ? String(groupCount) : "",
           additional_visitor_names: d.visitor.additional_visitor_names || "",
+          group_members: d.visitor.group_members?.length ? d.visitor.group_members : [],
           selected_time_slot: d.visitor.selected_time_slot || "",
           proposed_alternative_time: d.visitor.proposed_alternative_time || "",
         });
@@ -52,6 +65,13 @@ function CheckinInner() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  const updateMember = (index, field, value) => {
+    const next = values.group_members.map((m, i) => (i === index ? { ...m, [field]: value } : m));
+    setValues({ ...values, group_members: next });
+  };
+  const addMember = () => setValues({ ...values, group_members: [...values.group_members, emptyMember()] });
+  const removeMember = (index) => setValues({ ...values, group_members: values.group_members.filter((_, i) => i !== index) });
 
   const completePreregistration = async () => {
     setSubmitting(true);
@@ -65,7 +85,8 @@ function CheckinInner() {
           phone: values.phone,
           company: values.company,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
-          additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          additional_visitor_names: values.is_group && !isStructuredType ? values.additional_visitor_names : "",
+          group_members: values.is_group && isStructuredType ? values.group_members : [],
           selected_time_slot: values.selected_time_slot || null,
           proposed_alternative_time: values.proposed_alternative_time || null,
           agreed: true,
@@ -195,7 +216,8 @@ function CheckinInner() {
               setValues({
                 ...values,
                 is_group: e.target.checked,
-                additional_visitor_count: e.target.checked ? values.additional_visitor_count || "1" : "",
+                additional_visitor_count: e.target.checked && !isStructuredType ? values.additional_visitor_count || "1" : "",
+                group_members: e.target.checked && isStructuredType ? (values.group_members.length ? values.group_members : [emptyMember()]) : [],
               })
             }
             style={{ width: 16, height: 16 }}
@@ -205,7 +227,49 @@ function CheckinInner() {
           </span>
         </label>
 
-        {values.is_group && (
+        {values.is_group && isStructuredType && (
+          <div>
+            <p className="helper-text" style={{ marginTop: 12, marginBottom: 6 }}>
+              Add each additional person's name and phone number.
+            </p>
+            {values.group_members.map((m, i) => (
+              <div key={i} className="row-2" style={{ alignItems: "flex-end" }}>
+                <div>
+                  <label htmlFor={`ck-gm-name-${i}`}>{`Person ${i + 1} name`}</label>
+                  <input
+                    id={`ck-gm-name-${i}`}
+                    type="text"
+                    value={m.name}
+                    onChange={(e) => updateMember(i, "name", e.target.value)}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <label htmlFor={`ck-gm-phone-${i}`}>Phone</label>
+                    <input
+                      id={`ck-gm-phone-${i}`}
+                      type="tel"
+                      value={m.phone}
+                      onChange={(e) => updateMember(i, "phone", e.target.value)}
+                      placeholder="Phone number"
+                    />
+                  </div>
+                  {values.group_members.length > 1 && (
+                    <button type="button" className="btn-small" onClick={() => removeMember(i)} style={{ marginBottom: 2 }}>
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button type="button" className="btn-small" onClick={addMember} style={{ marginTop: 4 }}>
+              + Add another person
+            </button>
+          </div>
+        )}
+
+        {values.is_group && !isStructuredType && (
           <div>
             <label htmlFor="ck-group-count">How many additional visitors?</label>
             <input
@@ -227,27 +291,24 @@ function CheckinInner() {
           </div>
         )}
 
+        <div className="nda-box">{VISITOR_AGREEMENT_TEXT}</div>
+
         <button
           className="btn btn-primary"
-          onClick={() => setStage("agreement")}
+          onClick={completePreregistration}
           disabled={
+            submitting ||
             !values.full_name.trim() ||
             (visitor?.proposed_time_slots?.length > 0 &&
               !values.selected_time_slot &&
-              !values.proposed_alternative_time)
+              !values.proposed_alternative_time) ||
+            (values.is_group &&
+              isStructuredType &&
+              !(values.group_members.length > 0 && values.group_members.every((m) => m.name.trim() && m.phone.trim())))
           }
         >
-          Continue
+          {submitting ? "Registering…" : "Register"}
         </button>
-      </div>
-    );
-  }
-
-  if (stage === "agreement") {
-    return (
-      <div>
-        <h3>Agree to the visitor terms</h3>
-        <AgreementStep onAgree={completePreregistration} submitting={submitting} />
       </div>
     );
   }
