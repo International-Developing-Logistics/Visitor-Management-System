@@ -68,6 +68,42 @@ function partyNames(v) {
   return v.additional_visitor_names || "";
 }
 
+// A returning visitor who's completed several separate visits used to show
+// up as one near-identical row per visit in Completed, which reads as
+// duplicates rather than history. This collapses them into a single row
+// per phone number (keyed off the phone itself, not the phone_digits
+// column, so it works even before that migration is run) - the most
+// recent visit is shown, with a count of how many there were; the full
+// breakdown is still one click away via the existing History button.
+// Deliberately only used for the Completed tab (see below) - Expected/At
+// Gate/On Site need one row per currently-active visit so a second
+// pending visit for the same person never becomes unreachable.
+const PHONE_GROUP_MIN_DIGITS = 7;
+
+function phoneGroupKey(v) {
+  const digits = (v.phone || "").replace(/\D/g, "");
+  return digits.length >= PHONE_GROUP_MIN_DIGITS ? digits : `__id:${v.id}`;
+}
+
+function groupVisitsByPhone(list) {
+  const groups = new Map();
+  const order = [];
+  for (const v of list) {
+    const key = phoneGroupKey(v);
+    if (!groups.has(key)) {
+      // `list` arrives newest-first from the API, so the first row seen
+      // for a key is already the most recent - it stays the representative.
+      groups.set(key, { representative: v, count: 1, members: [v] });
+      order.push(key);
+    } else {
+      const g = groups.get(key);
+      g.count += 1;
+      g.members.push(v);
+    }
+  }
+  return order.map((key) => groups.get(key));
+}
+
 export default function AdminVisitorsPage() {
   const { facility } = useFacility();
   // Reads ?tab= on first render only (e.g. an Action Required link from
@@ -208,13 +244,18 @@ export default function AdminVisitorsPage() {
   };
 
   const q = search.trim().toLowerCase();
-  const filtered = !q
-    ? visitors
-    : visitors.filter((v) =>
-        [v.full_name, v.email, v.phone, v.company, v.hosts?.name, v.visitor_type]
-          .filter(Boolean)
-          .some((s) => s.toLowerCase().includes(q))
-      );
+  const matchesQuery = (v) =>
+    !q ||
+    [v.full_name, v.email, v.phone, v.company, v.hosts?.name, v.visitor_type]
+      .filter(Boolean)
+      .some((s) => s.toLowerCase().includes(q));
+
+  const filtered =
+    activeTab.key === "completed"
+      ? groupVisitsByPhone(visitors)
+          .filter((g) => g.members.some(matchesQuery))
+          .map((g) => ({ ...g.representative, __visitCount: g.count }))
+      : visitors.filter(matchesQuery);
 
   return (
     <div className="admin-card">
@@ -295,6 +336,11 @@ export default function AdminVisitorsPage() {
                     {v.additional_visitor_count > 0 && (
                       <div className="helper-text" style={{ marginTop: 0 }} title={partyNames(v) || undefined}>
                         Party of {v.additional_visitor_count + 1}
+                      </div>
+                    )}
+                    {v.__visitCount > 1 && (
+                      <div className="helper-text" style={{ marginTop: 0 }}>
+                        {v.__visitCount} visits — showing most recent
                       </div>
                     )}
                   </td>

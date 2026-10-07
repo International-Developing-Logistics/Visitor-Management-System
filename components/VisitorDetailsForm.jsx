@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { VISITOR_TYPE_OPTIONS, STRUCTURED_GROUP_VISITOR_TYPE, OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
 import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
+import { useReturningVisitorLookup } from "@/components/useReturningVisitorLookup";
 
 // Shared by the self-service kiosk check-in (WalkinForm) and open
 // pre-registration (PreregisterOpenForm). "Purpose of visit" was removed
@@ -24,49 +24,6 @@ function emptyMember() {
   return { name: "", phone: "" };
 }
 
-// Automatic recognition of returning visitors: once the phone field has a
-// real number in it, look it up against past visits. If it matches, prefill
-// whatever fields the visitor hasn't already typed something into (so this
-// never clobbers something they're mid-typing) and show a small "Welcome
-// back" notice so it's obvious their info was reused rather than freshly
-// typed - they can still edit anything that's changed, same as if they'd
-// typed it themselves. Never fetched for fewer than 7 digits, matching the
-// server-side floor in app/api/visitors/lookup/route.js.
-function usePhoneLookup(values, onChange) {
-  const [status, setStatus] = useState("idle"); // idle | checking | found | not_found
-  const [welcomeName, setWelcomeName] = useState("");
-
-  const runLookup = async () => {
-    const digits = (values.phone || "").replace(/\D/g, "");
-    if (digits.length < 7) return;
-    setStatus("checking");
-    try {
-      const res = await fetch(`/api/visitors/lookup?phone=${encodeURIComponent(digits)}`);
-      const data = await res.json();
-      if (!data.found) {
-        setStatus("not_found");
-        return;
-      }
-      const v = data.visitor;
-      onChange({
-        ...values,
-        full_name: values.full_name.trim() ? values.full_name : v.full_name || values.full_name,
-        company: values.company?.trim() ? values.company : v.company || values.company,
-        visitor_type: values.visitor_type ? values.visitor_type : v.visitor_type || values.visitor_type,
-        host_id: values.host_id ? values.host_id : v.host_id || values.host_id,
-      });
-      setWelcomeName(v.full_name || "");
-      setStatus("found");
-    } catch {
-      // A failed lookup should never block check-in - just carry on as if
-      // this were a brand-new visitor.
-      setStatus("not_found");
-    }
-  };
-
-  return { status, welcomeName, runLookup, dismiss: () => setStatus("idle") };
-}
-
 export default function VisitorDetailsForm({
   hosts,
   values,
@@ -78,7 +35,7 @@ export default function VisitorDetailsForm({
   busyLabel = null,
 }) {
   const set = (field) => (e) => onChange({ ...values, [field]: e.target.value });
-  const lookup = usePhoneLookup(values, onChange);
+  const lookup = useReturningVisitorLookup(values, onChange);
 
   const isGroup = values.is_group;
   const isStructuredType = values.visitor_type === STRUCTURED_GROUP_VISITOR_TYPE;

@@ -5,6 +5,7 @@ import { authFetch } from "@/lib/apiFetch";
 import { VISITOR_TYPE_OPTIONS, STRUCTURED_GROUP_VISITOR_TYPE, OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
 import { companyLocalToUtcIso, COMPANY_TIMEZONE_LABEL } from "@/lib/timezone";
+import { useReturningVisitorLookup } from "@/components/useReturningVisitorLookup";
 
 // Lets an admin register a visitor directly from the dashboard - "Admin-
 // created visitors". Mirrors VisitorDetailsForm's fields (same validation,
@@ -43,6 +44,7 @@ export default function AddVisitorModal({ hosts, onClose, onCreated }) {
   const groupMembers = values.group_members || [];
 
   const set = (field) => (e) => setValues({ ...values, [field]: e.target.value });
+  const lookup = useReturningVisitorLookup(values, setValues);
 
   const setVisitorType = (e) => {
     const nextType = e.target.value;
@@ -184,9 +186,19 @@ export default function AddVisitorModal({ hosts, onClose, onCreated }) {
           </div>
           <div>
             <label>Phone</label>
-            <input type="tel" value={values.phone} onChange={set("phone")} />
+            <input type="tel" value={values.phone} onChange={set("phone")} onBlur={lookup.runLookup} />
           </div>
         </div>
+
+        {lookup.status === "found" && (
+          <p className="helper-text" style={{ marginTop: -4, marginBottom: 14, color: "var(--accent-dark)" }}>
+            Welcome back{lookup.welcomeName ? `, ${lookup.welcomeName}` : ""} — filled in from their last visit.
+            Review and update anything that's changed.{" "}
+            <button type="button" className="btn-small" onClick={lookup.dismiss} style={{ marginLeft: 6 }}>
+              Dismiss
+            </button>
+          </p>
+        )}
 
         <label>Company</label>
         <input type="text" value={values.company} onChange={set("company")} />
