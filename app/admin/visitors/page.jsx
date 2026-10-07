@@ -226,11 +226,20 @@ export default function AdminVisitorsPage() {
             invitations, in one place.
           </p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn-small" onClick={runHousekeeping} disabled={runningHousekeeping}>
-            {runningHousekeeping ? "Running…" : "Run visitor housekeeping now"}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <button
+            className="btn-small"
+            onClick={runHousekeeping}
+            disabled={runningHousekeeping}
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {runningHousekeeping ? "Running…" : "Run housekeeping"}
           </button>
-          <button className="btn btn-primary" style={{ marginTop: 0 }} onClick={() => setAdding(true)}>
+          <button
+            className="btn btn-primary"
+            style={{ marginTop: 0, whiteSpace: "nowrap" }}
+            onClick={() => setAdding(true)}
+          >
             + Add Visitor
           </button>
         </div>
