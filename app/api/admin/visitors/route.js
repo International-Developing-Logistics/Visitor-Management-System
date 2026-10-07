@@ -21,6 +21,14 @@ import { randomUUID } from "crypto";
 // column the self-service returning-visitor lookup uses (see
 // supabase/migration_visitor_phone_lookup.sql), so formatting differences
 // (spaces, dashes, country code) don't cause misses.
+//
+// q=<text> - server-side search against full_name/email/phone/company,
+// applied BEFORE the limit below (combined with status/facility). Without
+// this, the admin Visitors page's search box could only filter whatever
+// page of (at most) 200 most-recent rows had already been fetched for the
+// active tab - so a completed visit older than the newest 200 in that
+// facility would silently never be findable there, even though it's a
+// perfectly real row, which is exactly the gap this closes.
 export async function GET(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -46,6 +54,7 @@ export async function GET(req) {
 
   const status = req.nextUrl.searchParams.get("status");
   const facility = req.nextUrl.searchParams.get("facility") || DEFAULT_FACILITY;
+  const q = (req.nextUrl.searchParams.get("q") || "").trim();
 
   let query = supabaseAdmin
     .from("visitors")
@@ -58,6 +67,22 @@ export async function GET(req) {
   if (status) {
     const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
     query = statuses.length > 1 ? query.in("status", statuses) : query.eq("status", statuses[0]);
+  }
+
+  if (q) {
+    const like = `%${q}%`;
+    // The admin Visitors page's search box used to also match on the
+    // joined host's name (it had the full row client-side to check
+    // against) - visitors doesn't store that name directly, so resolve
+    // any hosts whose name matches first and fold their ids into the same
+    // OR, rather than silently dropping host-name search when it moved
+    // server-side.
+    const { data: matchingHosts } = await supabaseAdmin.from("hosts").select("id").ilike("name", like);
+    const hostIds = (matchingHosts || []).map((h) => h.id);
+    const hostIdFilter = hostIds.length > 0 ? `,host_id.in.(${hostIds.join(",")})` : "";
+    query = query.or(
+      `full_name.ilike.${like},email.ilike.${like},phone.ilike.${like},company.ilike.${like}${hostIdFilter}`
+    );
   }
 
   const { data, error } = await query;

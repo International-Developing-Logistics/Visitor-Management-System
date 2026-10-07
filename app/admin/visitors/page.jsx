@@ -121,6 +121,7 @@ export default function AdminVisitorsPage() {
   const [notice, setNotice] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [editing, setEditing] = useState(null);
   const [adding, setAdding] = useState(false);
   const [historyFor, setHistoryFor] = useState(null);
@@ -128,12 +129,27 @@ export default function AdminVisitorsPage() {
 
   const activeTab = TABS.find((t) => t.key === tab) || TABS[0];
 
+  // Debounced so every keystroke doesn't fire a request - 300ms is enough
+  // to wait out normal typing without the search feeling laggy.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       const statusParam = activeTab.statuses.join(",");
-      const res = await authFetch(`/api/admin/visitors?facility=${facility}&status=${statusParam}`);
+      // The search box used to only filter whatever page of (at most) 200
+      // most-recent rows had already been fetched for the active tab - so
+      // anyone outside that recency window was silently unfindable there,
+      // even though the header's global search (a direct, unlimited-by-
+      // recency server query) could still find them. Passing q straight
+      // through to the server fixes that: matching now happens before the
+      // 200-row cap, not after it.
+      const qParam = debouncedSearch ? `&q=${encodeURIComponent(debouncedSearch)}` : "";
+      const res = await authFetch(`/api/admin/visitors?facility=${facility}&status=${statusParam}${qParam}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setVisitors(data.visitors || []);
@@ -143,7 +159,7 @@ export default function AdminVisitorsPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facility, tab]);
+  }, [facility, tab, debouncedSearch]);
 
   useEffect(() => {
     load();
@@ -243,19 +259,16 @@ export default function AdminVisitorsPage() {
     }
   };
 
-  const q = search.trim().toLowerCase();
-  const matchesQuery = (v) =>
-    !q ||
-    [v.full_name, v.email, v.phone, v.company, v.hosts?.name, v.visitor_type]
-      .filter(Boolean)
-      .some((s) => s.toLowerCase().includes(q));
-
+  // Text matching now happens server-side (see load() above) so search
+  // isn't limited to whatever page of rows was already fetched - `visitors`
+  // here has already been narrowed to matches by the time it arrives.
+  // Completed still gets grouped by phone on top of that (see
+  // groupVisitsByPhone above) so a returning visitor's repeat visits
+  // collapse into one row with a visit count, same as the unfiltered view.
   const filtered =
     activeTab.key === "completed"
-      ? groupVisitsByPhone(visitors)
-          .filter((g) => g.members.some(matchesQuery))
-          .map((g) => ({ ...g.representative, __visitCount: g.count }))
-      : visitors.filter(matchesQuery);
+      ? groupVisitsByPhone(visitors).map((g) => ({ ...g.representative, __visitCount: g.count }))
+      : visitors;
 
   return (
     <div className="admin-card">
@@ -308,7 +321,7 @@ export default function AdminVisitorsPage() {
       {loading && <p className="helper-text">Loading…</p>}
       {!loading && filtered.length === 0 && (
         <p className="helper-text">
-          {q ? "No visitors match your search." : `Nobody in "${activeTab.label}" right now.`}
+          {search.trim() ? "No visitors match your search." : `Nobody in "${activeTab.label}" right now.`}
         </p>
       )}
 
