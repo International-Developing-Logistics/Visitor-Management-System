@@ -4,7 +4,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/equipment-requests/availability?facility=idl
-// Public — an equipment item is "in use" if it appears in the
+// Public - an equipment item is "in use" if it appears in the
 // equipment_items array (or legacy `equipment` field) of an approved,
 // not-yet-returned request in this facility.
 export async function GET(req) {

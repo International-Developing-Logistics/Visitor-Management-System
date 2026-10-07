@@ -3,17 +3,41 @@
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { formatInCompanyTimezone } from "@/lib/timezone";
-import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
+import { useFacility } from "@/lib/facilityContext";
 
-const STATUS_LABEL = { pending: "Pending", approved: "Approved", rejected: "Rejected" };
-const STATUS_BADGE_CLASS = { pending: "invited", approved: "checked_in", rejected: "gate_denied" };
+// Stage = status, except "approved" splits into "approved" (still out) and
+// "completed" (returned) - so the tabs match the Pending/Approved/
+// Rejected/Completed shape from the IA spec without changing the DB status
+// values anything else relies on (email links, guard views, etc.).
+function stageOf(r) {
+  if (r.status === "approved") return r.returned_at ? "completed" : "approved";
+  return r.status;
+}
+
+const TABS = [
+  { key: "pending", label: "Pending" },
+  { key: "approved", label: "Approved" },
+  { key: "rejected", label: "Rejected" },
+  { key: "completed", label: "Completed" },
+];
+
+const STATUS_LABEL = { pending: "Pending", approved: "Approved", rejected: "Rejected", completed: "Returned" };
+const STATUS_BADGE_CLASS = { pending: "invited", approved: "gate_pending", rejected: "gate_denied", completed: "checked_out" };
 
 export default function AdminVehicleRequestsPage() {
-  const [facility, setFacility] = useState(DEFAULT_FACILITY);
+  const { facility } = useFacility();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
+  // Reads ?tab= on first render only (e.g. an Action Required link from
+  // Home) - see the same note in app/admin/visitors/page.jsx.
+  const [tab, setTab] = useState(() => {
+    if (typeof window === "undefined") return "pending";
+    const t = new URLSearchParams(window.location.search).get("tab");
+    return TABS.some((x) => x.key === t) ? t : "pending";
+  });
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,30 +75,44 @@ export default function AdminVehicleRequestsPage() {
     }
   };
 
+  const q = search.trim().toLowerCase();
+  const filtered = requests
+    .filter((r) => stageOf(r) === tab)
+    .filter((r) =>
+      !q || [r.employee_name, r.customer_name, r.vehicle, r.destination].filter(Boolean).some((s) => s.toLowerCase().includes(q))
+    );
+
   return (
     <div className="admin-card">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button
-              key={f.key}
-              className={`tab ${facility === f.key ? "active" : ""}`}
-              onClick={() => setFacility(f.key)}
-            >
-              {f.label}
+      <h3 style={{ marginBottom: 4 }}>Vehicle Requests</h3>
+      <p className="helper-text" style={{ marginBottom: 16 }}>Requests for company vehicles, from ask to return.</p>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+        <div className="tabs">
+          {TABS.map((t) => (
+            <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
+              {t.label}
             </button>
           ))}
         </div>
+        <input
+          type="text"
+          placeholder="Search employee, vehicle, destination…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ minWidth: 220 }}
+        />
       </div>
-
-      <h3 style={{ marginBottom: 16 }}>Vehicle requests</h3>
 
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}
-      {!loading && requests.length === 0 && <p className="helper-text">No vehicle requests yet.</p>}
+      {!loading && filtered.length === 0 && (
+        <p className="helper-text">
+          {q ? "No requests match your search." : `No ${TABS.find((t) => t.key === tab)?.label.toLowerCase()} requests.`}
+        </p>
+      )}
 
-      {!loading && requests.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <div className="vtable-scroll">
           <table className="vtable">
             <thead>
@@ -85,12 +123,11 @@ export default function AdminVehicleRequestsPage() {
                 <th>Needed</th>
                 <th>Submitted</th>
                 <th>Status</th>
-                <th>In use?</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {requests.map((r) => (
+              {filtered.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontWeight: 600 }}>
                     {r.is_external ? r.customer_name : r.employee_name}
@@ -101,22 +138,11 @@ export default function AdminVehicleRequestsPage() {
                   <td style={{ fontSize: "0.8rem" }}>
                     {r.needed_from
                       ? `${formatInCompanyTimezone(r.needed_from)} → ${formatInCompanyTimezone(r.needed_until)}`
-                      : r.estimated_time || "—"}
+                      : r.estimated_time || "-"}
                   </td>
                   <td style={{ fontSize: "0.82rem" }}>{formatInCompanyTimezone(r.created_at)}</td>
                   <td>
-                    <span className={`badge ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
-                  </td>
-                  <td>
-                    {r.status === "approved" ? (
-                      r.returned_at ? (
-                        <span className="helper-text" style={{ marginTop: 0 }}>Returned</span>
-                      ) : (
-                        <span className={`badge gate_pending`}>In use</span>
-                      )
-                    ) : (
-                      "—"
-                    )}
+                    <span className={`badge ${STATUS_BADGE_CLASS[stageOf(r)]}`}>{STATUS_LABEL[stageOf(r)]}</span>
                   </td>
                   <td>
                     {r.status === "pending" ? (

@@ -49,6 +49,10 @@ function LoginForm() {
       router.push(facilityHint === DEFAULT_FACILITY ? "/guard" : `/${facilityHint}/guard`);
       return;
     }
+    if (role === "staff") {
+      router.push(facilityHint === DEFAULT_FACILITY ? "/staff" : `/${facilityHint}/staff`);
+      return;
+    }
     router.push("/admin");
   };
 

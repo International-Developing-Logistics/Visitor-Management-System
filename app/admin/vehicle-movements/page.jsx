@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
-import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
+import { useFacility } from "@/lib/facilityContext";
 import { formatInCompanyTimezone, utcIsoToCompanyLocalInputValue, companyLocalToUtcIso } from "@/lib/timezone";
 
 function durationOutside(checkedOutAt, checkedInAt) {
@@ -47,7 +47,7 @@ function EditTimesModal({ movement, onClose, onSaved }) {
       onClick={onClose}
     >
       <div className="card" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
-        <h3>Correct times — {movement.vehicle} ({movement.license_plate})</h3>
+        <h3>Correct times - {movement.vehicle} ({movement.license_plate})</h3>
 
         <label htmlFor="em-checkout">Check-out time</label>
         <input id="em-checkout" type="datetime-local" value={checkedOutAt} onChange={(e) => setCheckedOutAt(e.target.value)} />
@@ -71,7 +71,7 @@ function EditTimesModal({ movement, onClose, onSaved }) {
 }
 
 export default function AdminVehicleMovementsPage() {
-  const [facility, setFacility] = useState(DEFAULT_FACILITY);
+  const { facility } = useFacility();
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,17 +98,6 @@ export default function AdminVehicleMovementsPage() {
 
   return (
     <div className="admin-card">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button key={f.key} className={`tab ${facility === f.key ? "active" : ""}`} onClick={() => setFacility(f.key)}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <h3 style={{ marginBottom: 4 }}>Vehicle movement history</h3>
       <p className="helper-text" style={{ marginBottom: 16 }}>
         Use the Edit button to correct any mistaken entries.
@@ -142,7 +131,7 @@ export default function AdminVehicleMovementsPage() {
                   <td style={{ fontWeight: 600 }}>{m.license_plate}</td>
                   <td>{m.driver_name}</td>
                   <td style={{ fontSize: "0.8rem" }}>{formatInCompanyTimezone(m.checked_out_at)}</td>
-                  <td style={{ fontSize: "0.8rem" }}>{m.checked_in_at ? formatInCompanyTimezone(m.checked_in_at) : "—"}</td>
+                  <td style={{ fontSize: "0.8rem" }}>{m.checked_in_at ? formatInCompanyTimezone(m.checked_in_at) : "-"}</td>
                   <td>{durationOutside(m.checked_out_at, m.checked_in_at)}</td>
                   <td>
                     <span className={`badge ${m.checked_in_at ? "checked_out" : "gate_pending"}`}>
@@ -156,7 +145,7 @@ export default function AdminVehicleMovementsPage() {
                     </div>
                   </td>
                   <td style={{ fontSize: "0.78rem", maxWidth: 160 }}>
-                    {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "—"}
+                    {[m.checkout_condition_notes, m.checkin_condition_notes, m.incident_notes].filter(Boolean).join(" · ") || "-"}
                   </td>
                   <td>
                     <button className="btn-small" onClick={() => setEditing(m)}>Edit</button>

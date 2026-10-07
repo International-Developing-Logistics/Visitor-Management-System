@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireAdmin } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 
 // POST /api/admin/gate/[id]/decide { action: "approve" | "deny" | "revert" }
-// approve/deny: same effect as clicking the email link, from the dashboard.
-// revert: undoes an approve/deny back to "awaiting approval" — for fixing
+// approve/deny: same effect as clicking the email link, from the dashboard
+// - open to guards too (not just admin) so a guard can decide a walk-in
+// directly from the Security dashboard instead of waiting on an email
+// link or an admin. This is no more permissive than the email link itself
+// (which needs no auth at all), and the response is just the one visitor
+// row being decided.
+// revert: undoes an approve/deny back to "awaiting approval" - for fixing
 // a mis-click, since the email links themselves are one-way.
 export async function POST(req, { params }) {
-  const user = await requireAdmin(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { action } = await req.json();

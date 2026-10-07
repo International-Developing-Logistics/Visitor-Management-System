@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 
 // PATCH /api/guard-logs/[id] { checked_out_at? }
 // Sends an ISO timestamp to set checkout time, or "" to clear it (undo an
 // accidental checkout). Omit the field entirely to just checkout "now".
 export async function PATCH(req, { params }) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));

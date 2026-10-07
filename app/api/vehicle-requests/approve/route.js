@@ -17,7 +17,7 @@ function htmlPage({ title, message, tone = "ok" }) {
 }
 
 // GET /api/vehicle-requests/approve?token=xxx&action=approve|reject
-// Opened directly from the email link — no login, the token IS the
+// Opened directly from the email link - no login, the token IS the
 // credential. Idempotent: re-clicking an already-decided link just shows
 // the current state rather than erroring.
 export async function GET(req) {

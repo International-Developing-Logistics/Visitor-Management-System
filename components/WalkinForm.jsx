@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import StepProgress from "@/components/StepProgress";
 import VisitorDetailsForm from "@/components/VisitorDetailsForm";
-import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
+import { OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
 
-const STEPS = ["Details", "Agreement", "Done"];
+// No separate "Agreement" step anymore - the visitor-terms notice is shown
+// directly on the Details form (see VisitorDetailsForm's showAgreementNotice
+// prop below), and clicking "Check-in" there is the acknowledgment.
+const STEPS = ["Details", "Done"];
 
 export default function WalkinForm({ facility }) {
   const [step, setStep] = useState(0);
@@ -18,13 +21,14 @@ export default function WalkinForm({ facility }) {
     email: "",
     phone: "",
     company: "",
-    purpose: "",
-    purpose_detail: "",
+    visitor_type: "",
+    visitor_type_detail: "",
     host_id: "",
     notes: "",
     is_group: false,
     additional_visitor_count: "",
     additional_visitor_names: "",
+    group_members: [],
   });
 
   useEffect(() => {
@@ -37,19 +41,24 @@ export default function WalkinForm({ facility }) {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError("");
-    const finalPurpose =
-      values.purpose === "Other" && values.purpose_detail
-        ? `Other: ${values.purpose_detail}`
-        : values.purpose;
+    // "Other" combines the picked type + the free-text detail into one
+    // string before sending, e.g. "Other: Passport renewal" - same
+    // convention already used for `purpose` on the request-invite/preregister
+    // staff tools (see lib/visitorTypes.js).
+    const finalVisitorType =
+      values.visitor_type === OTHER_VISITOR_TYPE && values.visitor_type_detail
+        ? `${OTHER_VISITOR_TYPE}: ${values.visitor_type_detail}`
+        : values.visitor_type;
     try {
       const res = await fetch("/api/visitors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
-          purpose: finalPurpose,
+          visitor_type: finalVisitorType,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          group_members: values.is_group ? values.group_members : [],
           agreed: true,
           visit_type: "walkin",
           facility: facility.key,
@@ -57,7 +66,7 @@ export default function WalkinForm({ facility }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-      setStep(2);
+      setStep(1);
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -75,23 +84,22 @@ export default function WalkinForm({ facility }) {
 
       <div className="card">
         {step === 0 && (
-          <VisitorDetailsForm
-            hosts={hosts}
-            values={values}
-            onChange={setValues}
-            onNext={() => setStep(1)}
-          />
-        )}
-
-        {step === 1 && (
           <div>
-            <h3>Agree to the visitor terms</h3>
-            <AgreementStep onAgree={submit} submitting={submitting} />
+            <VisitorDetailsForm
+              hosts={hosts}
+              values={values}
+              onChange={setValues}
+              onNext={submit}
+              showAgreementNotice
+              submitLabel="Check-in"
+              busyLabel="Checking in…"
+              submitting={submitting}
+            />
             {submitError && <p className="error-text">{submitError}</p>}
           </div>
         )}
 
-        {step === 2 && (
+        {step === 1 && (
           <div className="confirm-wrap">
             <div className="confirm-icon">✓</div>
             <h2>You're checked in</h2>

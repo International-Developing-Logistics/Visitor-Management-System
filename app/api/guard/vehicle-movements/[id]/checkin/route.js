@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { uploadPrivateFile } from "@/lib/storage";
 
 // POST /api/guard/vehicle-movements/[id]/checkin
 //   { checkin_condition_notes?, checkin_photo?, incident_notes? }
 // Only an active (not-yet-checked-in) movement can be checked in.
 export async function POST(req, { params }) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();

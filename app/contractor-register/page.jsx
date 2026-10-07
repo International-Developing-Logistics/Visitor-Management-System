@@ -4,7 +4,21 @@ import { useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
 
-const MAX_FILE_BYTES = 3 * 1024 * 1024; 
+const MAX_FILE_BYTES = 3 * 1024 * 1024;
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+
+const DOCUMENT_OPTIONS = [
+  {
+    value: "freezone_pass",
+    label: "Freezone gate pass",
+    description: "Upload a copy of your existing Freezone gate pass.",
+  },
+  {
+    value: "passport_emirates_id",
+    label: "Passport + Emirates ID",
+    description: "Upload copies of both your passport and your Emirates ID.",
+  },
+];
 
 function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -15,6 +29,48 @@ function readFileAsDataUrl(file) {
   });
 }
 
+// One labeled file input, used for all three document slots below. Keeps
+// the "wrong type / too large / unreadable" handling in one place instead
+// of copy-pasted per document.
+function DocumentUpload({ id, label, file, onChange }) {
+  const [fileError, setFileError] = useState("");
+
+  const handleFile = async (e) => {
+    const picked = e.target.files?.[0];
+    setFileError("");
+    if (!picked) {
+      onChange(null, null);
+      return;
+    }
+    if (!ACCEPTED_TYPES.includes(picked.type)) {
+      setFileError("Please upload a JPG, PNG, or PDF file.");
+      onChange(null, null);
+      return;
+    }
+    if (picked.size > MAX_FILE_BYTES) {
+      setFileError("The file is too large - please keep it under 3MB.");
+      onChange(null, null);
+      return;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(picked);
+      onChange(picked, dataUrl);
+    } catch {
+      setFileError("File unreadable - please try again.");
+      onChange(null, null);
+    }
+  };
+
+  return (
+    <div>
+      <label htmlFor={id}>{label}</label>
+      <input id={id} type="file" accept={ACCEPTED_TYPES.join(",")} onChange={handleFile} />
+      {file && !fileError && <p className="helper-text" style={{ marginTop: 6 }}>Selected: {file.name}</p>}
+      {fileError && <p className="error-text">{fileError}</p>}
+    </div>
+  );
+}
+
 export default function ContractorRegisterPage() {
   const [values, setValues] = useState({
     full_name: "",
@@ -23,39 +79,22 @@ export default function ContractorRegisterPage() {
     company: "",
     estimated_duration: "",
   });
-  const [passportFile, setPassportFile] = useState(null);
-  const [passportDataUrl, setPassportDataUrl] = useState(null);
-  const [fileError, setFileError] = useState("");
+  const [documentType, setDocumentType] = useState(null);
+  const [freezonePass, setFreezonePass] = useState({ file: null, dataUrl: null });
+  const [passport, setPassport] = useState({ file: null, dataUrl: null });
+  const [emiratesId, setEmiratesId] = useState({ file: null, dataUrl: null });
   const [result, setResult] = useState(null); // { passUrl }
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const set = (field) => (e) => setValues({ ...values, [field]: e.target.value });
 
-  const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    setFileError("");
-    setPassportFile(null);
-    setPassportDataUrl(null);
-    if (!file) return;
-
-    if (!["image/jpeg", "image/png", "image/webp", "application/pdf"].includes(file.type)) {
-      setFileError("Please upload a JPG, PNG, or PDF file.");
-      return;
-    }
-    if (file.size > MAX_FILE_BYTES) {
-      setFileError("The file is too large - please keep it under 3MB.");
-      return;
-    }
-
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      setPassportFile(file);
-      setPassportDataUrl(dataUrl);
-    } catch {
-      setFileError("File unreadable - please try again.");
-    }
-  };
+  const documentsComplete =
+    documentType === "freezone_pass"
+      ? !!freezonePass.dataUrl
+      : documentType === "passport_emirates_id"
+      ? !!passport.dataUrl && !!emiratesId.dataUrl
+      : false;
 
   const submit = async () => {
     setSubmitting(true);
@@ -64,7 +103,13 @@ export default function ContractorRegisterPage() {
       const res = await fetch("/api/contractors", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, passport: passportDataUrl }),
+        body: JSON.stringify({
+          ...values,
+          document_type: documentType,
+          freezone_pass: freezonePass.dataUrl,
+          passport: passport.dataUrl,
+          emirates_id: emiratesId.dataUrl,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -89,8 +134,8 @@ export default function ContractorRegisterPage() {
               <div className="confirm-icon">✓</div>
               <h2>Registration received</h2>
               <p className="helper-text" style={{ marginBottom: 20 }}>
-                An admin will review and activate your pass - we'll email you when it's ready.
-                Save this link to use you pass once activated:
+                An admin will review your registration and documents - we'll email you once a decision is made.
+                Save this link to use your pass once approved:
               </p>
             </div>
             <HyperlinkCopier url={result.passUrl} defaultText="My contractor pass" />
@@ -123,12 +168,71 @@ export default function ContractorRegisterPage() {
               placeholder="eg. 3 months"
             />
 
-            <label htmlFor="cr-passport">Passport copy</label>
-            <input id="cr-passport" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={handleFile} />
-            {passportFile && !fileError && (
-              <p className="helper-text" style={{ marginTop: 6 }}>Selected: {passportFile.name}</p>
+            <label style={{ display: "block", marginTop: 14 }}>Identity documents</label>
+            <p className="helper-text" style={{ marginTop: 0, marginBottom: 10 }}>
+              Choose one of the two options below and upload the document(s) it requires.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 4 }}>
+              {DOCUMENT_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  htmlFor={`cr-doc-${opt.value}`}
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    alignItems: "flex-start",
+                    padding: "10px 12px",
+                    border: `1px solid ${documentType === opt.value ? "var(--accent-dark)" : "var(--line)"}`,
+                    borderRadius: 10,
+                    cursor: "pointer",
+                    background: documentType === opt.value ? "var(--accent-soft)" : "transparent",
+                  }}
+                >
+                  <input
+                    id={`cr-doc-${opt.value}`}
+                    type="radio"
+                    name="document_type"
+                    value={opt.value}
+                    checked={documentType === opt.value}
+                    onChange={() => setDocumentType(opt.value)}
+                    style={{ marginTop: 3 }}
+                  />
+                  <span>
+                    <span style={{ display: "block", fontWeight: 600 }}>{opt.label}</span>
+                    <span className="helper-text" style={{ marginTop: 2, display: "block" }}>{opt.description}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {documentType === "freezone_pass" && (
+              <div style={{ marginTop: 10 }}>
+                <DocumentUpload
+                  id="cr-freezone-pass"
+                  label="Freezone gate pass"
+                  file={freezonePass.file}
+                  onChange={(file, dataUrl) => setFreezonePass({ file, dataUrl })}
+                />
+              </div>
             )}
-            {fileError && <p className="error-text">{fileError}</p>}
+
+            {documentType === "passport_emirates_id" && (
+              <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 12 }}>
+                <DocumentUpload
+                  id="cr-passport"
+                  label="Passport"
+                  file={passport.file}
+                  onChange={(file, dataUrl) => setPassport({ file, dataUrl })}
+                />
+                <DocumentUpload
+                  id="cr-emirates-id"
+                  label="Emirates ID"
+                  file={emiratesId.file}
+                  onChange={(file, dataUrl) => setEmiratesId({ file, dataUrl })}
+                />
+              </div>
+            )}
 
             {error && <p className="error-text">{error}</p>}
 
@@ -139,7 +243,8 @@ export default function ContractorRegisterPage() {
                 submitting ||
                 !values.full_name.trim() ||
                 !values.email.trim() ||
-                !passportDataUrl
+                !documentType ||
+                !documentsComplete
               }
             >
               {submitting ? "Submitting…" : "Register"}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
-import { requireStaff } from "@/lib/verifyAdmin";
+import { requireAdminOrGuard } from "@/lib/verifyAdmin";
 import { uploadPrivateFile, signMany } from "@/lib/storage";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 import { randomUUID } from "crypto";
@@ -9,7 +9,7 @@ import { randomUUID } from "crypto";
 // view=active (default): only currently-checked-out vehicles.
 // view=history: every movement record, active or completed.
 export async function GET(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -47,9 +47,9 @@ export async function GET(req) {
   );
 }
 
-// POST /api/guard/vehicle-movements — record a check-out.
+// POST /api/guard/vehicle-movements - record a check-out.
 export async function POST(req) {
-  const user = await requireStaff(req);
+  const user = await requireAdminOrGuard(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -63,7 +63,7 @@ export async function POST(req) {
   const facilityKey = facility || DEFAULT_FACILITY;
 
   // Rule: a vehicle can only be checked out if currently available.
-  // Server-side backstop — the UI already disables an already-out vehicle.
+  // Server-side backstop - the UI already disables an already-out vehicle.
   const { data: activeRows } = await supabaseAdmin
     .from("vehicle_movements")
     .select("driver_name")

@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 // POST /api/find-pass { email }
 // Same pattern as /api/find-registration: never confirms or denies a match
-// in the response, only ever re-sends the link by email — so someone can't
+// in the response, only ever re-sends the link by email - so someone can't
 // harvest another contractor's pass link just by knowing their email.
 export async function POST(req) {
   const limited = checkRateLimit(req, "find-pass");

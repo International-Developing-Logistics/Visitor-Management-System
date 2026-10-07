@@ -45,7 +45,7 @@ export default function ServiceHub({ facility }) {
         <BrandHeader companyName={facility.label} logoSrc={facility.logo} logoHeight={facility.logoHeight} />
       </div>
 
-      {/* Kiosk-mode hero — kept exactly as before for the reception tablet:
+      {/* Kiosk-mode hero - kept exactly as before for the reception tablet:
           one big button, no menu, no decisions to make. */}
       <div className="card" style={{ textAlign: "center" }}>
         <h1 style={{ fontSize: "1.6rem" }}>Welcome to {facility.label}</h1>
@@ -107,6 +107,9 @@ export default function ServiceHub({ facility }) {
 
       <p className="helper-text" style={{ marginTop: 18, textAlign: "center" }}>
         Employee or staff member? <Link href={p("/staff")}>Staff &amp; business services →</Link>
+      </p>
+      <p className="helper-text" style={{ marginTop: 6, textAlign: "center" }}>
+        Waiting around? <Link href="/crossword">Try our Crossword</Link>
       </p>
     </main>
   );

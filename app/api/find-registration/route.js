@@ -6,7 +6,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 // POST /api/find-registration { email }
 // Re-sends the check-in link to a guest who's lost it, by email lookup.
 // Deliberately never confirms or denies whether a match was found in the
-// response — always returns the same generic message, and only ever
+// response - always returns the same generic message, and only ever
 // re-sends the link via email (never displays it in the browser). This
 // means someone can't harvest another person's check-in link just by
 // knowing their email address; they'd need actual access to that inbox.

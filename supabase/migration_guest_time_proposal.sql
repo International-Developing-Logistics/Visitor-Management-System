@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- Purely additive — adds one nullable column, doesn't touch existing data.
+-- Purely additive - adds one nullable column, doesn't touch existing data.
 
 alter table visitors add column if not exists proposed_alternative_time timestamptz;
 

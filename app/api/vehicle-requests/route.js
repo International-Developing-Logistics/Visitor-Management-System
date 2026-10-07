@@ -8,6 +8,7 @@ import { randomUUID } from "crypto";
 // POST /api/vehicle-requests
 //   Normal:   { employee_name, vehicle, destination, needed_from, needed_until, facility? }
 //   External: { is_external: true, employee_name, customer_name, destination, facility? }
+// Public/no-login by design - see HANDOVER.md §1.4.
 export async function POST(req) {
   const limited = checkRateLimit(req, "vehicle-requests");
   if (limited) return limited;
@@ -37,7 +38,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "'Needed until' must be after 'Needed from'" }, { status: 400 });
     }
 
-    // Server-side backstop for Rule B — the UI already blocks selecting an
+    // Server-side backstop for Rule B - the UI already blocks selecting an
     // in-use vehicle, but re-check here too in case of a race condition or
     // a bypassed client. Doesn't apply to external requests, since those
     // aren't drawn from our own fleet.

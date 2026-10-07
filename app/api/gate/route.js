@@ -6,8 +6,8 @@ import { getGateApprovalRecipients, getFacility, DEFAULT_FACILITY } from "@/lib/
 import { randomUUID } from "crypto";
 
 // POST /api/gate { full_name, purpose, facility? }
-// Minimal gate walk-in form — creates a pending record and emails whoever's
-// configured for that facility an Approve/Deny link. No host assigned yet —
+// Minimal gate walk-in form - creates a pending record and emails whoever's
+// configured for that facility an Approve/Deny link. No host assigned yet -
 // that happens at reception once approved. `facility` defaults to the
 // original facility ("harmony") when omitted, so the existing /gate page's
 // behavior is unchanged.
@@ -52,7 +52,7 @@ export async function POST(req) {
     await sendGateApprovalRequest({ visitor, approveUrl, denyUrl, recipients, facilityLabel });
   } catch (err) {
     console.error("[gate] approval email failed:", err.message);
-    // Don't fail the visitor's submission just because the email had trouble —
+    // Don't fail the visitor's submission just because the email had trouble -
     // admin can still see and approve it from the dashboard.
   }
 

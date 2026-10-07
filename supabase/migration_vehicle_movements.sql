@@ -1,13 +1,13 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch any existing data, including the
+-- New table only - doesn't touch any existing data, including the
 -- separate `vehicle_requests` table (employee requests + coordinator
--- approval — a different workflow from this one).
+-- approval - a different workflow from this one).
 
 create table if not exists vehicle_movements (
   id uuid primary key default gen_random_uuid(),
   facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
 
-  -- Vehicle TYPE (e.g. "Sedan"), matching lib/vehicles.js — this app
+  -- Vehicle TYPE (e.g. "Sedan"), matching lib/vehicles.js - this app
   -- tracks fleet availability at the vehicle-type level (same
   -- simplification already used by the vehicle_requests workflow), not
   -- individual physical units. The license plate is what actually
