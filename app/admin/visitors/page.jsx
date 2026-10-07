@@ -236,8 +236,8 @@ export default function AdminVisitorsPage() {
             {runningHousekeeping ? "Running…" : "Run housekeeping"}
           </button>
           <button
-            className="btn btn-primary"
-            style={{ marginTop: 0, whiteSpace: "nowrap" }}
+            className="btn-small"
+            style={{ whiteSpace: "nowrap" }}
             onClick={() => setAdding(true)}
           >
             + Add Visitor
