@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- Purely additive — every existing row gets `facility = 'harmony'`
+-- Purely additive - every existing row gets `facility = 'harmony'`
 -- (today's default/only facility), so nothing about current behavior
 -- changes. New IDL pages will tag their own records 'idl'.
 

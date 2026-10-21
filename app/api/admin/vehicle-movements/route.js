@@ -12,12 +12,9 @@ export async function GET(req) {
   const supabaseAdmin = getSupabaseAdmin();
   const facility = req.nextUrl.searchParams.get("facility") || DEFAULT_FACILITY;
 
-  const { data, error } = await supabaseAdmin
-    .from("vehicle_movements")
-    .select("*")
-    .eq("facility", facility)
-    .order("checked_out_at", { ascending: false })
-    .limit(200);
+  let query = supabaseAdmin.from("vehicle_movements").select("*");
+  if (facility !== "all") query = query.eq("facility", facility);
+  const { data, error } = await query.order("checked_out_at", { ascending: false }).limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

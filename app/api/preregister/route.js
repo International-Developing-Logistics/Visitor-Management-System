@@ -41,7 +41,7 @@ export async function POST(req) {
     : 0;
 
   // proposed_time_slots must already be proper UTC ISO strings by the time
-  // they reach here — converted client-side (see lib/timezone.js) from
+  // they reach here - converted client-side (see lib/timezone.js) from
   // whatever the host typed, anchored to Dubai time. Re-interpreting a bare
   // "YYYY-MM-DDTHH:mm" string here would silently use the SERVER's own
   // timezone (UTC on Vercel), which is exactly the bug this fixes.

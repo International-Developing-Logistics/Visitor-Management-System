@@ -4,11 +4,15 @@ import { useEffect, useState } from "react";
 import StepProgress from "@/components/StepProgress";
 import VisitorDetailsForm from "@/components/VisitorDetailsForm";
 import ProposeTimeForm from "@/components/ProposeTimeForm";
-import AgreementStep from "@/components/AgreementStep";
 import BrandHeader from "@/components/BrandHeader";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
+import { OTHER_VISITOR_TYPE } from "@/lib/visitorTypes";
+import { VISITOR_AGREEMENT_TEXT } from "@/lib/agreementText";
 
-const STEPS = ["Details", "Time", "Agreement", "Done"];
+// No separate "Agreement" step anymore - the visitor-terms notice is shown
+// on the last screen before submission (the Time step, since it comes after
+// Details here), and clicking "Register" there is the acknowledgment.
+const STEPS = ["Details", "Time", "Done"];
 
 export default function PreregisterOpenForm({ facility }) {
   const [step, setStep] = useState(0);
@@ -21,13 +25,14 @@ export default function PreregisterOpenForm({ facility }) {
     email: "",
     phone: "",
     company: "",
-    purpose: "",
-    purpose_detail: "",
+    visitor_type: "",
+    visitor_type_detail: "",
     host_id: "",
     notes: "",
     is_group: false,
     additional_visitor_count: "",
     additional_visitor_names: "",
+    group_members: [],
   });
   const [preferredTime, setPreferredTime] = useState("");
 
@@ -41,19 +46,24 @@ export default function PreregisterOpenForm({ facility }) {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError("");
-    const finalPurpose =
-      values.purpose === "Other" && values.purpose_detail
-        ? `Other: ${values.purpose_detail}`
-        : values.purpose;
+    // "Other" combines the picked type + the free-text detail into one
+    // string before sending, e.g. "Other: Passport renewal" - same
+    // convention already used for `purpose` on the request-invite/preregister
+    // staff tools (see lib/visitorTypes.js).
+    const finalVisitorType =
+      values.visitor_type === OTHER_VISITOR_TYPE && values.visitor_type_detail
+        ? `${OTHER_VISITOR_TYPE}: ${values.visitor_type_detail}`
+        : values.visitor_type;
     try {
       const res = await fetch("/api/preregister-open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...values,
-          purpose: finalPurpose,
+          visitor_type: finalVisitorType,
           additional_visitor_count: values.is_group ? values.additional_visitor_count : 0,
           additional_visitor_names: values.is_group ? values.additional_visitor_names : "",
+          group_members: values.is_group ? values.group_members : [],
           proposed_alternative_time: preferredTime || null,
           agreed: true,
           facility: facility.key,
@@ -62,7 +72,7 @@ export default function PreregisterOpenForm({ facility }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       setCheckinUrl(data.checkinUrl);
-      setStep(3);
+      setStep(2);
     } catch (err) {
       setSubmitError(err.message);
     } finally {
@@ -99,21 +109,15 @@ export default function PreregisterOpenForm({ facility }) {
               onChange={setPreferredTime}
               label="+ Add a preferred date and time"
             />
-            <button className="btn btn-primary" onClick={() => setStep(2)}>
-              Continue
+            <div className="nda-box">{VISITOR_AGREEMENT_TEXT}</div>
+            <button className="btn btn-primary" onClick={submit} disabled={submitting}>
+              {submitting ? "Registering…" : "Register"}
             </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div>
-            <h3>Agree to the visitor terms</h3>
-            <AgreementStep onAgree={submit} submitting={submitting} />
             {submitError && <p className="error-text">{submitError}</p>}
           </div>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <div>
             <div className="confirm-wrap" style={{ paddingBottom: 8 }}>
               <div className="confirm-icon">✓</div>

@@ -1,395 +1,176 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { authFetch } from "@/lib/apiFetch";
-import EditVisitorModal from "@/components/EditVisitorModal";
-import HyperlinkCopier from "@/components/HyperlinkCopier";
-import { formatInCompanyTimezone, formatTimeInCompanyTimezone } from "@/lib/timezone";
-import { FACILITIES, DEFAULT_FACILITY } from "@/lib/facilities";
+import { useFacility } from "@/lib/facilityContext";
+import { utcIsoToCompanyLocalDateValue } from "@/lib/timezone";
 
-const TABS = [
-  { key: "", label: "All" },
-  { key: "requested", label: "Requests" },
-  { key: "gate_pending,gate_approved,gate_denied", label: "Gate" },
-  { key: "checked_in", label: "Checked in" },
-  { key: "pre_registered", label: "Expected" },
-  { key: "checked_out", label: "Checked out" },
+// Admin Home - item #9 of the IA overhaul: today's counts across the
+// domains staff actually ask about (Visitors/Vehicles/Contractors), then
+// an "Action Required" list of exactly what needs a decision right now,
+// each item jumping straight to the right screen and tab. Everything here
+// reuses the same list endpoints the domain pages already call - no new
+// aggregation route, just re-slicing data those pages already fetch.
+const QUICK_LINKS = [
+  { href: "/preregister", label: "Invite a guest" },
+  { href: "/admin/contractors", label: "Contractors" },
+  { href: "/admin/vehicle-requests", label: "Vehicle requests" },
+  { href: "/admin/equipment-log", label: "Equipment log" },
+  { href: "/admin/recommendations", label: "Feature requests" },
 ];
 
-const STATUS_LABEL = {
-  requested: "Requested",
-  invited: "Invited",
-  pre_registered: "Expected",
-  checked_in: "Checked in",
-  checked_out: "Checked out",
-  gate_pending: "Awaiting approval",
-  gate_approved: "Approved",
-  gate_denied: "Denied",
-};
-
-function fmtTime(ts) {
-  return ts ? formatTimeInCompanyTimezone(ts) : "—";
+function isToday(iso, todayStr) {
+  return !!iso && utcIsoToCompanyLocalDateValue(iso) === todayStr;
 }
 
-function fmtMeetingTime(v) {
-  if (v.selected_time_slot) return formatInCompanyTimezone(v.selected_time_slot);
-  if (v.proposed_alternative_time) return `Proposed: ${formatInCompanyTimezone(v.proposed_alternative_time)}`;
-  if (v.proposed_time_slots && v.proposed_time_slots.length > 0) return "Awaiting choice";
-  return "—";
+function StatTile({ label, count }) {
+  return (
+    <div style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "14px 18px", minWidth: 120 }}>
+      <div style={{ fontSize: "1.6rem", fontWeight: 700 }}>{count}</div>
+      <div className="helper-text" style={{ marginTop: 0 }}>{label}</div>
+    </div>
+  );
 }
 
-function currentMonth() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+function ActionRow({ label, count, href }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "12px 16px",
+        border: "1px solid var(--line)",
+        borderRadius: 10,
+        marginBottom: 8,
+        textDecoration: "none",
+        color: "var(--ink)",
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>{label}</span>
+      <span className="badge gate_pending">{count}</span>
+    </Link>
+  );
 }
 
-export default function AdminDashboard() {
-  const [facility, setFacility] = useState(DEFAULT_FACILITY);
-  const [tab, setTab] = useState("");
+export default function AdminHomePage() {
+  const { facility } = useFacility();
   const [visitors, setVisitors] = useState([]);
-  const [hosts, setHosts] = useState([]);
+  const [vehicleRequests, setVehicleRequests] = useState([]);
+  const [equipmentRequests, setEquipmentRequests] = useState([]);
+  const [contractors, setContractors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [busyId, setBusyId] = useState(null);
-  const [editingVisitor, setEditingVisitor] = useState(null);
-  const [exportMonth, setExportMonth] = useState(currentMonth());
-  const [exporting, setExporting] = useState(false);
-  const [approvedLink, setApprovedLink] = useState(null); // { guestName, checkinUrl, emailSent }
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const params = new URLSearchParams({ facility });
-      if (tab) params.set("status", tab);
-      const res = await authFetch(`/api/admin/visitors?${params.toString()}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setVisitors(data.visitors || []);
+      const [v, vr, er, c] = await Promise.all([
+        authFetch(`/api/admin/visitors?facility=${facility}`),
+        authFetch(`/api/admin/vehicle-requests?facility=${facility}`),
+        authFetch(`/api/admin/equipment-requests?facility=${facility}`),
+        authFetch(`/api/admin/contractors`),
+      ]);
+      const [vData, vrData, erData, cData] = await Promise.all([v.json(), vr.json(), er.json(), c.json()]);
+      if (!v.ok) throw new Error(vData.error);
+      if (!vr.ok) throw new Error(vrData.error);
+      if (!er.ok) throw new Error(erData.error);
+      if (!c.ok) throw new Error(cData.error);
+      setVisitors(vData.visitors || []);
+      setVehicleRequests(vrData.requests || []);
+      setEquipmentRequests(erData.requests || []);
+      setContractors(cData.contractors || []);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [tab, facility]);
+  }, [facility]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  useEffect(() => {
-    authFetch("/api/admin/hosts")
-      .then((r) => r.json())
-      .then((d) => setHosts(d.hosts || []))
-      .catch(() => setHosts([]));
-  }, []);
+  const todayStr = utcIsoToCompanyLocalDateValue(new Date().toISOString());
 
-  const checkOut = async (id) => {
-    setBusyId(id);
-    try {
-      const res = await authFetch("/api/admin/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const visitorsToday = visitors.filter((v) => isToday(v.created_at, todayStr)).length;
+  const vehiclesToday = vehicleRequests.filter((r) => isToday(r.created_at, todayStr)).length;
+  const contractorsToday = contractors.filter((c) => isToday(c.created_at, todayStr)).length;
 
-  const manualCheckIn = async (id) => {
-    setBusyId(id);
-    try {
-      const res = await authFetch("/api/admin/checkin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const approveRequest = async (v, sendEmail) => {
-    setBusyId(v.id);
-    setError("");
-    try {
-      const res = await authFetch(`/api/admin/requests/${v.id}/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ send_email: sendEmail }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setApprovedLink({ guestName: v.full_name || v.email, checkinUrl: data.checkinUrl, emailSent: data.emailSent });
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const decideGate = async (id, action) => {
-    setBusyId(id);
-    setError("");
-    try {
-      const res = await authFetch(`/api/admin/gate/${id}/decide`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (!res.ok) throw new Error((await res.json()).error);
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const runExport = async () => {
-    setExporting(true);
-    setError("");
-    try {
-      const res = await authFetch(`/api/admin/export?month=${exportMonth}&facility=${facility}`);
-      if (!res.ok) throw new Error((await res.json()).error);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `visitor-log-${facility}-${exportMonth}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setExporting(false);
-    }
-  };
+  const actionItems = [
+    {
+      label: "Visitor requests awaiting approval",
+      count: visitors.filter((v) => v.status === "requested").length,
+      href: "/admin/visitors?tab=expected",
+    },
+    {
+      label: "Visitors at the gate",
+      count: visitors.filter((v) => v.status === "gate_pending").length,
+      href: "/admin/visitors?tab=at_gate",
+    },
+    {
+      label: "Vehicle requests pending",
+      count: vehicleRequests.filter((r) => r.status === "pending").length,
+      href: "/admin/vehicle-requests?tab=pending",
+    },
+    {
+      label: "Equipment requests pending",
+      count: equipmentRequests.filter((r) => r.status === "pending").length,
+      href: "/admin/equipment-requests?tab=pending",
+    },
+    {
+      label: "Contractor registrations pending review",
+      count: contractors.filter((c) => c.status === "pending").length,
+      href: "/admin/contractors",
+    },
+  ].filter((item) => item.count > 0);
 
   return (
     <div className="admin-card">
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-        <span className="helper-text" style={{ marginTop: 0 }}>Facility:</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          {Object.values(FACILITIES).map((f) => (
-            <button
-              key={f.key}
-              className={`tab ${facility === f.key ? "active" : ""}`}
-              onClick={() => setFacility(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={`tab ${tab === t.key ? "active" : ""}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          alignItems: "center",
-          marginBottom: 20,
-          paddingBottom: 20,
-          borderBottom: "1px solid var(--line)",
-        }}
-      >
-        <label style={{ margin: 0 }}>Export month</label>
-        <input
-          type="month"
-          value={exportMonth}
-          onChange={(e) => setExportMonth(e.target.value)}
-          style={{ width: "auto", padding: "8px 12px" }}
-        />
-        <button className="btn-small" onClick={runExport} disabled={exporting}>
-          {exporting ? "Exporting…" : "Export CSV"}
-        </button>
-      </div>
-
-      {approvedLink && (
-        <div
-          style={{
-            background: "var(--accent-soft)",
-            border: "1px solid var(--accent)",
-            borderRadius: 10,
-            padding: "12px 14px",
-            marginBottom: 18,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
-            <div>
-              <strong>Approved: {approvedLink.guestName}</strong>
-              <p className="helper-text" style={{ marginTop: 4 }}>
-                {approvedLink.emailSent
-                  ? "Emailed to the guest. Link also copyable below."
-                  : "Share this link with the guest directly:"}
-              </p>
-            </div>
-            <button
-              onClick={() => setApprovedLink(null)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)" }}
-            >
-              ✕
-            </button>
-          </div>
-          <div style={{ marginTop: 8 }}>
-            <HyperlinkCopier url={approvedLink.checkinUrl} defaultText="Click here to complete your pre-registration" />
-          </div>
-        </div>
-      )}
+      <h3 style={{ marginBottom: 4 }}>Home</h3>
+      <p className="helper-text" style={{ marginBottom: 20 }}>
+        Today's activity and what needs your attention.
+      </p>
 
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}
 
-      {!loading && visitors.length === 0 && (
-        <p className="helper-text">No visitors yet.</p>
+      {!loading && !error && (
+        <>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
+            <StatTile label="Visitors today" count={visitorsToday} />
+            <StatTile label="Vehicle requests today" count={vehiclesToday} />
+            <StatTile label="Contractors registered today" count={contractorsToday} />
+          </div>
+
+          <p className="helper-text" style={{ marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
+            Action Required
+          </p>
+          {actionItems.length === 0 ? (
+            <p className="helper-text" style={{ marginBottom: 20 }}>Nothing needs your attention right now.</p>
+          ) : (
+            <div style={{ marginBottom: 20 }}>
+              {actionItems.map((item) => (
+                <ActionRow key={item.label} {...item} />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {!loading && visitors.length > 0 && (
-        <div className="vtable-scroll">
-        <table className="vtable">
-          <thead>
-            <tr>
-              <th>Visitor</th>
-              <th>Host</th>
-              <th>Purpose</th>
-              <th>Group</th>
-              <th>Meeting Time</th>
-              <th>Status</th>
-              <th>Arrived</th>
-              <th>Left</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {visitors.map((v) => (
-              <tr key={v.id}>
-                <td>
-                  <div style={{ fontWeight: 600 }}>{v.full_name || "(pending)"}</div>
-                  <div className="helper-text" style={{ marginTop: 0 }}>
-                    {[v.company, v.email || "no email", v.phone].filter(Boolean).join(" · ")}
-                  </div>
-                </td>
-                <td>{v.hosts?.name || "—"}</td>
-                <td>{v.purpose}</td>
-                <td>
-                  {v.additional_visitor_count > 0 ? (
-                    <span title={v.additional_visitor_names || ""}>+{v.additional_visitor_count}</span>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                <td>{fmtMeetingTime(v)}</td>
-                <td>
-                  <span className={`badge ${v.status}`}>{STATUS_LABEL[v.status] || v.status}</span>
-                </td>
-                <td>{fmtTime(v.checked_in_at)}</td>
-                <td>{fmtTime(v.checked_out_at)}</td>
-                <td>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {v.status === "requested" ? (
-                      <>
-                        <button
-                          className="btn-small"
-                          onClick={() => approveRequest(v, true)}
-                          disabled={busyId === v.id}
-                        >
-                          {busyId === v.id ? "…" : "Approve & email"}
-                        </button>
-                        <button
-                          className="btn-small"
-                          onClick={() => approveRequest(v, false)}
-                          disabled={busyId === v.id}
-                        >
-                          Approve, get link
-                        </button>
-                      </>
-                    ) : v.status === "gate_pending" ? (
-                      <>
-                        <button
-                          className="btn-small"
-                          onClick={() => decideGate(v.id, "approve")}
-                          disabled={busyId === v.id}
-                        >
-                          {busyId === v.id ? "…" : "Approve"}
-                        </button>
-                        <button
-                          className="btn-small"
-                          onClick={() => decideGate(v.id, "deny")}
-                          disabled={busyId === v.id}
-                        >
-                          Deny
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button className="btn-small" onClick={() => setEditingVisitor(v)}>
-                          Edit
-                        </button>
-                        {(v.status === "pre_registered" || v.status === "gate_approved") && (
-                          <button
-                            className="btn-small"
-                            onClick={() => manualCheckIn(v.id)}
-                            disabled={busyId === v.id}
-                          >
-                            {busyId === v.id ? "…" : "Check in"}
-                          </button>
-                        )}
-                        {v.status === "checked_in" && (
-                          <button className="btn-small" onClick={() => checkOut(v.id)} disabled={busyId === v.id}>
-                            {busyId === v.id ? "…" : "Check out"}
-                          </button>
-                        )}
-                        {(v.status === "gate_approved" || v.status === "gate_denied") && (
-                          <button className="btn-small" onClick={() => decideGate(v.id, "revert")} disabled={busyId === v.id}>
-                            {busyId === v.id ? "…" : "Undo"}
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
-
-      {editingVisitor && (
-        <EditVisitorModal
-          visitor={editingVisitor}
-          hosts={hosts}
-          onClose={() => setEditingVisitor(null)}
-          onSaved={() => {
-            setEditingVisitor(null);
-            load();
-          }}
-        />
-      )}
+      <p className="helper-text" style={{ marginBottom: 8, fontWeight: 600, textTransform: "uppercase", fontSize: "0.72rem", letterSpacing: "0.03em" }}>
+        Quick links
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        {QUICK_LINKS.map((l) => (
+          <Link key={l.href} href={l.href} className="btn-small" style={{ textDecoration: "none", display: "inline-flex" }}>
+            {l.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

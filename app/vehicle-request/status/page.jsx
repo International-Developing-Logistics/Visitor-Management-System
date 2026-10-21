@@ -49,7 +49,7 @@ function StatusInner() {
         <tbody>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0", width: 130 }}>Vehicle</td>
-            <td style={{ padding: "6px 0" }}>{request.is_external ? "External — not from our fleet" : request.vehicle}</td>
+            <td style={{ padding: "6px 0" }}>{request.is_external ? "External - not from our fleet" : request.vehicle}</td>
           </tr>
           <tr>
             <td style={{ color: "var(--muted)", padding: "6px 0" }}>Destination</td>
@@ -61,7 +61,7 @@ function StatusInner() {
               <td style={{ padding: "6px 0" }}>
                 {request.needed_from
                   ? `${formatInCompanyTimezone(request.needed_from)} → ${formatInCompanyTimezone(request.needed_until)}`
-                  : request.estimated_time || "—"}
+                  : request.estimated_time || "-"}
               </td>
             </tr>
           )}

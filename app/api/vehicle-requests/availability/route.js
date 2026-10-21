@@ -4,7 +4,7 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/vehicle-requests/availability?facility=idl
-// Public — a vehicle is "in use" if there's an approved request for it in
+// Public - a vehicle is "in use" if there's an approved request for it in
 // this facility that hasn't been marked returned yet. Returns which
 // employee has it, so the request form can show a clear message.
 export async function GET(req) {

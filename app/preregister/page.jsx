@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import AdminGuard from "@/components/AdminGuard";
+import AppShell from "@/components/AppShell";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
-import BrandHeader from "@/components/BrandHeader";
 import TimeSlotEditor from "@/components/TimeSlotEditor";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
 import { companyLocalToUtcIso } from "@/lib/timezone";
+import { FacilityProvider } from "@/lib/facilityContext";
 
 function InviteForm() {
   const [hosts, setHosts] = useState([]);
@@ -88,7 +89,7 @@ function InviteForm() {
             <div className="confirm-icon">✓</div>
             <h2>Link ready</h2>
             <p className="helper-text" style={{ marginBottom: 20 }}>
-              Share this with your guest however you like — email, WhatsApp, Slack, text.
+              Share this with your guest however you like - email, WhatsApp, Slack, text.
             </p>
           </div>
 
@@ -98,7 +99,7 @@ function InviteForm() {
             <p className={result.emailSent ? "helper-text" : "error-text"}>
               {result.emailSent
                 ? "Also emailed to the guest."
-                : `Email didn't send${result.emailError ? ` (${result.emailError})` : ""} — the link above still works, just share it manually.`}
+                : `Email didn't send${result.emailError ? ` (${result.emailError})` : ""} - the link above still works, just share it manually.`}
             </p>
           )}
 
@@ -223,12 +224,11 @@ function InviteForm() {
 export default function PreregisterInvitePage() {
   return (
     <AdminGuard requiredRole="admin">
-      <main className="kiosk-shell">
-        <div className="kiosk-header">
-          <BrandHeader label="Invite a guest" />
-        </div>
-        <InviteForm />
-      </main>
+      <FacilityProvider>
+        <AppShell role="admin">
+          <InviteForm />
+        </AppShell>
+      </FacilityProvider>
     </AdminGuard>
   );
 }

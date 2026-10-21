@@ -57,7 +57,7 @@ alter table visitors enable row level security;
 -- recreated (new Supabase project, disaster recovery, etc.) you don't have
 -- to re-enter everyone by hand in /admin/hosts. Keep this updated when your
 -- host list changes significantly, or just manage day-to-day changes from
--- /admin/hosts directly — this file only matters if you're rebuilding from
+-- /admin/hosts directly - this file only matters if you're rebuilding from
 -- scratch.
 insert into hosts (name, email, department) values
   ('Ajeethan Selvaratnam', 'operations@idllogistics.ae', 'Operations Department'),
@@ -72,7 +72,7 @@ insert into hosts (name, email, department) values
   ('Roshan Shinde', 'roshan@idllogistics.ae', 'Human Resources Department')
 on conflict do nothing;
 
--- Contractor pass system — separate from one-off visitors, since
+-- Contractor pass system - separate from one-off visitors, since
 -- contractors need multi-visit, time-bounded access.
 create table if not exists contractors (
   id uuid primary key default gen_random_uuid(),
@@ -92,7 +92,7 @@ create table if not exists contractors (
 create index if not exists contractors_pass_token_idx on contractors(pass_token);
 alter table contractors enable row level security;
 
--- Security guard vehicle/visitor log — separate from visitors, since this
+-- Security guard vehicle/visitor log - separate from visitors, since this
 -- tracks physical gate activity (who came through, in what vehicle) rather
 -- than a hosted visit.
 create table if not exists guard_logs (
@@ -147,7 +147,7 @@ create table if not exists vehicle_requests (
 create index if not exists vehicle_requests_facility_idx on vehicle_requests(facility);
 alter table vehicle_requests enable row level security;
 
--- Equipment requests — admin-only, unlike vehicle requests, these are not
+-- Equipment requests - admin-only, unlike vehicle requests, these are not
 -- surfaced to security guards at all (no email approval flow either;
 -- reviewed purely from /admin/equipment-requests).
 create table if not exists equipment_requests (
@@ -168,7 +168,7 @@ create table if not exists equipment_requests (
 create index if not exists equipment_requests_facility_idx on equipment_requests(facility);
 alter table equipment_requests enable row level security;
 
--- Guard-operated vehicle check-in/check-out tracking — a physical fleet
+-- Guard-operated vehicle check-in/check-out tracking - a physical fleet
 -- movement log, separate from vehicle_requests (employee request +
 -- coordinator approval). Tracks availability at the vehicle-TYPE level
 -- (matching lib/vehicles.js), with license plate identifying the specific

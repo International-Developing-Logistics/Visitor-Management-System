@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { sanitizeGroupMembers } from "@/lib/visitorTypes";
 
 export async function POST(req) {
   const limited = checkRateLimit(req, "preregister-complete");
@@ -13,9 +14,10 @@ export async function POST(req) {
     full_name,
     phone,
     company,
-    agreed, // boolean — replaces the old signature capture
+    agreed, // boolean - replaces the old signature capture
     additional_visitor_count,
     additional_visitor_names,
+    group_members,
     selected_time_slot,
     proposed_alternative_time,
   } = await req.json();
@@ -40,6 +42,11 @@ export async function POST(req) {
   const groupCount = Number.isFinite(Number(additional_visitor_count))
     ? Math.max(0, Math.floor(Number(additional_visitor_count)))
     : 0;
+  // Visitor type was already set when this pre-registration was created
+  // (preregister-open or the admin/staff invite tools), so it's not
+  // re-collected here - only the group's shape (structured vs. simple)
+  // reflects it, via cleanGroupMembers being empty for non-structured types.
+  const cleanGroupMembers = sanitizeGroupMembers(group_members);
 
   try {
     const { data: visitor, error } = await supabaseAdmin
@@ -50,8 +57,9 @@ export async function POST(req) {
         company,
         nda_signed_at: new Date().toISOString(),
         status: "pre_registered",
-        additional_visitor_count: groupCount,
+        additional_visitor_count: cleanGroupMembers.length > 0 ? cleanGroupMembers.length : groupCount,
         additional_visitor_names: additional_visitor_names || null,
+        group_members: cleanGroupMembers.length > 0 ? cleanGroupMembers : null,
         selected_time_slot: selected_time_slot ? new Date(selected_time_slot).toISOString() : null,
         proposed_alternative_time: proposed_alternative_time ? new Date(proposed_alternative_time).toISOString() : null,
       })

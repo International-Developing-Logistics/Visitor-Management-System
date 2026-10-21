@@ -4,10 +4,20 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-// requiredRole: "staff" (default) — any signed-in account, admin or guard.
-//               "admin" — blocks guard accounts entirely (used to wrap
-//               everything under /admin and /preregister).
-export default function AdminGuard({ children, requiredRole = "staff" }) {
+// requiredRole: "staff" (default) - any signed-in account, no role fetch.
+//               "admin" - blocks guard (and staff) accounts entirely (used
+//               to wrap everything under /admin and /preregister).
+// allowedRoles: optional array of exact roles allowed in, e.g.
+//               ["admin", "staff"]. When set, this takes precedence over
+//               requiredRole and the account's real role is always
+//               resolved and checked against the list. Pass a
+//               module-level constant array (not an inline literal) from
+//               callers so the effect below doesn't re-run every render.
+// onRoleResolved: optional callback(role) fired once the signed-in
+//               account's real role is known (default "admin" when there's
+//               no user_roles row) - lets a page gate on allowedRoles
+//               *and* conditionally render by role, e.g. StaffHub.jsx.
+export default function AdminGuard({ children, requiredRole = "staff", allowedRoles, onRoleResolved }) {
   const pathname = usePathname();
   const router = useRouter();
   const [status, setStatus] = useState("checking"); // checking | ok | denied
@@ -25,16 +35,34 @@ export default function AdminGuard({ children, requiredRole = "staff" }) {
       if (!session) {
         // Preserve where the person was actually trying to go (e.g. /guard,
         // /idl/guard) so login sends them back there instead of always to
-        // /admin — that mismatch was blocking guard accounts from ever
+        // /admin - that mismatch was blocking guard accounts from ever
         // reaching their own page.
         router.replace(`/admin/login?next=${encodeURIComponent(pathname)}`);
         return;
       }
-      if (requiredRole !== "admin") {
+
+      const needsRoleResolution = requiredRole === "admin" || !!allowedRoles || !!onRoleResolved;
+      if (!needsRoleResolution) {
         if (active) setStatus("ok");
         return;
       }
-      // Resolve the real role — no row in user_roles defaults to "admin",
+
+      // A client login (Client Portal) must never be treated as staff
+      // here either - mirrors the same defense-in-depth check in
+      // lib/verifyAdmin.js server-side, so a client account doesn't even
+      // get to see the admin shell render before its API calls start
+      // failing.
+      const { data: clientRow } = await supabase
+        .from("client_accounts")
+        .select("client_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (clientRow) {
+        if (active) setStatus("denied");
+        return;
+      }
+
+      // Resolve the real role - no row in user_roles defaults to "admin",
       // matching the same default used server-side in lib/verifyAdmin.js.
       const { data: roleRow } = await supabase
         .from("user_roles")
@@ -43,7 +71,22 @@ export default function AdminGuard({ children, requiredRole = "staff" }) {
         .maybeSingle();
       const role = roleRow?.role || "admin";
       if (!active) return;
-      setStatus(role === "admin" ? "ok" : "denied");
+
+      onRoleResolved?.(role);
+
+      // allowedRoles (when given) is the real gate. Otherwise fall back to
+      // the legacy requiredRole="admin" behavior. If neither is set, the
+      // only reason we got here is onRoleResolved - any signed-in account
+      // still passes, we just needed to resolve the role to report it.
+      let allowed;
+      if (allowedRoles) {
+        allowed = allowedRoles.includes(role);
+      } else if (requiredRole === "admin") {
+        allowed = role === "admin";
+      } else {
+        allowed = true;
+      }
+      setStatus(allowed ? "ok" : "denied");
     }
 
     supabase.auth.getSession().then(({ data }) => check(data?.session));
@@ -57,7 +100,7 @@ export default function AdminGuard({ children, requiredRole = "staff" }) {
       active = false;
       sub.subscription.unsubscribe();
     };
-  }, [isLoginPage, pathname, router, requiredRole]);
+  }, [isLoginPage, pathname, router, requiredRole, allowedRoles, onRoleResolved]);
 
   if (status === "checking") {
     return <p className="helper-text" style={{ padding: 24 }}>Loading…</p>;

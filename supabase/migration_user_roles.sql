@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch any existing data or accounts. Every
+-- New table only - doesn't touch any existing data or accounts. Every
 -- existing login keeps working exactly as before (see note below on the
 -- "no row = admin" default).
 
@@ -12,7 +12,7 @@ create table if not exists user_roles (
 
 alter table user_roles enable row level security;
 
--- Each signed-in user can read only their OWN role row — nothing else.
+-- Each signed-in user can read only their OWN role row - nothing else.
 -- Deliberately no insert/update/delete policy: assigning roles is done by
 -- staff via the Table Editor (which uses elevated access), so the
 -- browser-facing key stays strictly read-only and self-scoped here.
@@ -29,5 +29,5 @@ create policy "select own role" on user_roles
 --      own reference), role = 'guard'
 --
 -- Any account with NO row in this table (i.e. everyone created before this
--- migration) is treated as a full admin — that's what preserves existing
+-- migration) is treated as a full admin - that's what preserves existing
 -- staff access exactly as it was.

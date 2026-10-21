@@ -3,11 +3,16 @@
 import { useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { PURPOSE_OPTIONS } from "@/lib/purposeOptions";
+import { VISITOR_TYPE_OPTIONS, STRUCTURED_GROUP_VISITOR_TYPE } from "@/lib/visitorTypes";
 import {
   companyLocalToUtcIso,
   utcIsoToCompanyLocalInputValue,
   COMPANY_TIMEZONE_LABEL,
 } from "@/lib/timezone";
+
+function emptyMember() {
+  return { name: "", phone: "" };
+}
 
 export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
   const [values, setValues] = useState({
@@ -15,12 +20,25 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
     email: visitor.email || "",
     phone: visitor.phone || "",
     company: visitor.company || "",
+    visitor_type: visitor.visitor_type || "",
     purpose: visitor.purpose || "",
     host_id: visitor.host_id || "",
     notes: visitor.notes || "",
     additional_visitor_count: String(visitor.additional_visitor_count || 0),
     additional_visitor_names: visitor.additional_visitor_names || "",
+    group_members: visitor.group_members?.length ? visitor.group_members : [],
   });
+
+  const isStructuredType = values.visitor_type === STRUCTURED_GROUP_VISITOR_TYPE;
+  const groupMembers = values.group_members || [];
+
+  const updateMember = (index, field, value) => {
+    const next = groupMembers.map((m, i) => (i === index ? { ...m, [field]: value } : m));
+    setValues({ ...values, group_members: next });
+  };
+  const addMember = () => setValues({ ...values, group_members: [...groupMembers, emptyMember()] });
+  const removeMember = (index) => setValues({ ...values, group_members: groupMembers.filter((_, i) => i !== index) });
+  const [checkedInAt, setCheckedInAt] = useState(utcIsoToCompanyLocalInputValue(visitor.checked_in_at));
   const [checkedOutAt, setCheckedOutAt] = useState(utcIsoToCompanyLocalInputValue(visitor.checked_out_at));
   const [meetingTime, setMeetingTime] = useState(
     utcIsoToCompanyLocalInputValue(visitor.selected_time_slot || visitor.proposed_alternative_time)
@@ -34,16 +52,40 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
     setSaving(true);
     setError("");
     try {
+      // Keep whichever group representation matches the current visitor
+      // type - same rule the check-in form uses - so switching type in the
+      // edit modal never leaves stale data in the shape that's no longer used.
+      // Only visitors who have actually checked in have a check-in time to
+      // correct - everyone else (Expected/At Gate) has none yet, and this
+      // modal isn't how you retroactively check someone in.
+      if (visitor.checked_in_at && !checkedInAt) {
+        setError("Check-in time can't be cleared");
+        setSaving(false);
+        return;
+      }
+      const cleanMembers = isStructuredType
+        ? groupMembers.filter((m) => m.name.trim() && m.phone.trim())
+        : [];
+      const payload = {
+        ...values,
+        group_members: cleanMembers,
+        additional_visitor_count: isStructuredType ? cleanMembers.length : values.additional_visitor_count,
+        additional_visitor_names: isStructuredType ? "" : values.additional_visitor_names,
+        // Empty string clears the field; a value does the same conversion.
+        checked_out_at: checkedOutAt ? companyLocalToUtcIso(checkedOutAt) : "",
+        selected_time_slot: meetingTime ? companyLocalToUtcIso(meetingTime) : "",
+      };
+      // Only send checked_in_at for visitors who actually have one to
+      // correct (mirrors the field's visibility above) - the server rejects
+      // an empty value here, so sending it for a not-yet-arrived visitor
+      // would block saving any other edit for them too.
+      if (visitor.checked_in_at) {
+        payload.checked_in_at = companyLocalToUtcIso(checkedInAt);
+      }
       const res = await authFetch(`/api/admin/visitors/${visitor.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          // Empty string clears the field; a value converts Dubai wall-clock
-          // time (what the input represents) back to a real UTC timestamp.
-          checked_out_at: checkedOutAt ? companyLocalToUtcIso(checkedOutAt) : "",
-          selected_time_slot: meetingTime ? companyLocalToUtcIso(meetingTime) : "",
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -93,9 +135,23 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
         <label>Company</label>
         <input type="text" value={values.company} onChange={set("company")} />
 
-        <label>Purpose of visit</label>
-        <select value={values.purpose} onChange={set("purpose")}>
+        <label>Visitor type</label>
+        <select value={values.visitor_type} onChange={set("visitor_type")}>
           <option value="">Select…</option>
+          {VISITOR_TYPE_OPTIONS.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+          {!VISITOR_TYPE_OPTIONS.includes(values.visitor_type) && values.visitor_type && (
+            // Covers the combined "Other: <detail>" strings the check-in
+            // forms submit - not one of the fixed options, but still a real
+            // stored value that needs to show up rather than looking blank.
+            <option value={values.visitor_type}>{values.visitor_type}</option>
+          )}
+        </select>
+
+        <label>Purpose</label>
+        <select value={values.purpose} onChange={set("purpose")}>
+          <option value="">Not set yet</option>
           {PURPOSE_OPTIONS.map((p) => (
             <option key={p} value={p}>{p}</option>
           ))}
@@ -103,6 +159,9 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
             <option value={values.purpose}>{values.purpose}</option>
           )}
         </select>
+        <p className="helper-text" style={{ marginTop: 6 }}>
+          Visitors no longer pick this at check-in - add it here once you know why they're here.
+        </p>
 
         <label>Host</label>
         <select value={values.host_id} onChange={set("host_id")}>
@@ -112,16 +171,47 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
           ))}
         </select>
 
-        <label>Additional visitors</label>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={values.additional_visitor_count}
-          onChange={set("additional_visitor_count")}
-        />
+        {isStructuredType ? (
+          <div>
+            <label>Group members</label>
+            {groupMembers.length === 0 && (
+              <p className="helper-text" style={{ marginTop: 0, marginBottom: 8 }}>No additional group members yet.</p>
+            )}
+            {groupMembers.map((m, i) => (
+              <div key={i} className="row-2" style={{ alignItems: "flex-end", marginBottom: 8 }}>
+                <input type="text" value={m.name} onChange={(e) => updateMember(i, "name", e.target.value)} placeholder="Name" />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="tel"
+                    value={m.phone}
+                    onChange={(e) => updateMember(i, "phone", e.target.value)}
+                    placeholder="Phone"
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" className="btn-small" onClick={() => removeMember(i)} aria-label={`Remove ${m.name || "person"}`}>
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="btn-small" onClick={addMember}>
+              + Add person
+            </button>
+          </div>
+        ) : (
+          <div>
+            <label>Additional visitors</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={values.additional_visitor_count}
+              onChange={set("additional_visitor_count")}
+            />
 
-        <label>Additional visitor names</label>
-        <textarea rows={2} value={values.additional_visitor_names} onChange={set("additional_visitor_names")} />
+            <label>Additional visitor names</label>
+            <textarea rows={2} value={values.additional_visitor_names} onChange={set("additional_visitor_names")} />
+          </div>
+        )}
 
         <label>Notes</label>
         <textarea rows={2} value={values.notes} onChange={set("notes")} />
@@ -140,6 +230,20 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
             : "Set or correct the agreed meeting time."}
         </p>
 
+        {visitor.checked_in_at && (
+          <>
+            <label>Check-in time ({COMPANY_TIMEZONE_LABEL})</label>
+            <input
+              type="datetime-local"
+              value={checkedInAt}
+              onChange={(e) => setCheckedInAt(e.target.value)}
+            />
+            <p className="helper-text" style={{ marginTop: 6 }}>
+              Correct this if the recorded arrival time is wrong - it can't be cleared, only adjusted.
+            </p>
+          </>
+        )}
+
         <label>Checkout time ({COMPANY_TIMEZONE_LABEL})</label>
         <input
           type="datetime-local"
@@ -151,7 +255,7 @@ export default function EditVisitorModal({ visitor, hosts, onClose, onSaved }) {
             ? "Clear this field to undo an accidental checkout."
             : visitor.status === "checked_out"
             ? "This visitor was checked out but has no time recorded."
-            : "Not checked out yet — only set this if correcting a mistake."}
+            : "Not checked out yet - only set this if correcting a mistake."}
         </p>
 
         {error && <p className="error-text">{error}</p>}

@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseClient";
 import { sendHostNotification } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
 
-// GET /api/checkin?token=xxx — look up a pre-registered visitor
+// GET /api/checkin?token=xxx - look up a pre-registered visitor
 export async function GET(req) {
   const limited = checkRateLimit(req, "checkin-lookup");
   if (limited) return limited;
@@ -24,7 +24,7 @@ export async function GET(req) {
   return NextResponse.json({ visitor });
 }
 
-// POST /api/checkin { token } — confirm arrival, notify host
+// POST /api/checkin { token } - confirm arrival, notify host
 export async function POST(req) {
   const limited = checkRateLimit(req, "checkin-confirm");
   if (limited) return limited;

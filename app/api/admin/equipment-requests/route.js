@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/verifyAdmin";
 import { DEFAULT_FACILITY } from "@/lib/facilities";
 
 // GET /api/admin/equipment-requests?facility=idl
-// Admin-only by design — equipment requests aren't surfaced to guards at
+// Admin-only by design - equipment requests aren't surfaced to guards at
 // all, unlike vehicle requests.
 export async function GET(req) {
   const user = await requireAdmin(req);
@@ -13,12 +13,9 @@ export async function GET(req) {
   const supabaseAdmin = getSupabaseAdmin();
   const facility = req.nextUrl.searchParams.get("facility") || DEFAULT_FACILITY;
 
-  const { data, error } = await supabaseAdmin
-    .from("equipment_requests")
-    .select("*")
-    .eq("facility", facility)
-    .order("created_at", { ascending: false })
-    .limit(200);
+  let query = supabaseAdmin.from("equipment_requests").select("*");
+  if (facility !== "all") query = query.eq("facility", facility);
+  const { data, error } = await query.order("created_at", { ascending: false }).limit(200);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

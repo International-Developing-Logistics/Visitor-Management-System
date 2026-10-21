@@ -1,5 +1,5 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only — doesn't touch any existing data.
+-- New table only - doesn't touch any existing data.
 
 create table if not exists guard_logs (
   id uuid primary key default gen_random_uuid(),
