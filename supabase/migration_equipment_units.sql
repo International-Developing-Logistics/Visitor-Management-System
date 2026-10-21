@@ -22,6 +22,15 @@ create table if not exists equipment_units (
 create index if not exists equipment_units_facility_idx on equipment_units(facility);
 alter table equipment_units enable row level security;
 
+-- Supabase stops auto-granting Data API access to new "public" tables as
+-- of Oct 30, 2026 - without this, every call through getSupabaseAdmin()
+-- (which goes over the Data API, even with the service role key) would
+-- get a "permission denied" error. anon/authenticated are intentionally
+-- left out: this app never queries tables directly with those keys (only
+-- for supabase.auth.* sign-in), and RLS has no policy admitting them
+-- anyway, so granting them here would do nothing but widen the surface.
+grant select, insert, update, delete on public.equipment_units to service_role;
+
 insert into equipment_units (id, name, type, facility) values
   ('pallet-jack-1', 'Pallet Jack #1', 'Pallet Jack', 'harmony'),
   ('forklift-1', 'Forklift #1', 'Forklift', 'harmony'),
