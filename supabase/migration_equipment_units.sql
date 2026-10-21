@@ -1,3 +1,15 @@
+-- Run this in the Supabase SQL editor for your EXISTING project.
+-- New table only - makes the physical equipment list that used to live in
+-- lib/equipmentUnits.js admin-manageable from the dashboard (Admin >
+-- Equipment > Print QR Labels) instead of requiring a code edit and
+-- redeploy every time a unit is added, renamed, or retired.
+--
+-- Seeded below with the three units that were previously hardcoded in
+-- lib/equipmentUnits.js, using the SAME `id` values for each - that id is
+-- permanently baked into every QR code already printed and stuck on a
+-- physical piece of equipment, so changing it here would orphan those
+-- labels. New units added from the dashboard get their id generated from
+-- their name.
 create table if not exists equipment_units (
   id text primary key, -- what the printed QR code encodes, as /equipment-log/<id> - treat as permanent once a label is printed
   name text not null,
