@@ -121,6 +121,22 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
 }
 
+/* Removes the browser's native dropdown-arrow widget so a <select> is
+   exactly as tall as an <input> with the same padding (the native widget
+   otherwise reserves its own vertical space regardless of our padding,
+   which is why selects kept rendering taller than text fields beside
+   them even after their padding was matched). Replaced with a plain
+   drawn arrow so it still reads as a dropdown. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7268' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
 .btn {
   appearance: none;
   border: none;
@@ -285,7 +301,8 @@ input:focus, select:focus, textarea:focus {
 }
 .admin-form-inline > div { flex: 1; min-width: 140px; }
 .admin-form-inline label { margin: 0 0 6px; }
-.admin-form-inline input, .admin-form-inline select { padding: 10px 12px; }
+.admin-form-inline input { padding: 10px 12px; }
+.admin-form-inline select { padding: 10px 30px 10px 12px; background-position: right 10px center; }
 
 /* Visually hidden but still announced by screen readers */
 .sr-only {
@@ -365,12 +382,16 @@ input:focus, select:focus, textarea:focus {
    that made both controls visibly oversized next to the header's other
    btn-small controls (Menu, Sign out). This brings them down to the
    header's own scale without touching their behavior. */
-.app-header input[type="text"],
-.app-header select {
+.app-header input[type="text"] {
   padding: 8px 12px;
   font-size: 0.85rem;
 }
-.app-header select { width: auto; }
+.app-header select {
+  padding: 8px 28px 8px 10px;
+  font-size: 0.85rem;
+  background-position: right 8px center;
+  width: auto;
+}
 
 /* Shared page-header shape: title (+ optional helper text) on the left,
    page-level actions on the right, wrapping cleanly on narrow screens.

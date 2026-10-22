@@ -105,7 +105,7 @@ export default function AdminEquipmentRequestsPage() {
           placeholder="Search employee, equipment, location…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ minWidth: 220 }}
+          style={{ minWidth: 220, maxWidth: 320, flex: "1 1 220px" }}
         />
       </div>
 

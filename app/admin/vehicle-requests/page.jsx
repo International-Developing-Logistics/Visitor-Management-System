@@ -100,7 +100,7 @@ export default function AdminVehicleRequestsPage() {
           placeholder="Search employee, vehicle, destination…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ minWidth: 220 }}
+          style={{ minWidth: 220, maxWidth: 320, flex: "1 1 220px" }}
         />
       </div>
 
