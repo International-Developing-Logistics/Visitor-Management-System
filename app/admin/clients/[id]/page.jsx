@@ -139,7 +139,7 @@ export default function AdminClientDetailPage() {
   return (
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>{client.name}</h3>
-      <p className="helper-text" style={{ marginBottom: 20 }}>
+      <p className="helper-text" style={{ marginBottom: 16 }}>
         Created {formatInCompanyTimezone(client.created_at)}{client.facility ? ` · ${client.facility}` : ""}
       </p>
 

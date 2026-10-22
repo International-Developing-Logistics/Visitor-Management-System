@@ -272,7 +272,7 @@ export default function AdminVisitorsPage() {
 
   return (
     <div className="admin-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+      <div className="page-header">
         <div>
           <h3 style={{ marginBottom: 4 }}>Visitors</h3>
           <p className="helper-text" style={{ marginBottom: 16 }}>
@@ -280,20 +280,11 @@ export default function AdminVisitorsPage() {
             invitations, in one place.
           </p>
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          <button
-            className="btn-small"
-            onClick={runHousekeeping}
-            disabled={runningHousekeeping}
-            style={{ whiteSpace: "nowrap" }}
-          >
+        <div className="page-header-actions">
+          <button className="btn-small" onClick={runHousekeeping} disabled={runningHousekeeping}>
             {runningHousekeeping ? "Running…" : "Run housekeeping"}
           </button>
-          <button
-            className="btn-small"
-            style={{ whiteSpace: "nowrap" }}
-            onClick={() => setAdding(true)}
-          >
+          <button className="btn-small" onClick={() => setAdding(true)}>
             + Add Visitor
           </button>
         </div>

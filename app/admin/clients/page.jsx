@@ -59,7 +59,7 @@ export default function AdminClientsPage() {
   return (
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Clients</h3>
-      <p className="helper-text" style={{ marginTop: 0, marginBottom: 20 }}>
+      <p className="helper-text" style={{ marginBottom: 16 }}>
         Each client is its own account with logins and files kept separate from every other client
         and from this operations system - see a client's page to invite a login or manage their files.
       </p>

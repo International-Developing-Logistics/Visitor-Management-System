@@ -42,13 +42,17 @@ export default function AdminGateCheckFormsPage() {
 
   return (
     <div className="admin-card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 4 }}>
-        <h3 style={{ margin: 0 }}>Gate Check Forms</h3>
-        <Link href={newHref} className="btn-small" target="_blank" rel="noreferrer">+ New Gate Check</Link>
+      <div className="page-header">
+        <div>
+          <h3 style={{ marginBottom: 4 }}>Gate Check Forms</h3>
+          <p className="helper-text" style={{ marginBottom: 16 }}>
+            Container receiving security checks, submitted by admin and guard accounts.
+          </p>
+        </div>
+        <div className="page-header-actions">
+          <Link href={newHref} className="btn-small" target="_blank" rel="noreferrer">+ New Gate Check</Link>
+        </div>
       </div>
-      <p className="helper-text" style={{ marginBottom: 16 }}>
-        Container receiving security checks, submitted by admin and guard accounts.
-      </p>
 
       {error && <p className="error-text">{error}</p>}
       {loading && <p className="helper-text">Loading…</p>}

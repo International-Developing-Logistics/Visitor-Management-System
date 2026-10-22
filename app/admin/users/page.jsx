@@ -88,7 +88,7 @@ export default function UsersPage() {
   return (
     <div className="admin-card">
       <h3 style={{ marginBottom: 4 }}>Users & Roles</h3>
-      <p className="helper-text" style={{ marginTop: 0, marginBottom: 20 }}>
+      <p className="helper-text" style={{ marginBottom: 16 }}>
         Any login with no role set here defaults to full admin access - that's what keeps every
         account created before this page existed working exactly as before.
       </p>

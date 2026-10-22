@@ -12,7 +12,21 @@ import { FACILITIES } from "@/lib/facilities";
 // unit (rather than deleting it) keeps its printed QR code resolving to a
 // clear "no longer in service" message instead of a 404, and keeps its
 // past equipment_movements history intact.
+//
+// Split into two tabs (Manage / Print Labels) rather than stacking both
+// sections - with a real inventory (20+ units) the management table and
+// the QR grid are each long enough that showing both at once just made
+// the page feel endless. Printing isn't tied to which tab is open: the
+// print stylesheet below always shows the label grid and hides the
+// manage panel, regardless of what's active on screen, so hitting Print
+// from the Manage tab still prints every label correctly.
+const TABS = [
+  { key: "manage", label: "Manage" },
+  { key: "print", label: "Print Labels" },
+];
+
 export default function PrintEquipmentLabelsPage() {
+  const [tab, setTab] = useState("manage");
   const [units, setUnits] = useState([]);
   const [labels, setLabels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -100,9 +114,12 @@ export default function PrintEquipmentLabelsPage() {
   return (
     <div className="admin-card">
       <style>{`
+        .manage-panel.tab-hidden, .print-panel.tab-hidden { display: none; }
         @media print {
           .app-sidebar, .app-header, .no-print { display: none !important; }
           .app-main, .app-content { padding: 0 !important; margin: 0 !important; }
+          .manage-panel { display: none !important; }
+          .print-panel { display: block !important; }
           .label-grid { gap: 0 !important; }
         }
         .label-card {
@@ -114,121 +131,132 @@ export default function PrintEquipmentLabelsPage() {
         }
       `}</style>
 
-      <h3 style={{ marginBottom: 4 }}>Equipment & QR Labels</h3>
+      <h3 style={{ marginBottom: 4 }}>Equipment List</h3>
       <p className="helper-text no-print" style={{ marginBottom: 16 }}>
-        Add or retire equipment here - it's live for checkout immediately. A new unit gets its own printable label below.
+        Add or retire equipment, and print a QR label for each unit - changes here are live for checkout immediately.
       </p>
+
+      <div className="tabs no-print">
+        {TABS.map((t) => (
+          <button key={t.key} className={`tab ${tab === t.key ? "active" : ""}`} onClick={() => setTab(t.key)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {error && <p className="error-text">{error}</p>}
 
-      <div className="admin-form-inline no-print" style={{ marginBottom: 20 }}>
-        <div>
-          <label>Name</label>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g. Pallet Jack #2"
-          />
+      <div className={`manage-panel no-print ${tab === "manage" ? "" : "tab-hidden"}`}>
+        <div className="admin-form-inline" style={{ marginBottom: 20 }}>
+          <div>
+            <label>Name</label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Pallet Jack #2"
+            />
+          </div>
+          <div>
+            <label>Type</label>
+            <input
+              value={form.type}
+              onChange={(e) => setForm({ ...form, type: e.target.value })}
+              placeholder="e.g. Pallet Jack"
+            />
+          </div>
+          <div>
+            <label>Facility</label>
+            <select value={form.facility} onChange={(e) => setForm({ ...form, facility: e.target.value })}>
+              {Object.values(FACILITIES).map((f) => (
+                <option key={f.key} value={f.key}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label>Notes (optional)</label>
+            <input
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              placeholder="e.g. Toyota, electric, 2022"
+            />
+          </div>
+          <button
+            className="btn-small"
+            onClick={addUnit}
+            disabled={submitting || !form.name.trim() || !form.type.trim()}
+            style={{ height: 42 }}
+          >
+            {submitting ? "Adding…" : "+ Add Equipment"}
+          </button>
         </div>
-        <div>
-          <label>Type</label>
-          <input
-            value={form.type}
-            onChange={(e) => setForm({ ...form, type: e.target.value })}
-            placeholder="e.g. Pallet Jack"
-          />
-        </div>
-        <div>
-          <label>Facility</label>
-          <select value={form.facility} onChange={(e) => setForm({ ...form, facility: e.target.value })}>
-            {Object.values(FACILITIES).map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label>Notes (optional)</label>
-          <input
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            placeholder="e.g. Toyota, electric, 2022"
-          />
-        </div>
-        <button
-          className="btn-small"
-          onClick={addUnit}
-          disabled={submitting || !form.name.trim() || !form.type.trim()}
-          style={{ height: 42 }}
-        >
-          {submitting ? "Adding…" : "+ Add Equipment"}
-        </button>
+
+        {loading && <p className="helper-text">Loading…</p>}
+
+        {!loading && units.length === 0 && <p className="helper-text">No equipment yet - add your first unit above.</p>}
+
+        {!loading && units.length > 0 && (
+          <div className="vtable-scroll">
+            <table className="vtable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Facility</th>
+                  <th>Notes</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {units.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 600 }}>{u.name}</td>
+                    <td>{u.type}</td>
+                    <td>{FACILITIES[u.facility]?.label || u.facility}</td>
+                    <td style={{ fontSize: "0.8rem", color: "var(--muted)", maxWidth: 220 }}>{u.notes || "-"}</td>
+                    <td>
+                      <span className={`badge ${u.active ? "checked_in" : "gate_denied"}`}>
+                        {u.active ? "Active" : "Retired"}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn-small" onClick={() => toggleActive(u)} disabled={busyId === u.id}>
+                        {busyId === u.id ? "…" : u.active ? "Retire" : "Reactivate"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {loading && <p className="helper-text">Loading…</p>}
+      <div className={`print-panel ${tab === "print" ? "" : "tab-hidden"}`}>
+        <p className="helper-text no-print" style={{ marginBottom: 16 }}>
+          One label per active unit. Print, cut along the border, and stick one on each physical unit.
+        </p>
 
-      {!loading && units.length === 0 && <p className="helper-text">No equipment yet - add your first unit above.</p>}
+        <button className="btn-small no-print" style={{ marginBottom: 20 }} onClick={() => window.print()}>
+          Print
+        </button>
 
-      {!loading && units.length > 0 && (
-        <div className="vtable-scroll no-print" style={{ marginBottom: 28 }}>
-          <table className="vtable">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Facility</th>
-                <th>Notes</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {units.map((u) => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
-                  <td>{u.type}</td>
-                  <td>{FACILITIES[u.facility]?.label || u.facility}</td>
-                  <td style={{ fontSize: "0.8rem", color: "var(--muted)", maxWidth: 220 }}>{u.notes || "-"}</td>
-                  <td>
-                    <span className={`badge ${u.active ? "checked_in" : "gate_denied"}`}>
-                      {u.active ? "Active" : "Retired"}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="btn-small" onClick={() => toggleActive(u)} disabled={busyId === u.id}>
-                      {busyId === u.id ? "…" : u.active ? "Retire" : "Reactivate"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <h3 style={{ marginBottom: 4 }}>Print QR Labels</h3>
-      <p className="helper-text no-print" style={{ marginBottom: 16 }}>
-        One label per active unit. Print, cut along the border, and stick one on each physical unit.
-      </p>
-
-      <button className="btn-small no-print" style={{ marginBottom: 20 }} onClick={() => window.print()}>
-        Print
-      </button>
-
-      <div
-        className="label-grid"
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}
-      >
-        {labels.map((l) => (
-          <div key={l.id} className="label-card">
-            <img src={l.dataUrl} alt={l.name} style={{ width: "100%", maxWidth: 180 }} />
-            <div style={{ fontWeight: 700, marginTop: 6 }}>{l.name}</div>
-            <div className="helper-text" style={{ marginTop: 0, fontSize: "0.72rem", wordBreak: "break-all" }}>
-              {l.url}
+        <div
+          className="label-grid"
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}
+        >
+          {labels.map((l) => (
+            <div key={l.id} className="label-card">
+              <img src={l.dataUrl} alt={l.name} style={{ width: "100%", maxWidth: 180 }} />
+              <div style={{ fontWeight: 700, marginTop: 6 }}>{l.name}</div>
+              <div className="helper-text" style={{ marginTop: 0, fontSize: "0.72rem", wordBreak: "break-all" }}>
+                {l.url}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
