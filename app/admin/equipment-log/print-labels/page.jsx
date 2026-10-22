@@ -17,7 +17,7 @@ export default function PrintEquipmentLabelsPage() {
   const [labels, setLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ name: "", type: "", facility: "harmony" });
+  const [form, setForm] = useState({ name: "", type: "", facility: "harmony", notes: "" });
   const [submitting, setSubmitting] = useState(false);
   const [busyId, setBusyId] = useState(null);
 
@@ -70,7 +70,7 @@ export default function PrintEquipmentLabelsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setForm({ name: "", type: "", facility: form.facility });
+      setForm({ name: "", type: "", facility: form.facility, notes: "" });
       await load();
     } catch (e) {
       setError(e.message);
@@ -148,6 +148,14 @@ export default function PrintEquipmentLabelsPage() {
             ))}
           </select>
         </div>
+        <div>
+          <label>Notes (optional)</label>
+          <input
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            placeholder="e.g. Toyota, electric, 2022"
+          />
+        </div>
         <button
           className="btn-small"
           onClick={addUnit}
@@ -170,6 +178,7 @@ export default function PrintEquipmentLabelsPage() {
                 <th>Name</th>
                 <th>Type</th>
                 <th>Facility</th>
+                <th>Notes</th>
                 <th>Status</th>
                 <th></th>
               </tr>
@@ -180,6 +189,7 @@ export default function PrintEquipmentLabelsPage() {
                   <td style={{ fontWeight: 600 }}>{u.name}</td>
                   <td>{u.type}</td>
                   <td>{FACILITIES[u.facility]?.label || u.facility}</td>
+                  <td style={{ fontSize: "0.8rem", color: "var(--muted)", maxWidth: 220 }}>{u.notes || "-"}</td>
                   <td>
                     <span className={`badge ${u.active ? "checked_in" : "gate_denied"}`}>
                       {u.active ? "Active" : "Retired"}

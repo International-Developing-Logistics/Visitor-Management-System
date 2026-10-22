@@ -34,7 +34,7 @@ export async function POST(req) {
   const user = await requireAdmin(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { name, type, facility } = await req.json();
+  const { name, type, facility, notes } = await req.json();
   if (!name?.trim() || !type?.trim() || !facility) {
     return NextResponse.json({ error: "Name, type, and facility are required" }, { status: 400 });
   }
@@ -51,7 +51,7 @@ export async function POST(req) {
 
   const { data, error } = await supabaseAdmin
     .from("equipment_units")
-    .insert({ id, name: name.trim(), type: type.trim(), facility })
+    .insert({ id, name: name.trim(), type: type.trim(), facility, notes: notes?.trim() || null })
     .select()
     .single();
 
