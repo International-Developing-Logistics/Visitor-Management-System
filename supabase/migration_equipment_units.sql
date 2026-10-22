@@ -1,8 +1,11 @@
 -- Run this in the Supabase SQL editor for your EXISTING project.
--- New table only - makes the physical equipment list that used to live in
--- lib/equipmentUnits.js admin-manageable from the dashboard (Admin >
--- Equipment > Print QR Labels) instead of requiring a code edit and
--- redeploy every time a unit is added, renamed, or retired.
+--
+-- If you already ran an earlier version of this file, your table exists
+-- without the `notes` column (that's why the last run errored with
+-- "column notes does not exist" - `create table if not exists` is a
+-- no-op once the table's there, so it never picked up the new column on
+-- its own). The `alter table ... add column if not exists` line below
+-- fixes that - safe to run this whole file again from scratch either way.
 --
 -- Seeded below with the real EHS forklift/equipment list (20 units) -
 -- `id` is lowercased from each unit's existing Machine Id (RT-01, FL-01,
@@ -29,10 +32,13 @@ create table if not exists equipment_units (
   name text not null,
   type text not null,
   facility text not null default 'harmony' check (facility in ('harmony', 'idl')),
-  notes text, -- optional free-text context (brand/model/year/warehouse) - not used by any logic, just shown in the admin list
   active boolean not null default true, -- false = retired: hidden from the checkout/print list, but kept so an old sticker still resolves to a clear "no longer in service" message instead of a 404
   created_at timestamptz not null default now()
 );
+
+-- Backfills `notes` onto a table created by an earlier run of this file,
+-- before this column existed.
+alter table equipment_units add column if not exists notes text; -- optional free-text context (brand/model/year/warehouse) - not used by any logic, just shown in the admin list
 
 create index if not exists equipment_units_facility_idx on equipment_units(facility);
 alter table equipment_units enable row level security;
@@ -45,6 +51,11 @@ alter table equipment_units enable row level security;
 -- for supabase.auth.* sign-in), and RLS has no policy admitting them
 -- anyway, so granting them here would do nothing but widen the surface.
 grant select, insert, update, delete on public.equipment_units to service_role;
+
+-- Clears out the 3 placeholder rows from an earlier run of this file,
+-- before the real inventory (below) replaced them. No-op if they were
+-- never inserted.
+delete from equipment_units where id in ('pallet-jack-1', 'forklift-1', 'reach-truck-1');
 
 insert into equipment_units (id, name, type, facility, notes) values
   ('rt-01', 'Reach Truck RT-01', 'Reach Truck', 'idl', 'Toyota · Model 1065 · 2022'),
