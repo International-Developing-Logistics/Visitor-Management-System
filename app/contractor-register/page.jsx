@@ -3,9 +3,30 @@
 import { useState } from "react";
 import BrandHeader from "@/components/BrandHeader";
 import HyperlinkCopier from "@/components/HyperlinkCopier";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  CONTRACTOR_DOCS_BUCKET,
+  MAX_DOCUMENT_BYTES as MAX_FILE_BYTES,
+  ACCEPTED_DOCUMENT_TYPES as ACCEPTED_TYPES,
+} from "@/lib/contractorDocuments";
 
-const MAX_FILE_BYTES = 3 * 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+// Parses an API response, tolerating non-JSON bodies (e.g. Vercel's plain
+// text "Request Entity Too Large") so users see a readable message instead
+// of "Unexpected token ... is not valid JSON".
+async function readApiResponse(res) {
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = null;
+  }
+  if (!res.ok) {
+    throw new Error(data?.error || `Request failed (${res.status}). Please try again.`);
+  }
+  if (!data) throw new Error("Unexpected response from the server. Please try again.");
+  return data;
+}
 
 const DOCUMENT_OPTIONS = [
   {
@@ -20,15 +41,6 @@ const DOCUMENT_OPTIONS = [
   },
 ];
 
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 // One labeled file input, used for all three document slots below. Keeps
 // the "wrong type / too large / unreadable" handling in one place instead
 // of copy-pasted per document.
@@ -39,26 +51,25 @@ function DocumentUpload({ id, label, file, onChange }) {
     const picked = e.target.files?.[0];
     setFileError("");
     if (!picked) {
-      onChange(null, null);
+      onChange(null);
       return;
     }
     if (!ACCEPTED_TYPES.includes(picked.type)) {
       setFileError("Please upload a JPG, PNG, or PDF file.");
-      onChange(null, null);
+      onChange(null);
+      return;
+    }
+    if (picked.size === 0) {
+      setFileError("File unreadable - please try again.");
+      onChange(null);
       return;
     }
     if (picked.size > MAX_FILE_BYTES) {
-      setFileError("The file is too large - please keep it under 3MB.");
-      onChange(null, null);
+      setFileError("The file is too large - please keep it under 10MB.");
+      onChange(null);
       return;
     }
-    try {
-      const dataUrl = await readFileAsDataUrl(picked);
-      onChange(picked, dataUrl);
-    } catch {
-      setFileError("File unreadable - please try again.");
-      onChange(null, null);
-    }
+    onChange(picked);
   };
 
   return (
@@ -80,9 +91,9 @@ export default function ContractorRegisterPage() {
     estimated_duration: "",
   });
   const [documentType, setDocumentType] = useState(null);
-  const [freezonePass, setFreezonePass] = useState({ file: null, dataUrl: null });
-  const [passport, setPassport] = useState({ file: null, dataUrl: null });
-  const [emiratesId, setEmiratesId] = useState({ file: null, dataUrl: null });
+  const [freezonePass, setFreezonePass] = useState(null);
+  const [passport, setPassport] = useState(null);
+  const [emiratesId, setEmiratesId] = useState(null);
   const [result, setResult] = useState(null); // { passUrl }
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -91,28 +102,53 @@ export default function ContractorRegisterPage() {
 
   const documentsComplete =
     documentType === "freezone_pass"
-      ? !!freezonePass.dataUrl
+      ? !!freezonePass
       : documentType === "passport_emirates_id"
-      ? !!passport.dataUrl && !!emiratesId.dataUrl
+      ? !!passport && !!emiratesId
       : false;
 
   const submit = async () => {
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch("/api/contractors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          document_type: documentType,
-          freezone_pass: freezonePass.dataUrl,
-          passport: passport.dataUrl,
-          emirates_id: emiratesId.dataUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const filesBySlot =
+        documentType === "freezone_pass"
+          ? { "freezone-pass": freezonePass }
+          : { passport, "emirates-id": emiratesId };
+
+      // 1. Get one-time signed upload links for each document.
+      const prep = await readApiResponse(
+        await fetch("/api/contractors/upload-urls", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            document_type: documentType,
+            files: Object.fromEntries(
+              Object.entries(filesBySlot).map(([slot, f]) => [slot, { type: f.type, size: f.size }])
+            ),
+          }),
+        })
+      );
+
+      // 2. Upload the files straight to storage (not through Vercel).
+      await Promise.all(
+        Object.entries(filesBySlot).map(async ([slot, f]) => {
+          const { path, token } = prep.uploads[slot];
+          const { error: upErr } = await supabase.storage
+            .from(CONTRACTOR_DOCS_BUCKET)
+            .uploadToSignedUrl(path, token, f, { contentType: f.type });
+          if (upErr) throw new Error(`Upload failed - please try again. (${upErr.message})`);
+        })
+      );
+
+      // 3. Submit the registration itself - small JSON, no file data.
+      const data = await readApiResponse(
+        await fetch("/api/contractors", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...values, document_type: documentType, upload_id: prep.upload_id }),
+        })
+      );
       setResult(data);
     } catch (err) {
       setError(err.message);
@@ -211,8 +247,8 @@ export default function ContractorRegisterPage() {
                 <DocumentUpload
                   id="cr-freezone-pass"
                   label="Freezone gate pass"
-                  file={freezonePass.file}
-                  onChange={(file, dataUrl) => setFreezonePass({ file, dataUrl })}
+                  file={freezonePass}
+                  onChange={setFreezonePass}
                 />
               </div>
             )}
@@ -222,14 +258,14 @@ export default function ContractorRegisterPage() {
                 <DocumentUpload
                   id="cr-passport"
                   label="Passport"
-                  file={passport.file}
-                  onChange={(file, dataUrl) => setPassport({ file, dataUrl })}
+                  file={passport}
+                  onChange={setPassport}
                 />
                 <DocumentUpload
                   id="cr-emirates-id"
                   label="Emirates ID"
-                  file={emiratesId.file}
-                  onChange={(file, dataUrl) => setEmiratesId({ file, dataUrl })}
+                  file={emiratesId}
+                  onChange={setEmiratesId}
                 />
               </div>
             )}
