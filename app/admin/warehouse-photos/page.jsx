@@ -4,6 +4,58 @@ import { useCallback, useEffect, useState } from "react";
 import { authFetch } from "@/lib/apiFetch";
 import { formatInCompanyTimezone } from "@/lib/timezone";
 import { useFacility } from "@/lib/facilityContext";
+import { buildZip } from "@/lib/zip";
+import { warehouseZipName, warehouseZipEntryName } from "@/lib/warehousePhotos";
+
+// Builds the ZIP in the browser from the signed photo URLs. Done
+// client-side on purpose: a server-built ZIP of 20+ photos would exceed
+// Vercel's 4.5MB function response limit.
+async function downloadZip(submission) {
+  const files = await Promise.all(
+    submission.photos.map(async (url, i) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Photo ${i + 1} could not be downloaded (${res.status})`);
+      return { name: warehouseZipEntryName(submission, i), data: new Uint8Array(await res.arrayBuffer()) };
+    })
+  );
+  const zip = buildZip(files, new Date(submission.created_at));
+  const href = URL.createObjectURL(new Blob([zip], { type: "application/zip" }));
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = warehouseZipName(submission);
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 10000);
+}
+
+function DownloadZipButton({ submission }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  return (
+    <div style={{ marginTop: 10 }}>
+      <button
+        type="button"
+        className="btn-small"
+        disabled={busy || submission.photos.length === 0}
+        onClick={async () => {
+          setBusy(true);
+          setError("");
+          try {
+            await downloadZip(submission);
+          } catch (e) {
+            setError(e.message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Preparing ZIP…" : `Download ZIP (${submission.photos.length} photo${submission.photos.length === 1 ? "" : "s"})`}
+      </button>
+      {error && <p className="error-text">{error}</p>}
+    </div>
+  );
+}
 
 function SubmissionCard({ submission }) {
   const count = submission.photo_paths?.length || 0;
@@ -46,6 +98,7 @@ function SubmissionCard({ submission }) {
       {submission.photos.length < count && (
         <p className="helper-text">{count - submission.photos.length} photo(s) couldn't be loaded.</p>
       )}
+      <DownloadZipButton submission={submission} />
     </div>
   );
 }
