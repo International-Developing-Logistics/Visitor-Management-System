@@ -276,13 +276,12 @@ export default function WarehousePhotosForm({ facility }) {
             <label htmlFor="wp-containers">No. of containers</label>
             <input
               id="wp-containers"
-              type="number"
+              type="text"
               inputMode="numeric"
-              min={0}
-              max={1000}
-              step={1}
+              pattern="[0-9]*"
+              maxLength={4}
               value={containers}
-              onChange={(e) => setContainers(e.target.value)}
+              onChange={(e) => setContainers(e.target.value.replace(/[^0-9]/g, ""))}
               placeholder="eg. 2"
             />
             {containers !== "" && !containersValid && <p className="error-text">Enter a whole number.</p>}
