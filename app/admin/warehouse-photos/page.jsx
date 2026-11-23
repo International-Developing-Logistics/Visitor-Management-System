@@ -94,7 +94,7 @@ export default function AdminWarehousePhotosPage() {
         style={{ display: "flex", gap: 8, marginBottom: 16, maxWidth: 480 }}
       >
         <input
-          type="search"
+          type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by GRN or client"
