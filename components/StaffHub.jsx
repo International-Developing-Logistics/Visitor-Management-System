@@ -90,6 +90,11 @@ export default function StaffHub({ facility }) {
           title="Equipment Log"
           description="Scan the QR code on the equipment - or pick it from the list here"
         />
+        <PrimaryAction
+          href={p("/warehouse-photos")}
+          title="Warehouse Photos"
+          description="Add photos for a GRN - client, containers, and up to 30 pictures"
+        />
 
         <SectionLabel>My Guests</SectionLabel>
         <ServiceLink
