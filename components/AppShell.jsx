@@ -172,6 +172,7 @@ const NAV = [
   {
     group: "Operations",
     items: [
+      { label: "Warehouse Photos", href: "/admin/warehouse-photos", roles: ["admin"] },
       { label: "Activity", href: null, roles: ["admin"] },
       { label: "Reports", href: null, roles: ["admin"] },
       { label: "Audit Log", href: null, roles: ["admin"] },
